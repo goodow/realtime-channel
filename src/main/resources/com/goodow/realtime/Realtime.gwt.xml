@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module rename-to='realtime'>
+  <inherits name='com.goodow.realtime.Model'/>
+  
+  <source path="channel">
+  </source>
+</module>
