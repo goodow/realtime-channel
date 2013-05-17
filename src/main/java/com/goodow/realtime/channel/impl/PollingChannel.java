@@ -13,61 +13,50 @@
  */
 package com.goodow.realtime.channel.impl;
 
-import com.goodow.realtime.channel.ChannelDemuxer;
-import com.goodow.realtime.channel.RealtimeActiveMap;
-import com.goodow.realtime.channel.rpc.Constants.Params;
-import com.goodow.realtime.channel.rpc.DeltaService;
-
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.RepeatingCommand;
+import com.goodow.realtime.channel.RealtimeChannelDemuxer;
+import com.goodow.realtime.channel.rpc.PollingService;
+import com.goodow.realtime.util.NativeInterface;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import elemental.json.Json;
 import elemental.json.JsonArray;
-import elemental.json.JsonObject;
 import elemental.util.ArrayOfString;
 
-public class PollingChannel extends ChannelDemuxer {
+public class PollingChannel extends RealtimeChannelDemuxer {
   private static final Logger log = Logger.getLogger(PollingChannel.class.getName());
   private static final int HEARTBEAT_INTERVAL_MILLIS = 15 * 1000;
-  private static final PollingChannel INSTANCE = new PollingChannel(RealtimeActiveMap.get());
-
-  public static ChannelDemuxer get() {
-    return INSTANCE;
-  }
+  public static final PollingChannel INSTANCE = new PollingChannel();
 
   private boolean isHeartbeatTaskCanceled = true;
-  private final RepeatingCommand heartbeatTask = new RepeatingCommand() {
+  private final Runnable heartbeatTask = new Runnable() {
     @Override
-    public boolean execute() {
+    public void run() {
       if (isHeartbeatTaskCanceled) {
-        return false;
+        return;
       }
-      ArrayOfString keys = registry.getIds();
-      if (keys.length() == 0) {
-        return true;
-      }
+      ArrayOfString ids = getIds();
       JsonArray array = Json.createArray();
-      for (int i = 0, len = keys.length(); i < len; i++) {
-        JsonObject obj = Json.createObject();
-        String key = keys.get(i);
-        obj.put(Params.ID, key);
-        obj.put(Params.START_REVISION, registry.getRevision(key));
-        array.set(i, obj);
+      if (ids.length() != 0) {
+        for (int i = 0, len = ids.length(); i < len; i++) {
+          JsonArray req = Json.createArray();
+          String id = ids.get(i);
+          req.set(0, id);
+          req.set(1, getRevision(id) + 1);
+          array.set(i, req);
+        }
+        log.log(Level.FINE, "Heartbeat");
       }
-      log.log(Level.FINE, "Heartbeat");
-      service.fetchHistories(array);
-      return true;
+      service.poll(array, sessionId);
+      NativeInterface.get().scheduleFixedDelay(heartbeatTask, HEARTBEAT_INTERVAL_MILLIS);
     }
   };
-  private final RealtimeActiveMap registry;
-  private final DeltaService service;
+  private final PollingService service;
+  private String sessionId;
 
-  private PollingChannel(RealtimeActiveMap registry) {
-    this.registry = registry;
-    this.service = new DeltaService(registry.getRpc());
+  private PollingChannel() {
+    this.service = new PollingService();
   }
 
   @Override
@@ -77,14 +66,14 @@ public class PollingChannel extends ChannelDemuxer {
   }
 
   @Override
-  public void connect(String token) {
+  public void connect(String sessionId) {
+    this.sessionId = sessionId;
     if (!isHeartbeatTaskCanceled) {
       return;
     }
     // Send the first heartbeat immediately, to quickly catch up any initial missing
     // ops, which might happen if the object is currently active.
     isHeartbeatTaskCanceled = false;
-    heartbeatTask.execute();
-    Scheduler.get().scheduleFixedDelay(heartbeatTask, HEARTBEAT_INTERVAL_MILLIS);
+    heartbeatTask.run();
   }
 }

@@ -19,4 +19,5 @@
 <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-noprecompile com.goodow.realtime.Realtime"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="realtime-channel"/>
 <stringAttribute key="org.eclipse.jdt.launching.SOURCE_PATH_PROVIDER" value="org.eclipse.m2e.launchconfig.sourcepathProvider"/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Xmx1024m -Xss2m"/>
 </launchConfiguration>

@@ -13,6 +13,7 @@
  */
 package com.goodow.realtime.channel;
 
+import com.goodow.realtime.channel.util.FuzzingBackOffGenerator;
 import com.goodow.realtime.operation.Operation;
 import com.goodow.realtime.util.NativeInterface;
 
@@ -232,7 +233,8 @@ public class GenericOperationChannel<O extends Operation<?>> {
   }
 
   private static final Logger logger = Logger.getLogger(GenericOperationChannel.class.getName());
-
+  private final FuzzingBackOffGenerator backoffGenerator = new FuzzingBackOffGenerator(1500,
+      1800 * 1000, 0.5);
   private boolean isMaybeSendTaskScheduled;
   private final Runnable maybeSendTask = new Runnable() {
     @Override

@@ -20,10 +20,10 @@ import com.goodow.realtime.Error.ErrorHandler;
 import com.goodow.realtime.ModelInitializerHandler;
 import com.goodow.realtime.Realtime;
 import com.goodow.realtime.channel.GenericOperationChannel.ReceiveOpChannel;
+import com.goodow.realtime.channel.impl.PollingChannel;
 import com.goodow.realtime.channel.rpc.Rpc;
-import com.goodow.realtime.channel.rpc.SnapshotService;
 import com.goodow.realtime.channel.rpc.SaveService;
-import com.goodow.realtime.channel.rpc.impl.AjaxRpc;
+import com.goodow.realtime.channel.rpc.SnapshotService;
 import com.goodow.realtime.operation.OperationSink;
 import com.goodow.realtime.operation.RealtimeOperation;
 import com.goodow.realtime.operation.RealtimeTransformer;
@@ -38,7 +38,7 @@ public class RealtimeOperationSucker implements
   private static final Logger logger = Logger.getLogger(RealtimeOperationSucker.class.getName());
 
   private final GenericOperationChannel<RealtimeOperation<?>> channel;
-
+  private static final RealtimeChannelDemuxer demuxer = RealtimeChannelDemuxer.get();
   private final String id;
   private final String userId;
   private final Rpc rpc;
@@ -50,7 +50,7 @@ public class RealtimeOperationSucker implements
   public RealtimeOperationSucker(final String id, String userId) {
     this.id = id;
     this.userId = userId;
-    this.rpc = new AjaxRpc("", null);
+    this.rpc = demuxer.getRpc();
     transformer = new RealtimeTransformer();
     receiveChannel = new ReceiveOpChannelImpl<RealtimeOperation<?>>(id, rpc, transformer);
     TransformQueue<RealtimeOperation<?>> queue =
@@ -75,6 +75,7 @@ public class RealtimeOperationSucker implements
       @Override
       public void onSuccess(JsonValue snapshot, String sessionId, int revision) {
         bridge = transformer.createSnapshot(snapshot);
+        demuxer.register(id, bridge, (ReceiveOpChannelImpl<?>) receiveChannel);
         bridge.userId = userId;
         bridge.sessionId = sessionId;
         bridge.outputSink = outputSink;
@@ -86,6 +87,7 @@ public class RealtimeOperationSucker implements
           }
         }
         onLoaded.onLoaded(bridge.document);
+        PollingChannel.INSTANCE.connect(sessionId);
       }
     });
   }

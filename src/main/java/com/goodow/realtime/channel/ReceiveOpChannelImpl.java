@@ -13,10 +13,7 @@
  */
 package com.goodow.realtime.channel;
 
-import com.goodow.realtime.channel.ChannelDemuxer.Channel;
 import com.goodow.realtime.channel.GenericOperationChannel.ReceiveOpChannel;
-import com.goodow.realtime.channel.impl.GaeChannel;
-import com.goodow.realtime.channel.rpc.Constants;
 import com.goodow.realtime.channel.rpc.Constants.Params;
 import com.goodow.realtime.channel.rpc.DeltaService;
 import com.goodow.realtime.channel.rpc.Rpc;
@@ -45,7 +42,7 @@ import elemental.util.MapFromIntTo;
 // TODO: Move the flaky layer into a separate class - possibly
 // DeltaService, as its callback interface would be sufficient as
 // it stands now.
-public class ReceiveOpChannelImpl<O extends Operation<?>> implements ReceiveOpChannel<O>, Channel {
+public class ReceiveOpChannelImpl<O extends Operation<?>> implements ReceiveOpChannel<O> {
   private static final Logger log = Logger.getLogger(ReceiveOpChannelImpl.class.getName());
   /**
    * Delay catchup in case we receive operations in the meantime.
@@ -80,13 +77,13 @@ public class ReceiveOpChannelImpl<O extends Operation<?>> implements ReceiveOpCh
     }
   };
 
-  private final ChannelDemuxer demuxer = GaeChannel.get();
+  private final RealtimeChannelDemuxer demuxer = RealtimeChannelDemuxer.get();
 
   private final MapFromIntTo<Pair<String, O>> pending = Collections.mapFromIntTo();
-  private final String key;
+  private final String id;
   private final DeltaService service;
   private ReceiveOpChannel.Listener<O> listener;
-  private int currentRevision = 0;
+  int currentRevision = 0;
   private int knownHeadRevision = 0;
   private int catchupRevision = 0;
   private final Transformer<O> transformer;
@@ -94,8 +91,8 @@ public class ReceiveOpChannelImpl<O extends Operation<?>> implements ReceiveOpCh
   private boolean corruptedByException = false;
   private boolean receiving = false;
 
-  public ReceiveOpChannelImpl(String key, Rpc rpc, Transformer<O> transformer) {
-    this.key = key;
+  public ReceiveOpChannelImpl(String id, Rpc rpc, Transformer<O> transformer) {
+    this.id = id;
     this.transformer = transformer;
     this.service = new DeltaService(rpc);
   }
@@ -107,14 +104,11 @@ public class ReceiveOpChannelImpl<O extends Operation<?>> implements ReceiveOpCh
     this.currentRevision = this.knownHeadRevision = revision;
 
     log.log(Level.FINE, "connect, rev=" + revision);
-
-    // Set up browser channel
-    demuxer.registerChannel(key, this);
   }
 
   @Override
   public void disconnect() {
-    demuxer.deregisterChannel(key);
+    demuxer.close(id);
   }
 
   @Override
@@ -130,21 +124,19 @@ public class ReceiveOpChannelImpl<O extends Operation<?>> implements ReceiveOpCh
     assert knownHeadRevision == currentRevision || isCatchupTaskScheduled;
   }
 
-  @Override
   public void onMessage(JsonObject msg) {
-    JsonArray deltas = msg.getArray(Params.CHANGES);
+    JsonArray deltas = msg.getArray(Params.DELTAS);
     for (int i = 0, len = deltas.length(); i < len; i++) {
-      JsonObject delta = deltas.getObject(i);
+      JsonArray delta = deltas.getArray(i);
       log.log(Level.INFO, "Store message: " + delta.toJson());
       O op;
       try {
-        op = transformer.createOperation(delta.getObject(Constants.Params.DELTAS), null, null);
+        op = transformer.createOperation(delta.get(0), delta.getString(1), delta.getString(3));
       } catch (JsonException e) {
         listener.onError(e);
         return;
       }
-      receiveUnorderedData((int) delta.getNumber(Constants.Params.REVISION), delta
-          .getString(Constants.Params.SESSION_ID), op);
+      receiveUnorderedData((int) delta.getNumber(2), delta.getString(3), op);
     }
     if (msg.hasKey(Params.REVISION)) {
       // The head revision might be greater than expected if some
@@ -155,7 +147,7 @@ public class ReceiveOpChannelImpl<O extends Operation<?>> implements ReceiveOpCh
     // In case the result is batched, we'll keep fetching.
     if (msg.hasKey(Params.HAS_MORE)) {
       log.log(Level.INFO, "fetch history returned incomplete result, retrying for the rest");
-      service.fetchHistory(key, currentRevision + 1, callback);
+      service.fetchHistory(id, currentRevision + 1, callback);
     }
   }
 
@@ -164,7 +156,7 @@ public class ReceiveOpChannelImpl<O extends Operation<?>> implements ReceiveOpCh
     if (knownHeadRevision > currentRevision && knownHeadRevision > catchupRevision) {
       log.log(Level.FINE, "Catching up to " + knownHeadRevision);
       catchupRevision = knownHeadRevision;
-      service.fetchHistory(key, currentRevision + 1, callback);
+      service.fetchHistory(id, currentRevision + 1, callback);
     } else {
       log.log(Level.FINE, "No need to catchup");
     }

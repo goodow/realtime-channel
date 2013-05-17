@@ -14,54 +14,50 @@
 package com.goodow.realtime.channel.rpc;
 
 import com.goodow.realtime.Realtime;
+import com.goodow.realtime.channel.RealtimeChannelDemuxer;
 import com.goodow.realtime.channel.rpc.Constants.Params;
 
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import elemental.json.Json;
+import elemental.json.JsonArray;
 import elemental.json.JsonObject;
 import elemental.util.Collections;
 import elemental.util.MapFromStringToString;
 
-/**
- * Handles getting a channel token for connecting a browser channel, and fetching missing messages.
- */
-public class DeltaService {
-  public interface Callback {
-    void onConnectionError(Throwable e);
-
-    void onFatalError(Throwable e);
-
-    void onMessage(JsonObject msg);
-  }
-
+public class PollingService {
   private static final Logger log = Logger.getLogger(DeltaService.class.getName());
-  private final Rpc rpc;
+  private static final RealtimeChannelDemuxer demuxer = RealtimeChannelDemuxer.get();
 
-  public DeltaService(Rpc rpc) {
-    this.rpc = rpc;
-  }
-
-  public void fetchHistory(String key, final int startRev, final Callback callback) {
+  public void poll(JsonArray ids, String sessionId) {
     MapFromStringToString params = Collections.mapFromStringToString();
-    params.put(Constants.Params.ID, key);
-    params.put(Constants.Params.ACCESS_TOKEN, Realtime.getToken());
-    params.put(Constants.Params.START_REVISION, startRev + "");
-    rpc.get(Constants.Services.DELTA, params, new Rpc.RpcCallback() {
+    params.put(Params.ACCESS_TOKEN, Realtime.getToken());
+    params.put(Params.SESSION_ID, sessionId);
+    JsonObject obj = Json.createObject();
+    obj.put(Params.IDS, ids);
+    demuxer.getRpc().post(Constants.Services.POLL, params, obj.toJson(), new Rpc.RpcCallback() {
       @Override
       public void onConnectionError(Throwable e) {
-        callback.onConnectionError(e);
+        log.log(Level.WARNING, "onConnectionError ", e);
       }
 
       @Override
       public void onFatalError(Throwable e) {
-        callback.onFatalError(e);
+        log.log(Level.WARNING, "onFatalError ", e);
       }
 
       @Override
       public void onSuccess(String data) {
-        JsonObject msg = RpcUtil.evalPrefixed(data);
-        assert msg.hasKey(Params.HAS_MORE) && msg.getArray(Params.DELTAS).length() > 0;
-        callback.onMessage(msg);
+        JsonArray msgs = RpcUtil.evalPrefixed(data);
+        for (int i = 0, len = msgs.length(); i < len; i++) {
+          JsonObject msg = msgs.getObject(i);
+          if (Params.TOKEN.equals(msg.getString(Params.ID))) {
+            demuxer.connect(msg.getString(Params.TOKEN));
+            continue;
+          }
+          demuxer.publishMessage(msg);
+        }
       }
     });
   }

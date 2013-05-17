@@ -13,7 +13,7 @@
  */
 package com.goodow.realtime.channel.impl;
 
-import com.goodow.realtime.channel.ChannelDemuxer;
+import com.goodow.realtime.channel.RealtimeChannelDemuxer;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
@@ -23,27 +23,11 @@ import java.util.logging.Logger;
 import elemental.json.Json;
 import elemental.json.JsonObject;
 
-/**
- * De-multiplexes object channels a client is listening to.
- * 
- * Packets arrive with two keys, 'id' to identify the object, and 'm' containing the message
- * payload.
- */
-public class GaeChannel extends ChannelDemuxer {
+public class GaeChannel extends RealtimeChannelDemuxer {
 
-  private static final GaeChannel INSTANCE = new GaeChannel();
-
+  public static final GaeChannel INSTANCE = new GaeChannel();
   private static final Logger log = Logger.getLogger(GaeChannel.class.getName());
-
-  public static GaeChannel get() {
-    return INSTANCE;
-  }
-
-  // @formatter:off
-  private static native JsonObject nativeGetVars() /*-{
-    return $wnd.__vars;
-  }-*/;
-  // @formatter:on
+  private String currentToken = null;
 
   // used by native code
   private JavaScriptObject socket;

@@ -23,6 +23,7 @@ public class Constants {
    */
   public static class Params {
     public static final String ID = "id";
+    public static final String IDS = "ids";
     public static final String SNAPSHOT = "snapshot";
     public static final String CHANGES = "changes";
     public static final String DELTAS = "mu";
@@ -34,7 +35,6 @@ public class Constants {
     public static final String HAS_MORE = "more";
     public static final String REVISION = "revision";
     public static final String START_REVISION = "startRev";
-    /** End version in a range (exclusive). */
     public static final String END_REVISION = "endRev";
 
     private Params() {
@@ -48,6 +48,7 @@ public class Constants {
     public static final String DELTA = SERVICE + "delta";
     public static final String REVISION = SERVICE + "revision";
     public static final String SAVE = SERVICE + "save";
+    public static final String POLL = SERVICE + "poll";
 
     private Services() {
     }
