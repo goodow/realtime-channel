@@ -11,22 +11,17 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.goodow.realtime.channel.rpc.impl;
+package com.goodow.realtime.channel.rpc;
 
-import com.goodow.realtime.channel.rpc.Rpc;
+import com.goodow.realtime.channel.http.HttpRequest;
+import com.goodow.realtime.channel.http.HttpRequestCallback;
+import com.goodow.realtime.channel.http.HttpResponse;
+import com.goodow.realtime.channel.util.ChannelNative;
 
-import com.google.gwt.core.client.Duration;
-import com.google.gwt.http.client.Request;
-import com.google.gwt.http.client.RequestBuilder;
-import com.google.gwt.http.client.RequestCallback;
-import com.google.gwt.http.client.RequestException;
-import com.google.gwt.http.client.Response;
-import com.google.gwt.http.client.URL;
-
+import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import elemental.client.Browser;
 import elemental.json.JsonException;
 import elemental.util.ArrayOfInt;
 import elemental.util.ArrayOfString;
@@ -37,7 +32,7 @@ import elemental.util.MapFromStringToString;
 /**
  * Ajax HTTP-Request based implementation of the Rpc interface.
  */
-public class AjaxRpc implements Rpc {
+public class RpcImpl implements Rpc {
   private final class Handle implements RpcHandle {
     private final int id;
 
@@ -91,7 +86,7 @@ public class AjaxRpc implements Rpc {
   private int consecutiveFailures = 0;
 
   /** Log stream to use */
-  private static final Logger log = Logger.getLogger(AjaxRpc.class.getName());
+  private static final Logger log = Logger.getLogger(RpcImpl.class.getName());
 
   /** Incrementing id counter */
   private static int nextRequestId;
@@ -111,7 +106,7 @@ public class AjaxRpc implements Rpc {
   /**
    * @param rpcRoot root prefix to prepend to service urls
    */
-  public AjaxRpc(final String rpcRoot, ConnectionStateListener listener) {
+  public RpcImpl(final String rpcRoot, ConnectionStateListener listener) {
     this.rpcRoot = rpcRoot;
     this.listener = listener;
   }
@@ -148,7 +143,7 @@ public class AjaxRpc implements Rpc {
       String key = keys.get(i);
       String value = params.get(key);
       if (value != null) {
-        b.append(URL.encodeQueryString(key) + "=" + URL.encodeQueryString(value) + "&");
+        b.append(key + "=" + ChannelNative.get().escapeUriQuery(value) + "&");
       }
     }
     return b;
@@ -166,42 +161,43 @@ public class AjaxRpc implements Rpc {
     }
 
     final String requestData;
-    final RequestBuilder.Method httpMethod;
 
     StringBuilder urlBuilder = new StringBuilder(rpcRoot + "/" + serviceName + "?");
-    // NOTE: For some reason, IE6 seems not to perform some requests
-    // it's already made, resulting in... no data. Inserting some
-    // unique value into the request seems to fix that.
-    if (!Browser.getInfo().isWebKit() && !Browser.getInfo().isGecko()) {
-      urlBuilder.append("_no_cache=" + requestId + "" + Duration.currentTimeMillis() + "&");
-    }
 
     if (method == Method.GET) {
-      httpMethod = RequestBuilder.GET;
       addParams(urlBuilder, params);
       requestData = "";
     } else {
-      httpMethod = RequestBuilder.POST;
       addParams(urlBuilder, params);
       requestData = "=" + formData;
     }
 
     final String url = urlBuilder.toString();
 
-    RequestBuilder r = new RequestBuilder(httpMethod, url);
+    HttpRequest r = ChannelNative.get().getHttpTransport().buildRequest(method.name(), url);
     if (method == Method.POST) {
-      r.setHeader("Content-Type", "application/x-www-form-urlencoded");
-      r.setHeader("X-Same-Domain", "true");
+      r.setContentType("application/x-www-form-urlencoded");
+      r.addHeader("X-Same-Domain", "true");
     }
 
-    log.log(Level.INFO, "RPC Request, id=" + requestId + " method=" + httpMethod + " urlSize="
+    log.log(Level.INFO, "RPC Request, id=" + requestId + " method=" + method.name() + " urlSize="
         + url.length() + " bodySize=" + requestData.length());
 
-    class RpcRequestCallback implements RequestCallback {
+    class RpcRequestCallback implements HttpRequestCallback {
+      final int id;
+      final RpcCallback callback;
+      final String url_;
+
+      RpcRequestCallback(int id, RpcCallback callback, String url_) {
+        this.id = id;
+        this.callback = callback;
+        this.url_ = url_;
+      }
+
       @Override
-      public void onError(Request request, Throwable exception) {
-        if (!handles.hasKey(requestId)) {
-          log.log(Level.INFO, "RPC FailureDrop, id=" + requestId + " " + exception.getMessage());
+      public void onFailure(Throwable exception) {
+        if (!handles.hasKey(id)) {
+          log.log(Level.INFO, "RPC FailureDrop, id=" + id + " " + exception.getMessage());
           return;
         }
         removeHandle();
@@ -209,11 +205,11 @@ public class AjaxRpc implements Rpc {
       }
 
       @Override
-      public void onResponseReceived(Request request, Response response) {
-        RpcHandle handle = handles.get(requestId);
+      public void onResponse(HttpResponse response) {
+        RpcHandle handle = handles.get(id);
         if (handle == null) {
           // It's been dropped
-          log.log(Level.INFO, "RPC SuccessDrop, id=" + requestId);
+          log.log(Level.INFO, "RPC SuccessDrop, id=" + id);
           return;
         }
 
@@ -221,7 +217,7 @@ public class AjaxRpc implements Rpc {
         removeHandle();
 
         int statusCode = response.getStatusCode();
-        String data = response.getText();
+        String data = response.getContent();
 
         Result result;
         if (statusCode < 100) {
@@ -246,9 +242,9 @@ public class AjaxRpc implements Rpc {
 
         switch (result) {
           case OK:
-            log.log(Level.INFO, "RPC Success, id=" + requestId);
+            log.log(Level.INFO, "RPC Success, id=" + id);
             try {
-              rpcCallback.onSuccess(data);
+              callback.onSuccess(data);
             } catch (JsonException e) {
               // Semi-HACK: Treat parse errors as login problems
               // due to loading a login or authorization page. (It's unlikely
@@ -283,31 +279,32 @@ public class AjaxRpc implements Rpc {
       }
 
       private void error(Throwable e) {
-        log.log(Level.WARNING, "RPC Failure, id=" + requestId + " " + e.getMessage()
-            + " Request url:" + url, e);
-        rpcCallback.onConnectionError(e);
+        log.log(Level.WARNING, "RPC Failure, id=" + id + " " + e.getMessage() + " Request url:"
+            + url_, e);
+        callback.onConnectionError(e);
       }
 
       private void fatal(Throwable e) {
-        log.log(Level.WARNING, "RPC Bad Request, id=" + requestId + " " + e.getMessage()
-            + " Request url:" + url, e);
-        rpcCallback.onFatalError(e);
+        log.log(Level.WARNING, "RPC Bad Request, id=" + id + " " + e.getMessage() + " Request url:"
+            + url_, e);
+        callback.onFatalError(e);
       }
 
       private void removeHandle() {
-        handles.remove(requestId);
+        handles.remove(id);
       }
     }
 
-    RpcRequestCallback innerCallback = new RpcRequestCallback();
+    RpcRequestCallback innerCallback = new RpcRequestCallback(requestId, rpcCallback, url);
 
     try {
       // TODO: store the Request object somewhere so we can e.g. cancel it
-      r.sendRequest(requestData, innerCallback);
+      r.setContent(requestData);
+      r.executeAsync(innerCallback);
       Handle handle = new Handle(requestId);
       handles.put(handle.getId(), handle);
       return handle;
-    } catch (RequestException e) {
+    } catch (IOException e) {
       // TODO: Decide if this should be a badRequest.
       innerCallback.error(e);
       return null;

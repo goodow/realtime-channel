@@ -14,14 +14,16 @@
 package com.goodow.realtime.channel;
 
 import com.goodow.realtime.DocumentBridge;
-import com.goodow.realtime.channel.impl.GaeChannel;
+import com.goodow.realtime.channel.operation.ReceiveOpChannelImpl;
 import com.goodow.realtime.channel.rpc.Constants;
 import com.goodow.realtime.channel.rpc.Rpc;
-import com.goodow.realtime.channel.rpc.impl.AjaxRpc;
+import com.goodow.realtime.channel.rpc.RpcImpl;
+import com.goodow.realtime.channel.util.ChannelNative;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import elemental.json.Json;
 import elemental.json.JsonObject;
 import elemental.util.ArrayOfString;
 import elemental.util.Collections;
@@ -33,11 +35,10 @@ import elemental.util.MapFromStringTo;
  * Packets arrive with two keys, 'id' to identify the object, and 'm' containing the message
  * payload.
  */
-public abstract class RealtimeChannelDemuxer {
+public class RealtimeChannelDemuxer implements SocketListener {
   private static class Entry {
     final DocumentBridge snapshot;
     final ReceiveOpChannelImpl<?> channel;
-    int count;
 
     Entry(DocumentBridge snapshot, ReceiveOpChannelImpl<?> channel) {
       this.snapshot = snapshot;
@@ -46,13 +47,18 @@ public abstract class RealtimeChannelDemuxer {
   }
 
   private static final Logger log = Logger.getLogger(RealtimeChannelDemuxer.class.getName());
-
+  private static final RealtimeChannelDemuxer INSTANCE = new RealtimeChannelDemuxer();
   private static final MapFromStringTo<Entry> entries = Collections.<Entry> mapFromStringTo();
-
-  private static final Rpc rpc = new AjaxRpc("", null);
+  private static final Rpc rpc = new RpcImpl("", null);
 
   public static final RealtimeChannelDemuxer get() {
-    return GaeChannel.INSTANCE;
+    return INSTANCE;
+  }
+
+  private String currentToken = null;
+  private Socket socket;
+
+  private RealtimeChannelDemuxer() {
   }
 
   public void clear() {
@@ -69,14 +75,27 @@ public abstract class RealtimeChannelDemuxer {
     entries.remove(id);
   }
 
-  public abstract void connect(String token);
+  public void connect(String token) {
+    assert token != null : "Null token";
+    if (!token.equals(currentToken)) {
+      log.log(Level.INFO, "Connecting with token " + token);
+      currentToken = token;
+      if (socket != null) {
+        socket.close();
+      }
+      Channel channel = ChannelNative.get().createChannel(token);
+      socket = channel.open(this);
+    } else {
+      log.log(Level.FINE, "Already using same token, ignoring " + token);
+    }
+  }
 
   public ArrayOfString getIds() {
     return entries.keys();
   }
 
   public int getRevision(String id) {
-    return entries.get(id).channel.currentRevision;
+    return entries.get(id).channel.revision();
   }
 
   public Rpc getRpc() {
@@ -88,6 +107,32 @@ public abstract class RealtimeChannelDemuxer {
       return null;
     }
     return entries.get(id).snapshot;
+  }
+
+  @Override
+  public void onClose() {
+    log.log(Level.FINE, "onClose ");
+  }
+
+  @Override
+  public void onError(ChannelError error) {
+    log.log(Level.WARNING, "onError code=" + error.getCode() + " description="
+        + error.getDescription());
+  }
+
+  @Override
+  public void onMessage(String message) {
+    if (message == null) {
+      log.log(Level.WARNING, "Null data on channel");
+      return;
+    }
+    JsonObject msg = Json.parse(message);
+    publishMessage(msg);
+  }
+
+  @Override
+  public void onOpen() {
+    log.log(Level.FINE, "onOpened ");
   }
 
   public void publishMessage(JsonObject msg) {
@@ -106,15 +151,5 @@ public abstract class RealtimeChannelDemuxer {
   public void register(String id, DocumentBridge snapshot, ReceiveOpChannelImpl<?> channel) {
     assert !entries.hasKey(id) : "Channel handler already registered for " + id;
     entries.put(id, new Entry(snapshot, channel));
-  }
-
-  // called by native code
-  protected void onError(int httpCode, String description) {
-    log.log(Level.WARNING, "onError code=" + httpCode + " description=" + description);
-  }
-
-  // called by native code
-  protected void onOpened() {
-    log.log(Level.FINE, "onOpened ");
   }
 }

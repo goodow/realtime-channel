@@ -11,7 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.goodow.realtime.channel;
+package com.goodow.realtime.channel.operation;
 
 import com.goodow.realtime.DocumentBridge;
 import com.goodow.realtime.DocumentLoadedHandler;
@@ -19,8 +19,9 @@ import com.goodow.realtime.DocumentSaveStateChangedEvent;
 import com.goodow.realtime.Error.ErrorHandler;
 import com.goodow.realtime.ModelInitializerHandler;
 import com.goodow.realtime.Realtime;
-import com.goodow.realtime.channel.GenericOperationChannel.ReceiveOpChannel;
-import com.goodow.realtime.channel.impl.PollingChannel;
+import com.goodow.realtime.channel.PollingChannel;
+import com.goodow.realtime.channel.RealtimeChannelDemuxer;
+import com.goodow.realtime.channel.operation.GenericOperationChannel.ReceiveOpChannel;
 import com.goodow.realtime.channel.rpc.Rpc;
 import com.goodow.realtime.channel.rpc.SaveService;
 import com.goodow.realtime.channel.rpc.SnapshotService;
@@ -87,7 +88,7 @@ public class RealtimeOperationSucker implements
           }
         }
         onLoaded.onLoaded(bridge.document);
-        PollingChannel.INSTANCE.connect(sessionId);
+        PollingChannel.get().connect(sessionId);
       }
     });
   }

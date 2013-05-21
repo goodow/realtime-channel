@@ -11,11 +11,10 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.goodow.realtime.channel.impl;
+package com.goodow.realtime.channel;
 
-import com.goodow.realtime.channel.RealtimeChannelDemuxer;
 import com.goodow.realtime.channel.rpc.PollingService;
-import com.goodow.realtime.util.NativeInterface;
+import com.goodow.realtime.util.ModelNative;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -24,11 +23,16 @@ import elemental.json.Json;
 import elemental.json.JsonArray;
 import elemental.util.ArrayOfString;
 
-public class PollingChannel extends RealtimeChannelDemuxer {
+public class PollingChannel {
   private static final Logger log = Logger.getLogger(PollingChannel.class.getName());
   private static final int HEARTBEAT_INTERVAL_MILLIS = 15 * 1000;
-  public static final PollingChannel INSTANCE = new PollingChannel();
+  private static final PollingChannel INSTANCE = new PollingChannel();
 
+  public static PollingChannel get() {
+    return INSTANCE;
+  }
+
+  private final RealtimeChannelDemuxer demuxer = RealtimeChannelDemuxer.get();
   private boolean isHeartbeatTaskCanceled = true;
   private final Runnable heartbeatTask = new Runnable() {
     @Override
@@ -36,20 +40,20 @@ public class PollingChannel extends RealtimeChannelDemuxer {
       if (isHeartbeatTaskCanceled) {
         return;
       }
-      ArrayOfString ids = getIds();
+      ArrayOfString ids = demuxer.getIds();
       JsonArray array = Json.createArray();
       if (ids.length() != 0) {
         for (int i = 0, len = ids.length(); i < len; i++) {
           JsonArray req = Json.createArray();
           String id = ids.get(i);
           req.set(0, id);
-          req.set(1, getRevision(id) + 1);
+          req.set(1, demuxer.getRevision(id) + 1);
           array.set(i, req);
         }
         log.log(Level.FINE, "Heartbeat");
       }
       service.poll(array, sessionId);
-      NativeInterface.get().scheduleFixedDelay(heartbeatTask, HEARTBEAT_INTERVAL_MILLIS);
+      ModelNative.get().scheduleFixedDelay(heartbeatTask, HEARTBEAT_INTERVAL_MILLIS);
     }
   };
   private final PollingService service;
@@ -59,13 +63,10 @@ public class PollingChannel extends RealtimeChannelDemuxer {
     this.service = new PollingService();
   }
 
-  @Override
   public void close() {
     isHeartbeatTaskCanceled = true;
-    super.close();
   }
 
-  @Override
   public void connect(String sessionId) {
     this.sessionId = sessionId;
     if (!isHeartbeatTaskCanceled) {

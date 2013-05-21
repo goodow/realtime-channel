@@ -15,8 +15,8 @@ package com.goodow.realtime;
 
 import com.goodow.realtime.Error.ErrorHandler;
 import com.goodow.realtime.channel.RealtimeChannelDemuxer;
-import com.goodow.realtime.channel.RealtimeOperationSucker;
-import com.goodow.realtime.util.NativeInterfaceFactory;
+import com.goodow.realtime.channel.operation.RealtimeOperationSucker;
+import com.goodow.realtime.util.ModelFactory;
 
 import org.timepedia.exporter.client.Export;
 import org.timepedia.exporter.client.ExportPackage;
@@ -26,7 +26,7 @@ import org.timepedia.exporter.client.Exportable;
  * The Goodow Realtime API.
  */
 @ExportPackage("")
-@Export(NativeInterfaceFactory.PACKAGE_PREFIX_REALTIME)
+@Export(ModelFactory.PACKAGE_PREFIX_REALTIME)
 public class Realtime implements Exportable {
   private static String TOKEN;
   private static String USERID;

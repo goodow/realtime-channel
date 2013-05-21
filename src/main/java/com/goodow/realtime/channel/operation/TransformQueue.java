@@ -11,7 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.goodow.realtime.channel;
+package com.goodow.realtime.channel.operation;
 
 import com.goodow.realtime.operation.Operation;
 import com.goodow.realtime.operation.Transformer;
@@ -146,6 +146,10 @@ public class TransformQueue<O extends Operation<?>> {
     return serverOps.shift();
   }
 
+  public int revision() {
+    return version;
+  }
+
   public void serverOp(int resultingRevision, O serverOp) {
     assert !serverOp.isNoOp();
     checkRevision(resultingRevision);
@@ -208,10 +212,6 @@ public class TransformQueue<O extends Operation<?>> {
 
   public int unackedClientOpsCount() {
     return unackedClientOps.length();
-  }
-
-  public int revision() {
-    return version;
   }
 
   private void checkRevision(int resultingRevision) {

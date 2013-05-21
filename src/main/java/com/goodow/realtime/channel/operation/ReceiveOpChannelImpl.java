@@ -11,18 +11,17 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.goodow.realtime.channel;
+package com.goodow.realtime.channel.operation;
 
-import com.goodow.realtime.channel.GenericOperationChannel.ReceiveOpChannel;
+import com.goodow.realtime.channel.RealtimeChannelDemuxer;
+import com.goodow.realtime.channel.operation.GenericOperationChannel.ReceiveOpChannel;
 import com.goodow.realtime.channel.rpc.Constants.Params;
 import com.goodow.realtime.channel.rpc.DeltaService;
 import com.goodow.realtime.channel.rpc.Rpc;
 import com.goodow.realtime.operation.Operation;
 import com.goodow.realtime.operation.Transformer;
+import com.goodow.realtime.util.ModelNative;
 import com.goodow.realtime.util.Pair;
-
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -50,12 +49,11 @@ public class ReceiveOpChannelImpl<O extends Operation<?>> implements ReceiveOpCh
   // TODO: Flags for these values, and fuzz.
   private static final int CATCHUP_DELAY_MILLIS = 3000;
   private boolean isCatchupTaskScheduled;
-  private final RepeatingCommand catchupTask = new RepeatingCommand() {
+  private final Runnable catchupTask = new Runnable() {
     @Override
-    public boolean execute() {
+    public void run() {
       isCatchupTaskScheduled = false;
       maybeCatchup();
-      return false;
     }
   };
 
@@ -83,7 +81,7 @@ public class ReceiveOpChannelImpl<O extends Operation<?>> implements ReceiveOpCh
   private final String id;
   private final DeltaService service;
   private ReceiveOpChannel.Listener<O> listener;
-  int currentRevision = 0;
+  private int currentRevision = 0;
   private int knownHeadRevision = 0;
   private int catchupRevision = 0;
   private final Transformer<O> transformer;
@@ -112,7 +110,7 @@ public class ReceiveOpChannelImpl<O extends Operation<?>> implements ReceiveOpCh
   }
 
   @Override
-  public void onKnownHeadVersion(int headVersion) {
+  public void onKnownHeadRevision(int headVersion) {
     log.log(Level.FINE, "onKnownHeadRevision(" + headVersion + "), " + "old known="
         + knownHeadRevision + ", current=" + currentRevision);
 
@@ -142,13 +140,17 @@ public class ReceiveOpChannelImpl<O extends Operation<?>> implements ReceiveOpCh
       // The head revision might be greater than expected if some
       // history items were missed, so let's give the listener
       // as much information as possible.
-      onKnownHeadVersion((int) msg.getNumber(Params.REVISION));
+      onKnownHeadRevision((int) msg.getNumber(Params.REVISION));
     }
     // In case the result is batched, we'll keep fetching.
     if (msg.hasKey(Params.HAS_MORE)) {
       log.log(Level.INFO, "fetch history returned incomplete result, retrying for the rest");
       service.fetchHistory(id, currentRevision + 1, callback);
     }
+  }
+
+  public int revision() {
+    return currentRevision;
   }
 
   private void maybeCatchup() {
@@ -183,7 +185,7 @@ public class ReceiveOpChannelImpl<O extends Operation<?>> implements ReceiveOpCh
     // Check, to avoid resetting the delay.
     if (!isCatchupTaskScheduled) {
       isCatchupTaskScheduled = true;
-      Scheduler.get().scheduleFixedDelay(catchupTask, CATCHUP_DELAY_MILLIS);
+      ModelNative.get().scheduleFixedDelay(catchupTask, CATCHUP_DELAY_MILLIS);
     }
   }
 

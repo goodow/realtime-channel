@@ -11,14 +11,11 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.goodow.realtime.channel;
+package com.goodow.realtime.channel.operation;
 
 import com.goodow.realtime.channel.util.FuzzingBackOffGenerator;
 import com.goodow.realtime.operation.Operation;
-import com.goodow.realtime.util.NativeInterface;
-
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.RepeatingCommand;
+import com.goodow.realtime.util.ModelNative;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -84,7 +81,7 @@ public class GenericOperationChannel<O extends Operation<?>> {
 
     void disconnect();
 
-    void onKnownHeadVersion(int headVersion);
+    void onKnownHeadRevision(int headRevison);
   }
 
   /**
@@ -181,6 +178,7 @@ public class GenericOperationChannel<O extends Operation<?>> {
 
     abstract void success(int appliedRevision);
   }
+
   enum State {
     /**
      * Cannot send ops in this state. All states can transition here if either explicitly requested,
@@ -244,15 +242,14 @@ public class GenericOperationChannel<O extends Operation<?>> {
     }
   };
   private boolean isResyncTaskScheduled;
-  private final RepeatingCommand delayedResyncTask = new RepeatingCommand() {
+  private final Runnable delayedResyncTask = new Runnable() {
     @Override
-    public boolean execute() {
+    public void run() {
       if (!isResyncTaskScheduled) {
-        return false;
+        return;
       }
       isResyncTaskScheduled = false;
       doResync();
-      return false;
     }
   };
 
@@ -364,7 +361,7 @@ public class GenericOperationChannel<O extends Operation<?>> {
     if (!queue.hasUnacknowledgedClientOps()) {
       assert state == State.ALL_ACKED;
       isMaybeSendTaskScheduled = true;
-      NativeInterface.get().scheduleDeferred(maybeSendTask);
+      ModelNative.get().scheduleDeferred(maybeSendTask);
     }
   }
 
@@ -382,7 +379,8 @@ public class GenericOperationChannel<O extends Operation<?>> {
 
     setState(State.ALL_ACKED);
     if (queue.hasQueuedClientOps()) {
-      NativeInterface.get().scheduleDeferred(maybeSendTask);
+      isMaybeSendTaskScheduled = true;
+      ModelNative.get().scheduleDeferred(maybeSendTask);
     }
   }
 
@@ -432,7 +430,8 @@ public class GenericOperationChannel<O extends Operation<?>> {
 
   private void delayResync() {
     isResyncTaskScheduled = true;
-    Scheduler.get().scheduleFixedDelay(delayedResyncTask, 5 * 1000);
+    ModelNative.get()
+        .scheduleFixedDelay(delayedResyncTask, backoffGenerator.next().targetDelay);
     setState(State.DELAY_RESYNC);
   }
 
@@ -470,7 +469,7 @@ public class GenericOperationChannel<O extends Operation<?>> {
   private void maybeEagerlyHandleAck(int appliedRevision) {
     ArrayOf<O> ownOps = queue.ackOpsIfVersionMatches(appliedRevision);
     if (ownOps == null) {
-      channel.onKnownHeadVersion(appliedRevision);
+      channel.onKnownHeadRevision(appliedRevision);
       return;
     }
     logger.log(Level.INFO, "Eagerly acked @" + appliedRevision);
@@ -604,6 +603,7 @@ public class GenericOperationChannel<O extends Operation<?>> {
 
     retryVersion = -1;
     isResyncTaskScheduled = false;
+    backoffGenerator.reset();
 
     if (versionCallback != null) {
       versionCallback.discard();

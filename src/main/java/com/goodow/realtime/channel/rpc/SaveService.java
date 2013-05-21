@@ -13,7 +13,7 @@
  */
 package com.goodow.realtime.channel.rpc;
 
-import com.goodow.realtime.channel.GenericOperationChannel.SendOpService;
+import com.goodow.realtime.channel.operation.GenericOperationChannel.SendOpService;
 import com.goodow.realtime.channel.rpc.Constants.Params;
 import com.goodow.realtime.operation.Operation;
 
