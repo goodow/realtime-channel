@@ -15,25 +15,26 @@ package com.goodow.realtime.channel.util.impl;
 
 import com.goodow.realtime.channel.Channel;
 import com.goodow.realtime.channel.http.HttpTransport;
+import com.goodow.realtime.channel.http.objc.ObjCHttpTransport;
+import com.goodow.realtime.channel.objc.ObjCChannel;
 import com.goodow.realtime.channel.util.ChannelFactory;
 
 public class ObjCChannelFactory implements ChannelFactory {
 
   @Override
   public Channel createChannel(String token) {
-    // TODO Auto-generated method stub
-    return null;
+    return new ObjCChannel();
   }
 
   @Override
-  public String escapeUriQuery(String value) {
-    // TODO Auto-generated method stub
-    return null;
-  }
+  // @formatter:off
+  public native String escapeUriQuery(String value) /*-[
+    return [value stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+  ]-*/;
+  // @formatter:on
 
   @Override
   public HttpTransport getHttpTransport() {
-    // TODO Auto-generated method stub
-    return null;
+    return new ObjCHttpTransport();
   }
 }

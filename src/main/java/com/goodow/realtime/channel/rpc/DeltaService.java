@@ -60,7 +60,7 @@ public class DeltaService {
       @Override
       public void onSuccess(String data) {
         JsonObject msg = RpcUtil.evalPrefixed(data);
-        assert msg.hasKey(Params.HAS_MORE) && msg.getArray(Params.DELTAS).length() > 0;
+        assert msg.getArray(Params.DELTAS).length() > 0;
         callback.onMessage(msg);
       }
     });

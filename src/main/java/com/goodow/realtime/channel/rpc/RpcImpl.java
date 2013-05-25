@@ -160,13 +160,12 @@ public class RpcImpl implements Rpc {
       return new Handle(requestId);
     }
 
-    final String requestData;
+    String requestData = null;
 
     StringBuilder urlBuilder = new StringBuilder(rpcRoot + "/" + serviceName + "?");
 
     if (method == Method.GET) {
       addParams(urlBuilder, params);
-      requestData = "";
     } else {
       addParams(urlBuilder, params);
       requestData = "=" + formData;
@@ -181,7 +180,7 @@ public class RpcImpl implements Rpc {
     }
 
     log.log(Level.INFO, "RPC Request, id=" + requestId + " method=" + method.name() + " urlSize="
-        + url.length() + " bodySize=" + requestData.length());
+        + url.length() + " bodySize=" + (requestData == null ? 0 : requestData.length()));
 
     class RpcRequestCallback implements HttpRequestCallback {
       final int id;

@@ -11,17 +11,16 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.goodow.realtime.channel.http.objc;
+package com.goodow.realtime.channel.objc;
 
-import com.goodow.realtime.channel.http.HttpRequest;
-import com.goodow.realtime.channel.http.HttpTransport;
+import com.goodow.realtime.channel.Channel;
+import com.goodow.realtime.channel.Socket;
+import com.goodow.realtime.channel.SocketListener;
 
-public class ObjCHttpTransport extends HttpTransport {
-
-  public static final String RPC_ROOT = "http://realtime.goodow.com";
+public class ObjCChannel implements Channel {
 
   @Override
-  public HttpRequest buildRequest(String method, String url) {
-    return new ObjCHttpRequest(method, RPC_ROOT + url);
+  public Socket open(SocketListener listener) {
+    return null;
   }
 }

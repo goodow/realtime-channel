@@ -14,7 +14,6 @@
 package com.goodow.realtime;
 
 import com.goodow.realtime.Error.ErrorHandler;
-import com.goodow.realtime.channel.RealtimeChannelDemuxer;
 import com.goodow.realtime.channel.operation.RealtimeOperationSucker;
 import com.goodow.realtime.util.ModelFactory;
 
@@ -62,12 +61,6 @@ public class Realtime implements Exportable {
    */
   public static void load(String docId, DocumentLoadedHandler onLoaded,
       ModelInitializerHandler opt_initializer, ErrorHandler opt_error) {
-    RealtimeChannelDemuxer demuxer = RealtimeChannelDemuxer.get();
-    DocumentBridge snapshot = demuxer.getSnapshot(docId);
-    if (snapshot != null) {
-      onLoaded.onLoaded(snapshot.document);
-      return;
-    }
     new RealtimeOperationSucker(docId, USERID).load(onLoaded, opt_initializer, opt_error);
   }
 }

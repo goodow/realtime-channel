@@ -13,7 +13,7 @@
  */
 package com.goodow.realtime.channel;
 
-import com.goodow.realtime.channel.rpc.PollingService;
+import com.goodow.realtime.channel.rpc.PollService;
 import com.goodow.realtime.util.ModelNative;
 
 import java.util.logging.Level;
@@ -23,12 +23,12 @@ import elemental.json.Json;
 import elemental.json.JsonArray;
 import elemental.util.ArrayOfString;
 
-public class PollingChannel {
-  private static final Logger log = Logger.getLogger(PollingChannel.class.getName());
+public class PollChannel {
+  private static final Logger log = Logger.getLogger(PollChannel.class.getName());
   private static final int HEARTBEAT_INTERVAL_MILLIS = 15 * 1000;
-  private static final PollingChannel INSTANCE = new PollingChannel();
+  private static final PollChannel INSTANCE = new PollChannel();
 
-  public static PollingChannel get() {
+  public static PollChannel get() {
     return INSTANCE;
   }
 
@@ -56,11 +56,11 @@ public class PollingChannel {
       ModelNative.get().scheduleFixedDelay(heartbeatTask, HEARTBEAT_INTERVAL_MILLIS);
     }
   };
-  private final PollingService service;
+  private final PollService service;
   private String sessionId;
 
-  private PollingChannel() {
-    this.service = new PollingService();
+  private PollChannel() {
+    this.service = new PollService();
   }
 
   public void close() {

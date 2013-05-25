@@ -23,15 +23,19 @@ import java.io.IOException;
  */
 class ObjCHttpRequest extends HttpRequest {
 
+  @SuppressWarnings("unused")
   ObjCHttpRequest(String method, String url) {
+    throw new RuntimeException("Stub!");
   }
 
   @Override
   public void addHeader(String name, String value) {
+    throw new RuntimeException("Stub!");
   }
 
   @Override
   public void executeAsync(HttpRequestCallback callback) throws IOException {
+    throw new RuntimeException("Stub!");
   }
 
 }

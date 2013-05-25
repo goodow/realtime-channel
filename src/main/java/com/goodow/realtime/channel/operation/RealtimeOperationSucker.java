@@ -13,13 +13,16 @@
  */
 package com.goodow.realtime.channel.operation;
 
+import com.goodow.realtime.Document;
 import com.goodow.realtime.DocumentBridge;
 import com.goodow.realtime.DocumentLoadedHandler;
 import com.goodow.realtime.DocumentSaveStateChangedEvent;
+import com.goodow.realtime.Error;
 import com.goodow.realtime.Error.ErrorHandler;
+import com.goodow.realtime.Model;
 import com.goodow.realtime.ModelInitializerHandler;
 import com.goodow.realtime.Realtime;
-import com.goodow.realtime.channel.PollingChannel;
+import com.goodow.realtime.channel.PollChannel;
 import com.goodow.realtime.channel.RealtimeChannelDemuxer;
 import com.goodow.realtime.channel.operation.GenericOperationChannel.ReceiveOpChannel;
 import com.goodow.realtime.channel.rpc.Rpc;
@@ -34,43 +37,37 @@ import java.util.logging.Logger;
 
 import elemental.json.JsonValue;
 
+/*-[
+ #import "GDRRealtime+OCNI.h"
+ #import "GDRError+OCNI.h"
+ ]-*/
 public class RealtimeOperationSucker implements
     GenericOperationChannel.Listener<RealtimeOperation<?>> {
   private static final Logger logger = Logger.getLogger(RealtimeOperationSucker.class.getName());
 
-  private final GenericOperationChannel<RealtimeOperation<?>> channel;
   private static final RealtimeChannelDemuxer demuxer = RealtimeChannelDemuxer.get();
   private final String id;
   private final String userId;
-  private final Rpc rpc;
-  private final RealtimeTransformer transformer;
-  private final OperationSink<RealtimeOperation<?>> outputSink;
-  private final ReceiveOpChannel<RealtimeOperation<?>> receiveChannel;
+  private GenericOperationChannel<RealtimeOperation<?>> channel;
+  private Rpc rpc;
+  private RealtimeTransformer transformer;
+  private OperationSink<RealtimeOperation<?>> outputSink;
+  private ReceiveOpChannel<RealtimeOperation<?>> receiveChannel;
   private DocumentBridge bridge;
 
   public RealtimeOperationSucker(final String id, String userId) {
     this.id = id;
     this.userId = userId;
-    this.rpc = demuxer.getRpc();
-    transformer = new RealtimeTransformer();
-    receiveChannel = new ReceiveOpChannelImpl<RealtimeOperation<?>>(id, rpc, transformer);
-    TransformQueue<RealtimeOperation<?>> queue =
-        new TransformQueue<RealtimeOperation<?>>(transformer);
-    SaveService<RealtimeOperation<?>> submitService =
-        new SaveService<RealtimeOperation<?>>(rpc, id, Realtime.getToken());
-    channel =
-        new GenericOperationChannel<RealtimeOperation<?>>(queue, receiveChannel, submitService,
-            this);
-    outputSink = new OperationSink<RealtimeOperation<?>>() {
-      @Override
-      public void consume(RealtimeOperation<?> op) {
-        channel.send(op);
-      }
-    };
   }
 
   public void load(final DocumentLoadedHandler onLoaded,
       final ModelInitializerHandler opt_initializer, ErrorHandler opt_error) {
+    DocumentBridge snapshot = demuxer.getSnapshot(id);
+    if (snapshot != null) {
+      loadDoucument(onLoaded, snapshot.document);
+      return;
+    }
+    init();
     SnapshotService snapshotService = new SnapshotService(rpc);
     snapshotService.load(id, Realtime.getToken(), true, new SnapshotService.Callback() {
       @Override
@@ -84,11 +81,11 @@ public class RealtimeOperationSucker implements
         if (revision == 1) {
           bridge.createRoot();
           if (opt_initializer != null) {
-            opt_initializer.onInitializer(bridge.model);
+            initializeModel(opt_initializer, bridge.model);
           }
         }
-        onLoaded.onLoaded(bridge.document);
-        PollingChannel.get().connect(sessionId);
+        loadDoucument(onLoaded, bridge.document);
+        PollChannel.get().connect(sessionId);
       }
     });
   }
@@ -114,5 +111,70 @@ public class RealtimeOperationSucker implements
     DocumentSaveStateChangedEvent event =
         new DocumentSaveStateChangedEvent(bridge.document, isSaving, isPending);
     bridge.fireDocumentSaveStateChangedEvent(event);
+  }
+
+  // @formatter:off
+  private native void __ocniHandleError__(Object opt_error, Error error) /*-[
+    GDRErrorBlock block = (GDRErrorBlock) opt_error;
+    return block(error);
+  ]-*/ /*-{
+  }-*/;
+
+  private native void __ocniInitializeModel__(Object opt_initializer, Model model) /*-[
+    GDRModelInitializerBlock block = (GDRModelInitializerBlock) opt_initializer;
+    return block(model);
+  ]-*/ /*-{
+  }-*/;
+  
+  private native void __ocniLoadDoucument__(Object onLoaded, Document document) /*-[
+    GDRDocumentLoadedBlock block = (GDRDocumentLoadedBlock) onLoaded;
+    return block(document);
+  ]-*/ /*-{
+  }-*/;
+  // @formatter:on
+
+  @SuppressWarnings("cast")
+  private void handlerError(ErrorHandler opt_error, Error error) {
+    if (opt_error instanceof ErrorHandler) {
+      opt_error.handleError(error);
+    } else {
+      __ocniHandleError__(opt_error, error);
+    }
+  }
+
+  private void init() {
+    this.rpc = demuxer.getRpc();
+    transformer = new RealtimeTransformer();
+    receiveChannel = new ReceiveOpChannelImpl<RealtimeOperation<?>>(id, rpc, transformer);
+    TransformQueue<RealtimeOperation<?>> queue =
+        new TransformQueue<RealtimeOperation<?>>(transformer);
+    SaveService<RealtimeOperation<?>> saveService =
+        new SaveService<RealtimeOperation<?>>(rpc, id, Realtime.getToken());
+    channel =
+        new GenericOperationChannel<RealtimeOperation<?>>(queue, receiveChannel, saveService, this);
+    outputSink = new OperationSink<RealtimeOperation<?>>() {
+      @Override
+      public void consume(RealtimeOperation<?> op) {
+        channel.send(op);
+      }
+    };
+  }
+
+  @SuppressWarnings("cast")
+  private void initializeModel(ModelInitializerHandler opt_initializer, Model model) {
+    if (opt_initializer instanceof ModelInitializerHandler) {
+      opt_initializer.onInitializer(model);
+    } else {
+      __ocniInitializeModel__(opt_initializer, model);
+    }
+  }
+
+  @SuppressWarnings("cast")
+  private void loadDoucument(final DocumentLoadedHandler onLoaded, Document document) {
+    if (onLoaded instanceof DocumentLoadedHandler) {
+      onLoaded.onLoaded(document);
+    } else {
+      __ocniLoadDoucument__(onLoaded, document);
+    }
   }
 }

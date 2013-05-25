@@ -24,51 +24,51 @@ class ObjCHttpResponse extends HttpResponse {
 
   @Override
   public String getContent() {
-    return null;
+    throw new RuntimeException("Stub!");
   }
 
   @Override
   public String getContentEncoding() throws IOException {
-    return null;
+    throw new RuntimeException("Stub!");
   }
 
   @Override
   public long getContentLength() throws IOException {
-    return 0;
+    throw new RuntimeException("Stub!");
   }
 
   @Override
   public String getContentType() throws IOException {
-    return null;
+    throw new RuntimeException("Stub!");
   }
 
   @Override
   public int getHeaderCount() throws IOException {
-    return 0;
+    throw new RuntimeException("Stub!");
   }
 
   @Override
   public String getHeaderName(int index) throws IOException {
-    return null;
+    throw new RuntimeException("Stub!");
   }
 
   @Override
   public String getHeaderValue(int index) throws IOException {
-    return null;
+    throw new RuntimeException("Stub!");
   }
 
   @Override
   public String getReasonPhrase() throws IOException {
-    return null;
+    throw new RuntimeException("Stub!");
   }
 
   @Override
   public int getStatusCode() {
-    return 0;
+    throw new RuntimeException("Stub!");
   }
 
   @Override
   public String getStatusLine() throws IOException {
-    return null;
+    throw new RuntimeException("Stub!");
   }
 }

@@ -26,7 +26,7 @@ import elemental.json.JsonObject;
 import elemental.util.Collections;
 import elemental.util.MapFromStringToString;
 
-public class PollingService {
+public class PollService {
   private static final Logger log = Logger.getLogger(DeltaService.class.getName());
   private static final RealtimeChannelDemuxer demuxer = RealtimeChannelDemuxer.get();
 
