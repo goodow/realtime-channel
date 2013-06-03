@@ -13,8 +13,9 @@
  */
 package com.goodow.realtime.channel.http;
 
-
 public abstract class HttpTransport {
+  public static final String ROOT = "http://realtime.goodow.com";
+
   /**
    * Builds a low level HTTP request for the given HTTP method.
    * 

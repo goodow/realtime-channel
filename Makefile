@@ -58,7 +58,7 @@ translate_main: pre_translate_main $(MAIN_GEN_SOURCES) $(OCNI_GEN_SOURCES)
 	    `cat $(SOURCE_LIST)` ; \
 	fi
 	@cp -r $(OVERRIDE_GEN_DIR)/ $(MAIN_GEN_DIR)
-	@cd $(MAIN_GEN_DIR);tar -c . | tar -x -C ../include --include=*.h
+	@cd $(MAIN_GEN_DIR);mkdir -p ../include;tar -c . | tar -x -C ../include --include=*.h
 
 $(MAIN_GEN_DIR):
 	@mkdir -p $(MAIN_GEN_DIR)

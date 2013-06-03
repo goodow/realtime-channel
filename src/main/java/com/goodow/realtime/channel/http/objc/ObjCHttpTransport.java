@@ -18,10 +18,8 @@ import com.goodow.realtime.channel.http.HttpTransport;
 
 public class ObjCHttpTransport extends HttpTransport {
 
-  public static final String RPC_ROOT = "http://realtime.goodow.com";
-
   @Override
   public HttpRequest buildRequest(String method, String url) {
-    return new ObjCHttpRequest(method, RPC_ROOT + url);
+    return new ObjCHttpRequest(method, HttpTransport.ROOT + url);
   }
 }

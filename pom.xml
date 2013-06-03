@@ -17,6 +17,12 @@
       <version>${project.version}</version>
     </dependency>
     
+    <dependency>
+      <groupId>com.google.inject</groupId>
+      <artifactId>guice</artifactId>
+      <optional>true</optional>
+    </dependency>
+    
     <!-- Google Web Toolkit (GWT) -->
     <dependency>
       <groupId>com.google.gwt</groupId>

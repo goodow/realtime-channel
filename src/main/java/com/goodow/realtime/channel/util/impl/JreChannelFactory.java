@@ -14,21 +14,33 @@
 package com.goodow.realtime.channel.util.impl;
 
 import com.goodow.realtime.channel.Channel;
+import com.goodow.realtime.channel.Socket;
+import com.goodow.realtime.channel.SocketListener;
 import com.goodow.realtime.channel.http.HttpTransport;
 import com.goodow.realtime.channel.util.ChannelFactory;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 
 public class JreChannelFactory implements ChannelFactory {
 
   @Override
   public Channel createChannel(String token) {
-    // TODO Auto-generated method stub
-    return null;
+    return new Channel() {
+      @Override
+      public Socket open(SocketListener listener) {
+        return null;
+      }
+    };
   }
 
   @Override
   public String escapeUriQuery(String value) {
-    // TODO Auto-generated method stub
-    return null;
+    try {
+      return URLEncoder.encode(value, "UTF-8");
+    } catch (UnsupportedEncodingException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @Override

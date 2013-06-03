@@ -15,8 +15,13 @@ package com.goodow.realtime.channel.util;
 
 import com.goodow.realtime.channel.util.impl.JreChannelFactory;
 
+import com.google.inject.Inject;
+
 public class ChannelNative {
+  @Inject(optional = true)
+  private static ChannelFactory instance = new JreChannelFactory();
+
   public static final ChannelFactory get() {
-    return new JreChannelFactory();
+    return instance;
   }
 }
