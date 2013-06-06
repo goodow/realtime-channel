@@ -13,9 +13,9 @@
  */
 package com.goodow.realtime.channel.operation;
 
+import com.goodow.realtime.channel.util.ChannelNative;
 import com.goodow.realtime.channel.util.FuzzingBackOffGenerator;
 import com.goodow.realtime.operation.Operation;
-import com.goodow.realtime.util.ModelNative;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -361,7 +361,7 @@ public class GenericOperationChannel<O extends Operation<?>> {
     if (!queue.hasUnacknowledgedClientOps()) {
       assert state == State.ALL_ACKED;
       isMaybeSendTaskScheduled = true;
-      ModelNative.get().scheduleDeferred(maybeSendTask);
+      ChannelNative.get().scheduleDeferred(maybeSendTask);
     }
   }
 
@@ -380,7 +380,7 @@ public class GenericOperationChannel<O extends Operation<?>> {
     setState(State.ALL_ACKED);
     if (queue.hasQueuedClientOps()) {
       isMaybeSendTaskScheduled = true;
-      ModelNative.get().scheduleDeferred(maybeSendTask);
+      ChannelNative.get().scheduleDeferred(maybeSendTask);
     }
   }
 
@@ -430,8 +430,7 @@ public class GenericOperationChannel<O extends Operation<?>> {
 
   private void delayResync() {
     isResyncTaskScheduled = true;
-    ModelNative.get()
-        .scheduleFixedDelay(delayedResyncTask, backoffGenerator.next().targetDelay);
+    ChannelNative.get().scheduleFixedDelay(delayedResyncTask, backoffGenerator.next().targetDelay);
     setState(State.DELAY_RESYNC);
   }
 

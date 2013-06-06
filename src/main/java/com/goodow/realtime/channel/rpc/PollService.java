@@ -13,7 +13,6 @@
  */
 package com.goodow.realtime.channel.rpc;
 
-import com.goodow.realtime.Realtime;
 import com.goodow.realtime.channel.RealtimeChannelDemuxer;
 import com.goodow.realtime.channel.rpc.Constants.Params;
 
@@ -32,7 +31,7 @@ public class PollService {
 
   public void poll(JsonArray ids, String sessionId) {
     MapFromStringToString params = Collections.mapFromStringToString();
-    params.put(Params.ACCESS_TOKEN, Realtime.getToken());
+    params.put(Params.ACCESS_TOKEN, demuxer.getAccessToken());
     params.put(Params.SESSION_ID, sessionId);
     JsonObject obj = Json.createObject();
     obj.put(Params.IDS, ids);

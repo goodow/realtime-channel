@@ -18,10 +18,12 @@ import com.goodow.realtime.channel.http.HttpTransport;
 import com.goodow.realtime.channel.http.js.JsHttpTransport;
 import com.goodow.realtime.channel.util.ChannelFactory;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.RepeatingCommand;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.http.client.URL;
 
 public class JsChannelFactory implements ChannelFactory {
-
   @Override
   // @formatter:off
   public final native Channel createChannel(String token) /*-{
@@ -37,5 +39,26 @@ public class JsChannelFactory implements ChannelFactory {
   @Override
   public HttpTransport getHttpTransport() {
     return new JsHttpTransport();
+  }
+
+  @Override
+  public void scheduleDeferred(final Runnable cmd) {
+    Scheduler.get().scheduleDeferred(new ScheduledCommand() {
+      @Override
+      public void execute() {
+        cmd.run();
+      }
+    });
+  }
+
+  @Override
+  public void scheduleFixedDelay(final Runnable cmd, int delayMs) {
+    Scheduler.get().scheduleFixedDelay(new RepeatingCommand() {
+      @Override
+      public boolean execute() {
+        cmd.run();
+        return false;
+      }
+    }, delayMs);
   }
 }

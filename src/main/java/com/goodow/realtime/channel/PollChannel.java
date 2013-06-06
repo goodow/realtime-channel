@@ -14,7 +14,7 @@
 package com.goodow.realtime.channel;
 
 import com.goodow.realtime.channel.rpc.PollService;
-import com.goodow.realtime.util.ModelNative;
+import com.goodow.realtime.channel.util.ChannelNative;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -53,7 +53,7 @@ public class PollChannel {
         log.log(Level.FINE, "Heartbeat");
       }
       service.poll(array, sessionId);
-      ModelNative.get().scheduleFixedDelay(heartbeatTask, HEARTBEAT_INTERVAL_MILLIS);
+      ChannelNative.get().scheduleFixedDelay(heartbeatTask, HEARTBEAT_INTERVAL_MILLIS);
     }
   };
   private final PollService service;

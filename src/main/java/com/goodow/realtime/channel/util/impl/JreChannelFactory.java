@@ -48,4 +48,14 @@ public class JreChannelFactory implements ChannelFactory {
     // TODO Auto-generated method stub
     return null;
   }
+
+  @Override
+  public void scheduleDeferred(Runnable cmd) {
+    cmd.run();
+  }
+
+  @Override
+  public void scheduleFixedDelay(Runnable cmd, int delayMs) {
+    // cmd.run();
+  }
 }

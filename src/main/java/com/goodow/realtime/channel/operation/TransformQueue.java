@@ -15,7 +15,7 @@ package com.goodow.realtime.channel.operation;
 
 import com.goodow.realtime.operation.Operation;
 import com.goodow.realtime.operation.Transformer;
-import com.goodow.realtime.util.Pair;
+import com.goodow.realtime.operation.util.Pair;
 
 import elemental.util.ArrayOf;
 import elemental.util.Collections;

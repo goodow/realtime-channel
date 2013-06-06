@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module>
-  <inherits name='com.goodow.realtime.Model'/>
+  <inherits name='com.goodow.realtime.operation.Operation'/>
   
   <source path="">
     <exclude name="util/impl/JreChannelFactory.java" />

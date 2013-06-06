@@ -13,12 +13,12 @@
  */
 package com.goodow.realtime.channel;
 
-import com.goodow.realtime.DocumentBridge;
 import com.goodow.realtime.channel.operation.ReceiveOpChannelImpl;
 import com.goodow.realtime.channel.rpc.Constants;
 import com.goodow.realtime.channel.rpc.Rpc;
 import com.goodow.realtime.channel.rpc.RpcImpl;
 import com.goodow.realtime.channel.util.ChannelNative;
+import com.goodow.realtime.operation.OperationSink;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -37,10 +37,10 @@ import elemental.util.MapFromStringTo;
  */
 public class RealtimeChannelDemuxer implements SocketListener {
   private static class Entry {
-    final DocumentBridge snapshot;
+    final OperationSink<?> snapshot;
     final ReceiveOpChannelImpl<?> channel;
 
-    Entry(DocumentBridge snapshot, ReceiveOpChannelImpl<?> channel) {
+    Entry(OperationSink<?> snapshot, ReceiveOpChannelImpl<?> channel) {
       this.snapshot = snapshot;
       this.channel = channel;
     }
@@ -55,6 +55,7 @@ public class RealtimeChannelDemuxer implements SocketListener {
     return INSTANCE;
   }
 
+  private String accessToken;
   private String currentToken = null;
   private Socket socket;
 
@@ -90,6 +91,10 @@ public class RealtimeChannelDemuxer implements SocketListener {
     }
   }
 
+  public String getAccessToken() {
+    return accessToken;
+  }
+
   public ArrayOfString getIds() {
     return entries.keys();
   }
@@ -102,7 +107,7 @@ public class RealtimeChannelDemuxer implements SocketListener {
     return rpc;
   }
 
-  public DocumentBridge getSnapshot(String id) {
+  public OperationSink<?> getSnapshot(String id) {
     if (!entries.hasKey(id)) {
       return null;
     }
@@ -148,8 +153,12 @@ public class RealtimeChannelDemuxer implements SocketListener {
     channel.onMessage(msg);
   }
 
-  public void register(String id, DocumentBridge snapshot, ReceiveOpChannelImpl<?> channel) {
+  public void register(String id, OperationSink<?> snapshot, ReceiveOpChannelImpl<?> channel) {
     assert !entries.hasKey(id) : "Channel handler already registered for " + id;
     entries.put(id, new Entry(snapshot, channel));
+  }
+
+  public void setAccessToken(String accessToken) {
+    this.accessToken = accessToken;
   }
 }

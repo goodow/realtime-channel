@@ -18,10 +18,10 @@ import com.goodow.realtime.channel.operation.GenericOperationChannel.ReceiveOpCh
 import com.goodow.realtime.channel.rpc.Constants.Params;
 import com.goodow.realtime.channel.rpc.DeltaService;
 import com.goodow.realtime.channel.rpc.Rpc;
+import com.goodow.realtime.channel.util.ChannelNative;
 import com.goodow.realtime.operation.Operation;
 import com.goodow.realtime.operation.Transformer;
-import com.goodow.realtime.util.ModelNative;
-import com.goodow.realtime.util.Pair;
+import com.goodow.realtime.operation.util.Pair;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -185,7 +185,7 @@ public class ReceiveOpChannelImpl<O extends Operation<?>> implements ReceiveOpCh
     // Check, to avoid resetting the delay.
     if (!isCatchupTaskScheduled) {
       isCatchupTaskScheduled = true;
-      ModelNative.get().scheduleFixedDelay(catchupTask, CATCHUP_DELAY_MILLIS);
+      ChannelNative.get().scheduleFixedDelay(catchupTask, CATCHUP_DELAY_MILLIS);
     }
   }
 

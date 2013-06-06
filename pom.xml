@@ -13,7 +13,7 @@
     <!-- Internal modules -->
     <dependency>
       <groupId>com.goodow.realtime</groupId>
-      <artifactId>realtime-model</artifactId>
+      <artifactId>realtime-operation</artifactId>
       <version>${project.version}</version>
     </dependency>
     
@@ -21,20 +21,6 @@
       <groupId>com.google.inject</groupId>
       <artifactId>guice</artifactId>
       <optional>true</optional>
-    </dependency>
-    
-    <!-- Google Web Toolkit (GWT) -->
-    <dependency>
-      <groupId>com.google.gwt</groupId>
-      <artifactId>gwt-user</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.google.gwt</groupId>
-      <artifactId>gwt-codeserver</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.goodow.gwt</groupId>
-      <artifactId>gwt-exporter</artifactId>
     </dependency>
     
     <!-- Test -->
@@ -46,17 +32,9 @@
   
   <build>
     <plugins>
-      <!-- GWT Maven Plugin -->
       <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>gwt-maven-plugin</artifactId>
-        <version>${gwt.version}</version>
-        <configuration>
-          <compileSourcesArtifacts>
-            <compileSourcesArtifact>com.goodow.realtime:realtime-model</compileSourcesArtifact>
-          </compileSourcesArtifacts>
-          <module>${project.groupId}.Realtime</module>
-        </configuration>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
       </plugin>
     </plugins>
   </build>

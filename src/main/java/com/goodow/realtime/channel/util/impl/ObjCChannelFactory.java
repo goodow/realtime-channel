@@ -19,22 +19,40 @@ import com.goodow.realtime.channel.http.objc.ObjCHttpTransport;
 import com.goodow.realtime.channel.objc.ObjCChannel;
 import com.goodow.realtime.channel.util.ChannelFactory;
 
+//@formatter:off
 public class ObjCChannelFactory implements ChannelFactory {
 
   @Override
   public Channel createChannel(String token) {
     return new ObjCChannel();
   }
-
+  
   @Override
-  // @formatter:off
   public native String escapeUriQuery(String value) /*-[
     return [value stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
   ]-*/;
-  // @formatter:on
 
   @Override
   public HttpTransport getHttpTransport() {
     return new ObjCHttpTransport();
   }
+
+  @Override
+  public native void scheduleDeferred(Runnable cmd) /*-[
+    #if TARGET_OS_IPHONE == 1 || TARGET_OS_IPHONE_SIMULATOR == 1
+      [[NSRunLoop currentRunLoop] performSelector:@selector(run) target:cmd argument:nil order:0 modes:@[NSDefaultRunLoopMode]];
+    #else
+      [cmd run];
+    #endif
+  ]-*/;
+
+  @Override
+  public native void scheduleFixedDelay(Runnable cmd, int delayMs) /*-[
+    [NSTimer scheduledTimerWithTimeInterval:delayMs/1000 
+                                     target:cmd
+                                   selector:@selector(run)
+                                   userInfo:nil
+                                    repeats:NO];
+  ]-*/;
 }
+//@formatter:on
