@@ -176,7 +176,7 @@ public class RpcImpl implements Rpc {
     HttpRequest r = ChannelNative.get().getHttpTransport().buildRequest(method.name(), url);
     if (method == Method.POST) {
       r.setContentType("application/x-www-form-urlencoded");
-      r.addHeader("X-Same-Domain", "true");
+      // r.addHeader("X-Same-Domain", "true");
     }
 
     log.log(Level.INFO, "RPC Request, id=" + requestId + " method=" + method.name() + " urlSize="
