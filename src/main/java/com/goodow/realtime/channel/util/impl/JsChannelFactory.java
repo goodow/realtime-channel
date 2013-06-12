@@ -21,7 +21,8 @@ import com.goodow.realtime.channel.util.ChannelFactory;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.http.client.URL;
+
+import elemental.client.Browser;
 
 public class JsChannelFactory implements ChannelFactory {
   @Override
@@ -33,7 +34,7 @@ public class JsChannelFactory implements ChannelFactory {
 
   @Override
   public String escapeUriQuery(String value) {
-    return URL.encodeQueryString(value);
+    return Browser.encodeURIComponent(value);
   }
 
   @Override

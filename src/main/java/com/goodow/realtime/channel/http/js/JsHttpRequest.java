@@ -25,12 +25,19 @@ import com.google.gwt.http.client.Response;
 
 import java.io.IOException;
 
+import elemental.client.Browser;
+
 final class JsHttpRequest extends HttpRequest {
 
   private final RequestBuilder request;
 
   JsHttpRequest(Method method, String url) {
-    request = new RequestBuilder(method, url);
+    String userAgent = Browser.getWindow().getNavigator().getUserAgent().toLowerCase();
+    if (userAgent.indexOf("msie") != -1) {
+      request = new JsXDomainRequestBuilder(method, url);
+    } else {
+      request = new RequestBuilder(method, url);
+    }
   }
 
   @Override

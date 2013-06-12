@@ -31,7 +31,11 @@ final class JsHttpResponse extends HttpResponse {
 
   JsHttpResponse(Response fetchResponse) {
     this.fetchResponse = fetchResponse;
-    for (Header header : fetchResponse.getHeaders()) {
+    Header[] headers = fetchResponse.getHeaders();
+    if (headers == null) {
+      return;
+    }
+    for (Header header : headers) {
       String name = header.getName();
       String value = header.getValue();
       if (name != null && value != null) {

@@ -150,8 +150,7 @@ public class RpcImpl implements Rpc {
   }
 
   private RpcHandle makeRequest(Method method, String serviceName, MapFromStringToString params,
-      String formData, final Rpc.RpcCallback rpcCallback) {
-
+      String requestData, final Rpc.RpcCallback rpcCallback) {
     final int requestId = nextRequestId;
     nextRequestId++;
 
@@ -160,24 +159,15 @@ public class RpcImpl implements Rpc {
       return new Handle(requestId);
     }
 
-    String requestData = null;
-
     StringBuilder urlBuilder = new StringBuilder(rpcRoot + "/" + serviceName + "?");
-
-    if (method == Method.GET) {
-      addParams(urlBuilder, params);
-    } else {
-      addParams(urlBuilder, params);
-      requestData = "=" + formData;
-    }
-
+    addParams(urlBuilder, params);
     final String url = urlBuilder.toString();
 
     HttpRequest r = ChannelNative.get().getHttpTransport().buildRequest(method.name(), url);
-    if (method == Method.POST) {
-      r.setContentType("application/x-www-form-urlencoded");
-      // r.addHeader("X-Same-Domain", "true");
-    }
+    // if (method == Method.POST) {
+    // r.setContentType("application/x-www-form-urlencoded");
+    // r.addHeader("X-Same-Domain", "true");
+    // }
 
     log.log(Level.INFO, "RPC Request, id=" + requestId + " method=" + method.name() + " urlSize="
         + url.length() + " bodySize=" + (requestData == null ? 0 : requestData.length()));
@@ -298,10 +288,10 @@ public class RpcImpl implements Rpc {
 
     try {
       // TODO: store the Request object somewhere so we can e.g. cancel it
-      r.setContent(requestData);
-      r.executeAsync(innerCallback);
       Handle handle = new Handle(requestId);
       handles.put(handle.getId(), handle);
+      r.setContent(requestData);
+      r.executeAsync(innerCallback);
       return handle;
     } catch (IOException e) {
       // TODO: Decide if this should be a badRequest.
