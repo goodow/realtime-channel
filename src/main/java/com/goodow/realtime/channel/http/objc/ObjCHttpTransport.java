@@ -20,6 +20,6 @@ public class ObjCHttpTransport extends HttpTransport {
 
   @Override
   public HttpRequest buildRequest(String method, String url) {
-    return new ObjCHttpRequest(method, HttpTransport.ROOT + url);
+    return new ObjCHttpRequest(method, HttpTransport.CHANNEL + url);
   }
 }

@@ -35,6 +35,6 @@ public final class JsHttpTransport extends HttpTransport {
     } else {
       httpMethod = RequestBuilder.PUT;
     }
-    return new JsHttpRequest(httpMethod, HttpTransport.ROOT + url);
+    return new JsHttpRequest(httpMethod, HttpTransport.CHANNEL + url);
   }
 }
