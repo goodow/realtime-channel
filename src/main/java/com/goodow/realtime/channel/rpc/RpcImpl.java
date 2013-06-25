@@ -169,8 +169,8 @@ public class RpcImpl implements Rpc {
     // r.addHeader("X-Same-Domain", "true");
     // }
 
-    log.log(Level.INFO, "RPC Request, id=" + requestId + " method=" + method.name() + " urlSize="
-        + url.length() + " bodySize=" + (requestData == null ? 0 : requestData.length()));
+    // log.log(Level.INFO, "RPC Request, id=" + requestId + " method=" + method.name() + " urlSize="
+    // + url.length() + " bodySize=" + (requestData == null ? 0 : requestData.length()));
 
     class RpcRequestCallback implements HttpRequestCallback {
       final int id;
@@ -231,7 +231,7 @@ public class RpcImpl implements Rpc {
 
         switch (result) {
           case OK:
-            log.log(Level.INFO, "RPC Success, id=" + id);
+            // log.log(Level.INFO, "RPC Success, id=" + id);
             try {
               callback.onSuccess(data);
             } catch (JsonException e) {

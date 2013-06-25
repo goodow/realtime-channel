@@ -86,8 +86,6 @@ public class RealtimeChannelDemuxer implements SocketListener {
       }
       Channel channel = ChannelNative.get().createChannel(token);
       socket = channel.open(this);
-    } else {
-      log.log(Level.FINE, "Already using same token, ignoring " + token);
     }
   }
 
