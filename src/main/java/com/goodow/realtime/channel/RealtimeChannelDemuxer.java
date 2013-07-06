@@ -143,12 +143,12 @@ public class RealtimeChannelDemuxer implements SocketListener {
     assert msg.hasKey(Constants.Params.ID) && msg.hasKey(Constants.Params.DELTAS) : "Bad data on channel (Missing fields) "
         + msg;
     String id = msg.getString(Constants.Params.ID);
-    ReceiveOpChannelImpl<?> channel = entries.get(id).channel;
-    if (channel == null) {
+    Entry entry = entries.get(id);
+    if (entry == null) {
       log.log(Level.WARNING, "No channel registered for object with id " + id);
       return;
     }
-    channel.onMessage(msg);
+    entry.channel.onMessage(msg);
   }
 
   public void register(String id, OperationSink<?> snapshot, ReceiveOpChannelImpl<?> channel) {
