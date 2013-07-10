@@ -13,8 +13,8 @@
  */
 package com.goodow.realtime.channel.operation;
 
+import com.goodow.realtime.channel.ChannelDemuxer;
 import com.goodow.realtime.channel.PollChannel;
-import com.goodow.realtime.channel.RealtimeChannelDemuxer;
 import com.goodow.realtime.channel.operation.GenericOperationChannel.ReceiveOpChannel;
 import com.goodow.realtime.channel.rpc.Rpc;
 import com.goodow.realtime.channel.rpc.SaveService;
@@ -28,35 +28,43 @@ import java.util.logging.Logger;
 
 import elemental.json.JsonValue;
 
-public class RealtimeOperationSucker implements
-    GenericOperationChannel.Listener<RealtimeOperation<?>> {
+public class OperationSucker implements GenericOperationChannel.Listener<RealtimeOperation<?>> {
   public interface Listener extends OperationSink<RealtimeOperation<?>> {
     void onSaveStateChanged(boolean isSaving, boolean isPending);
   }
+  public interface OutputSink extends OperationSink<RealtimeOperation<?>> {
+    void close();
+  }
 
-  private static final Logger logger = Logger.getLogger(RealtimeOperationSucker.class.getName());
+  private static final Logger logger = Logger.getLogger(OperationSucker.class.getName());
 
-  private static final RealtimeChannelDemuxer demuxer = RealtimeChannelDemuxer.get();
+  private static final ChannelDemuxer demuxer = ChannelDemuxer.get();
   private final String id;
   private final GenericOperationChannel<RealtimeOperation<?>> channel;
   private final Rpc rpc;
   private final RealtimeTransformer transformer;
-  private final OperationSink<RealtimeOperation<?>> outputSink;
+  private final OutputSink outputSink;
   private final ReceiveOpChannel<RealtimeOperation<?>> receiveChannel;
   private Listener bridge;
+  private final String sessionId = ChannelDemuxer.getSessionId();;
 
-  public RealtimeOperationSucker(final String id) {
+  public OperationSucker(final String id) {
     this.id = id;
     this.rpc = demuxer.getRpc();
     transformer = new RealtimeTransformer();
     receiveChannel = new ReceiveOpChannelImpl<RealtimeOperation<?>>(id, rpc, transformer);
     TransformQueue<RealtimeOperation<?>> queue =
         new TransformQueue<RealtimeOperation<?>>(transformer);
-    SaveService<RealtimeOperation<?>> saveService =
-        new SaveService<RealtimeOperation<?>>(rpc, id, demuxer.getAccessToken());
+    SaveService<RealtimeOperation<?>> saveService = new SaveService<RealtimeOperation<?>>(rpc, id);
     channel =
         new GenericOperationChannel<RealtimeOperation<?>>(queue, receiveChannel, saveService, this);
-    outputSink = new OperationSink<RealtimeOperation<?>>() {
+    outputSink = new OutputSink() {
+      @Override
+      public void close() {
+        // presenceService.disconnect(sessionId, id);
+        demuxer.close(id);
+      }
+
       @Override
       public void consume(RealtimeOperation<?> op) {
         channel.send(op);
@@ -64,22 +72,23 @@ public class RealtimeOperationSucker implements
     };
   }
 
-  public OperationSink<RealtimeOperation<?>> getOutputSink() {
+  public OutputSink getOutputSink() {
     return outputSink;
   }
 
   public void load(final Listener listener, final SnapshotService.Callback callback) {
     SnapshotService snapshotService = new SnapshotService(rpc);
-    snapshotService.load(id, demuxer.getAccessToken(), true, new SnapshotService.Callback() {
-      @Override
-      public void onSuccess(JsonValue snapshot, String sessionId, int revision) {
-        bridge = listener;
-        callback.onSuccess(snapshot, sessionId, revision);
-        demuxer.register(id, bridge, (ReceiveOpChannelImpl<?>) receiveChannel);
-        channel.connect(revision, sessionId);
-        PollChannel.get().connect(sessionId);
-      }
-    });
+    snapshotService.load(id, demuxer.getAccessToken(), sessionId, true,
+        new SnapshotService.Callback() {
+          @Override
+          public void onSuccess(JsonValue snapshot, String sid, int revision) {
+            bridge = listener;
+            callback.onSuccess(snapshot, sessionId, revision);
+            demuxer.register(id, bridge, (ReceiveOpChannelImpl<?>) receiveChannel);
+            channel.connect(revision, sessionId);
+            PollChannel.get().connect();
+          }
+        });
   }
 
   @Override

@@ -13,7 +13,7 @@
  */
 package com.goodow.realtime.channel.operation;
 
-import com.goodow.realtime.channel.RealtimeChannelDemuxer;
+import com.goodow.realtime.channel.ChannelDemuxer;
 import com.goodow.realtime.channel.operation.GenericOperationChannel.ReceiveOpChannel;
 import com.goodow.realtime.channel.rpc.Constants.Params;
 import com.goodow.realtime.channel.rpc.DeltaService;
@@ -75,7 +75,7 @@ public class ReceiveOpChannelImpl<O extends Operation<?>> implements ReceiveOpCh
     }
   };
 
-  private final RealtimeChannelDemuxer demuxer = RealtimeChannelDemuxer.get();
+  private final ChannelDemuxer demuxer = ChannelDemuxer.get();
 
   private final MapFromIntTo<Pair<String, O>> pending = Collections.mapFromIntTo();
   private final String id;

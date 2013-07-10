@@ -44,6 +44,12 @@ public class JreChannelFactory implements ChannelFactory {
   }
 
   @Override
+  public String getDefaultUserAgent() {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  @Override
   public HttpTransport getHttpTransport() {
     // TODO Auto-generated method stub
     return null;

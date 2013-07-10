@@ -34,9 +34,13 @@ public class SnapshotService {
     this.rpc = rpc;
   }
 
-  public void load(final String id, String token, boolean autoCreate, final Callback callback) {
+  public void load(final String id, String token, String sessionId, boolean autoCreate,
+      final Callback callback) {
     MapFromStringToString params = Collections.mapFromStringToString();
     params.put(Constants.Params.ID, id);
+    if (sessionId != null) {
+      params.put(Constants.Params.SESSION_ID, sessionId);
+    }
     params.put(Constants.Params.ACCESS_TOKEN, token);
     params.put(Constants.Params.AUTO_CREATE, "" + autoCreate);
     rpc.get(Constants.Services.SNAPSHOT, params, new Rpc.RpcCallback() {
@@ -54,10 +58,8 @@ public class SnapshotService {
       @Override
       public void onSuccess(String data) {
         JsonObject obj = RpcUtil.evalPrefixed(data);
-        callback
-            .onSuccess(obj.get(Constants.Params.SNAPSHOT), obj
-                .getString(Constants.Params.SESSION_ID), (int) obj
-                .getNumber(Constants.Params.REVISION));
+        callback.onSuccess(obj.get(Constants.Params.SNAPSHOT), null, (int) obj
+            .getNumber(Constants.Params.REVISION));
       }
     });
   }

@@ -13,6 +13,7 @@
  */
 package com.goodow.realtime.channel.rpc;
 
+import com.goodow.realtime.channel.ChannelDemuxer;
 import com.goodow.realtime.channel.operation.GenericOperationChannel.SendOpService;
 import com.goodow.realtime.channel.rpc.Constants.Params;
 import com.goodow.realtime.operation.Operation;
@@ -35,12 +36,11 @@ public class SaveService<O extends Operation<?>> implements SendOpService<O> {
   private static final Logger log = Logger.getLogger(SaveService.class.getName());
   private final Rpc rpc;
   private final String id;
-  private final String token;
+  private final ChannelDemuxer demuxer = ChannelDemuxer.get();;
 
-  public SaveService(Rpc rpc, String id, String token) {
+  public SaveService(Rpc rpc, String id) {
     this.rpc = rpc;
     this.id = id;
-    this.token = token;
   }
 
   @Override
@@ -52,7 +52,7 @@ public class SaveService<O extends Operation<?>> implements SendOpService<O> {
   public void requestRevision(String sessionId, final SendOpService.Callback callback) {
     MapFromStringToString params = Collections.mapFromStringToString();
     params.put(Params.ID, id);
-    params.put(Params.ACCESS_TOKEN, token);
+    params.put(Params.ACCESS_TOKEN, demuxer.getAccessToken());
     rpc.get(Constants.Services.REVISION, params, new Rpc.RpcCallback() {
       @Override
       public void onConnectionError(Throwable e) {
@@ -78,7 +78,7 @@ public class SaveService<O extends Operation<?>> implements SendOpService<O> {
       final SendOpService.Callback callback) {
     MapFromStringToString params = Collections.mapFromStringToString();
     params.put(Params.ID, id);
-    params.put(Params.ACCESS_TOKEN, token);
+    params.put(Params.ACCESS_TOKEN, demuxer.getAccessToken());
     params.put(Params.SESSION_ID, sessionId);
     JsonObject formData = Json.createObject();
     formData.put(Params.REVISION, revision);

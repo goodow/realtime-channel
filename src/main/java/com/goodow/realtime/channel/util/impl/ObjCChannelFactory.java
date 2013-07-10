@@ -33,6 +33,16 @@ public class ObjCChannelFactory implements ChannelFactory {
   ]-*/;
 
   @Override
+  public native String getDefaultUserAgent() /*-[
+    static NSString * userAgent;
+    if (!userAgent) {
+      UIWebView *webView = [[UIWebView alloc]initWithFrame:CGRectZero];
+      userAgent = [webView stringByEvaluatingJavaScriptFromString:"@navigator.userAgent"];
+    }
+    return userAgent;
+  ]-*/;
+
+  @Override
   public HttpTransport getHttpTransport() {
     return new ObjCHttpTransport();
   }

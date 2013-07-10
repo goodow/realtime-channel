@@ -19,6 +19,7 @@ import com.goodow.realtime.channel.rpc.Rpc;
 import com.goodow.realtime.channel.rpc.RpcImpl;
 import com.goodow.realtime.channel.util.ChannelNative;
 import com.goodow.realtime.operation.OperationSink;
+import com.goodow.realtime.operation.id.IdGenerator;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -35,7 +36,7 @@ import elemental.util.MapFromStringTo;
  * Packets arrive with two keys, 'id' to identify the object, and 'm' containing the message
  * payload.
  */
-public class RealtimeChannelDemuxer implements SocketListener {
+public class ChannelDemuxer implements SocketListener {
   private static class Entry {
     final OperationSink<?> snapshot;
     final ReceiveOpChannelImpl<?> channel;
@@ -46,20 +47,42 @@ public class RealtimeChannelDemuxer implements SocketListener {
     }
   }
 
-  private static final Logger log = Logger.getLogger(RealtimeChannelDemuxer.class.getName());
-  private static final RealtimeChannelDemuxer INSTANCE = new RealtimeChannelDemuxer();
+  private static final Logger log = Logger.getLogger(ChannelDemuxer.class.getName());
+  private static final ChannelDemuxer INSTANCE = new ChannelDemuxer();
   private static final MapFromStringTo<Entry> entries = Collections.<Entry> mapFromStringTo();
   private static final Rpc rpc = new RpcImpl("", null);
+  private static String sessionId;
 
-  public static final RealtimeChannelDemuxer get() {
+  public static final ChannelDemuxer get() {
     return INSTANCE;
   }
 
+  public static final String getSessionId() {
+    if (sessionId != null) {
+      return sessionId;
+    }
+    IdGenerator idGenerator = new IdGenerator();
+    String userAgent = ChannelNative.get().getDefaultUserAgent();
+    String sid = idGenerator.next(Constants.SESSION_LENGTH - 1);
+    if (userAgent == null) {
+      sessionId = Constants.WEB + sid;
+    }
+    userAgent = userAgent.toLowerCase();
+    if (userAgent.contains("android")) {
+      sessionId = Constants.ANDROID + sid;
+    } else if (userAgent.contains("iphone")) {
+      sessionId = Constants.IOS + sid;
+    } else {
+      sessionId = Constants.WEB + sid;
+    }
+    return sessionId;
+  }
+
   private String accessToken;
-  private String currentToken = null;
+  private String channelToken = null;
   private Socket socket;
 
-  private RealtimeChannelDemuxer() {
+  private ChannelDemuxer() {
   }
 
   public void clear() {
@@ -78,9 +101,9 @@ public class RealtimeChannelDemuxer implements SocketListener {
 
   public void connect(String token) {
     assert token != null : "Null token";
-    if (!token.equals(currentToken)) {
+    if (!token.equals(this.channelToken)) {
       log.log(Level.INFO, "Connecting with token " + token);
-      currentToken = token;
+      this.channelToken = token;
       if (socket != null) {
         socket.close();
       }

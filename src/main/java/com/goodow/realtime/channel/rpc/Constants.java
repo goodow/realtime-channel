@@ -49,6 +49,9 @@ public class Constants {
     public static final String REVISION = SERVICE + "revision";
     public static final String SAVE = SERVICE + "save";
     public static final String POLL = SERVICE + "poll";
+    private static final String PRESENCE = SERVICE + "presence/";
+    public static final String PRESENCE_CONNECT = PRESENCE + "connect/";
+    public static final String PRESENCE_DISCONNECT = PRESENCE + "disconnect/";
 
     private Services() {
     }
@@ -60,6 +63,10 @@ public class Constants {
    * See http://google-gruyere.appspot.com/part4
    */
   public static final String XSSI_PREFIX = ")]}'\n";
+  public static final char WEB = 'w';
+  public static final char ANDROID = 'a';
+  public static final char IOS = 'i';
+  public static final int SESSION_LENGTH = 15;
 
   private Constants() {
   }

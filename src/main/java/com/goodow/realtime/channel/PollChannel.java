@@ -31,7 +31,7 @@ public class PollChannel {
     return INSTANCE;
   }
 
-  private final RealtimeChannelDemuxer demuxer = RealtimeChannelDemuxer.get();
+  private final ChannelDemuxer demuxer = ChannelDemuxer.get();
   private boolean isHeartbeatTaskCanceled = true;
   private final Runnable heartbeatTask = new Runnable() {
     @Override
@@ -39,24 +39,12 @@ public class PollChannel {
       if (isHeartbeatTaskCanceled) {
         return;
       }
-      ArrayOfString ids = demuxer.getIds();
-      JsonArray array = Json.createArray();
-      if (ids.length() != 0) {
-        for (int i = 0, len = ids.length(); i < len; i++) {
-          JsonArray req = Json.createArray();
-          String id = ids.get(i);
-          req.set(0, id);
-          req.set(1, demuxer.getRevision(id) + 1);
-          array.set(i, req);
-        }
-        // log.log(Level.FINE, "Heartbeat");
-      }
-      service.poll(array, sessionId);
+      runImpl();
       ChannelNative.get().scheduleFixedDelay(heartbeatTask, HEARTBEAT_INTERVAL_MILLIS);
     }
+
   };
   private final PollService service;
-  private String sessionId;
 
   private PollChannel() {
     this.service = new PollService();
@@ -66,14 +54,30 @@ public class PollChannel {
     isHeartbeatTaskCanceled = true;
   }
 
-  public void connect(String sessionId) {
-    this.sessionId = sessionId;
+  public void connect() {
     if (!isHeartbeatTaskCanceled) {
+      runImpl();
       return;
     }
     // Send the first heartbeat immediately, to quickly catch up any initial missing
     // ops, which might happen if the object is currently active.
     isHeartbeatTaskCanceled = false;
     heartbeatTask.run();
+  }
+
+  private void runImpl() {
+    ArrayOfString ids = demuxer.getIds();
+    JsonArray array = Json.createArray();
+    if (ids.length() != 0) {
+      for (int i = 0, len = ids.length(); i < len; i++) {
+        JsonArray req = Json.createArray();
+        String id = ids.get(i);
+        req.set(0, id);
+        req.set(1, demuxer.getRevision(id) + 1);
+        array.set(i, req);
+      }
+      // log.log(Level.FINE, "Heartbeat");
+    }
+    service.poll(array, ChannelDemuxer.getSessionId());
   }
 }

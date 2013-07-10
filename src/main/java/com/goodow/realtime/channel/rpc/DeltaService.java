@@ -13,7 +13,7 @@
  */
 package com.goodow.realtime.channel.rpc;
 
-import com.goodow.realtime.channel.RealtimeChannelDemuxer;
+import com.goodow.realtime.channel.ChannelDemuxer;
 import com.goodow.realtime.channel.rpc.Constants.Params;
 
 import java.util.logging.Logger;
@@ -44,7 +44,7 @@ public class DeltaService {
   public void fetchHistory(String key, final int startRev, final Callback callback) {
     MapFromStringToString params = Collections.mapFromStringToString();
     params.put(Constants.Params.ID, key);
-    params.put(Constants.Params.ACCESS_TOKEN, RealtimeChannelDemuxer.get().getAccessToken());
+    params.put(Constants.Params.ACCESS_TOKEN, ChannelDemuxer.get().getAccessToken());
     params.put(Constants.Params.START_REVISION, startRev + "");
     rpc.get(Constants.Services.DELTA, params, new Rpc.RpcCallback() {
       @Override

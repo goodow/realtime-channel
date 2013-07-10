@@ -28,6 +28,8 @@ public interface ChannelFactory {
 
   String escapeUriQuery(String value);
 
+  String getDefaultUserAgent();
+
   HttpTransport getHttpTransport();
 
   /**

@@ -25,39 +25,39 @@ import elemental.json.JsonObject;
 import elemental.util.Collections;
 import elemental.util.MapFromStringToString;
 
-public class PollService {
-  private static final Logger log = Logger.getLogger(DeltaService.class.getName());
+public class PresenceService {
+  private static final Logger log = Logger.getLogger(PresenceService.class.getName());
   private static final ChannelDemuxer demuxer = ChannelDemuxer.get();
 
-  public void poll(JsonArray ids, String sessionId) {
+  public void disconnect(String sessionId, String... ids) {
     MapFromStringToString params = Collections.mapFromStringToString();
     params.put(Params.ACCESS_TOKEN, demuxer.getAccessToken());
     params.put(Params.SESSION_ID, sessionId);
-    JsonObject obj = Json.createObject();
-    obj.put(Params.IDS, ids);
-    demuxer.getRpc().post(Constants.Services.POLL, params, obj.toJson(), new Rpc.RpcCallback() {
-      @Override
-      public void onConnectionError(Throwable e) {
-        log.log(Level.WARNING, "onConnectionError ", e);
+    JsonObject obj = null;
+    if (ids != null && ids.length != 0) {
+      obj = Json.createObject();
+      JsonArray docIds = Json.createArray();
+      int i = 0;
+      for (String id : ids) {
+        docIds.set(i++, id);
       }
-
-      @Override
-      public void onFatalError(Throwable e) {
-        log.log(Level.WARNING, "onFatalError ", e);
-      }
-
-      @Override
-      public void onSuccess(String data) {
-        JsonArray msgs = RpcUtil.evalPrefixed(data);
-        for (int i = 0, len = msgs.length(); i < len; i++) {
-          JsonObject msg = msgs.getObject(i);
-          if (Params.TOKEN.equals(msg.getString(Params.ID))) {
-            demuxer.connect(msg.getString(Params.TOKEN));
-            continue;
+      obj.put(Params.IDS, docIds);
+    }
+    demuxer.getRpc().post(Constants.Services.PRESENCE_DISCONNECT, params,
+        obj == null ? null : obj.toJson(), new Rpc.RpcCallback() {
+          @Override
+          public void onConnectionError(Throwable e) {
+            log.log(Level.WARNING, "onConnectionError ", e);
           }
-          demuxer.publishMessage(msg);
-        }
-      }
-    });
+
+          @Override
+          public void onFatalError(Throwable e) {
+            log.log(Level.WARNING, "onFatalError ", e);
+          }
+
+          @Override
+          public void onSuccess(String data) {
+          }
+        });
   }
 }

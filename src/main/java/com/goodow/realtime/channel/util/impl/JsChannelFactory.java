@@ -38,6 +38,13 @@ public class JsChannelFactory implements ChannelFactory {
   }
 
   @Override
+  // @formatter:off
+  public native String getDefaultUserAgent() /*-{
+    return $wnd.navigator.userAgent;        
+  }-*/;
+  // @formatter:on
+
+  @Override
   public HttpTransport getHttpTransport() {
     return new JsHttpTransport();
   }
