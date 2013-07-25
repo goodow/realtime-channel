@@ -11,7 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.goodow.realtime.channel.rpc;
+package com.goodow.realtime.channel.constant;
 
 /**
  * Shared constants between server and client.
@@ -37,10 +37,17 @@ public class Constants {
     public static final String START_REVISION = "startRev";
     public static final String END_REVISION = "endRev";
 
+    public static final String IS_JOINED = "joined";
+    public static final String COLOR = "color";
+    public static final String DISPLAY_NAME = "displayName";
+    public static final String IS_ANONYMOUS = "isAnonymous";
+    public static final String IS_ME = "isMe";
+    public static final String PHOTO_URL = "photoUrl";
+    public static final String USER_ID = "userId";
+
     private Params() {
     }
   }
-
   /** Service names. */
   public static class Services {
     public static final String SERVICE = "otservice/";
@@ -63,9 +70,6 @@ public class Constants {
    * See http://google-gruyere.appspot.com/part4
    */
   public static final String XSSI_PREFIX = ")]}'\n";
-  public static final char WEB = 'w';
-  public static final char ANDROID = 'a';
-  public static final char IOS = 'i';
   public static final int SESSION_LENGTH = 15;
 
   private Constants() {

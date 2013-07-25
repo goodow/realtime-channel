@@ -13,6 +13,8 @@
  */
 package com.goodow.realtime.channel.rpc;
 
+import com.goodow.realtime.channel.constant.Constants;
+
 import elemental.json.Json;
 import elemental.json.JsonException;
 import elemental.json.JsonValue;

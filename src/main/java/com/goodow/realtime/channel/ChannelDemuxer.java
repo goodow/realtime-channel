@@ -13,8 +13,11 @@
  */
 package com.goodow.realtime.channel;
 
+import com.goodow.realtime.channel.constant.Constants;
+import com.goodow.realtime.channel.constant.Constants.Params;
+import com.goodow.realtime.channel.constant.Platform;
+import com.goodow.realtime.channel.operation.OperationSucker;
 import com.goodow.realtime.channel.operation.ReceiveOpChannelImpl;
-import com.goodow.realtime.channel.rpc.Constants;
 import com.goodow.realtime.channel.rpc.Rpc;
 import com.goodow.realtime.channel.rpc.RpcImpl;
 import com.goodow.realtime.channel.util.ChannelNative;
@@ -38,10 +41,10 @@ import elemental.util.MapFromStringTo;
  */
 public class ChannelDemuxer implements SocketListener {
   private static class Entry {
-    final OperationSink<?> snapshot;
+    final OperationSucker.Listener snapshot;
     final ReceiveOpChannelImpl<?> channel;
 
-    Entry(OperationSink<?> snapshot, ReceiveOpChannelImpl<?> channel) {
+    Entry(OperationSucker.Listener snapshot, ReceiveOpChannelImpl<?> channel) {
       this.snapshot = snapshot;
       this.channel = channel;
     }
@@ -64,17 +67,7 @@ public class ChannelDemuxer implements SocketListener {
     IdGenerator idGenerator = new IdGenerator();
     String userAgent = ChannelNative.get().getDefaultUserAgent();
     String sid = idGenerator.next(Constants.SESSION_LENGTH - 1);
-    if (userAgent == null) {
-      sessionId = Constants.WEB + sid;
-    }
-    userAgent = userAgent.toLowerCase();
-    if (userAgent.contains("android")) {
-      sessionId = Constants.ANDROID + sid;
-    } else if (userAgent.contains("iphone")) {
-      sessionId = Constants.IOS + sid;
-    } else {
-      sessionId = Constants.WEB + sid;
-    }
+    sessionId = Platform.fromUserAgent(userAgent).prefix() + sid;
     return sessionId;
   }
 
@@ -163,18 +156,22 @@ public class ChannelDemuxer implements SocketListener {
 
   public void publishMessage(JsonObject msg) {
     log.log(Level.FINE, "publishMessage data=" + msg.toJson());
-    assert msg.hasKey(Constants.Params.ID) && msg.hasKey(Constants.Params.DELTAS) : "Bad data on channel (Missing fields) "
+    assert msg.hasKey(Params.ID) && msg.hasKey(Params.DELTAS) : "Bad data on channel (Missing fields) "
         + msg;
-    String id = msg.getString(Constants.Params.ID);
+    String id = msg.getString(Params.ID);
     Entry entry = entries.get(id);
     if (entry == null) {
       log.log(Level.WARNING, "No channel registered for object with id " + id);
       return;
     }
-    entry.channel.onMessage(msg);
+    if (msg.hasKey(Params.IS_JOINED)) {
+      entry.snapshot.onCollaboratorChanged(msg.getBoolean(Params.IS_JOINED), msg);
+    } else {
+      entry.channel.onMessage(msg);
+    }
   }
 
-  public void register(String id, OperationSink<?> snapshot, ReceiveOpChannelImpl<?> channel) {
+  public void register(String id, OperationSucker.Listener snapshot, ReceiveOpChannelImpl<?> channel) {
     assert !entries.hasKey(id) : "Channel handler already registered for " + id;
     entries.put(id, new Entry(snapshot, channel));
   }

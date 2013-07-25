@@ -14,7 +14,8 @@
 package com.goodow.realtime.channel.rpc;
 
 import com.goodow.realtime.channel.ChannelDemuxer;
-import com.goodow.realtime.channel.rpc.Constants.Params;
+import com.goodow.realtime.channel.constant.Constants;
+import com.goodow.realtime.channel.constant.Constants.Params;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;

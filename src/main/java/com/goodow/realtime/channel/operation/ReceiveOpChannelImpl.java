@@ -14,8 +14,8 @@
 package com.goodow.realtime.channel.operation;
 
 import com.goodow.realtime.channel.ChannelDemuxer;
+import com.goodow.realtime.channel.constant.Constants.Params;
 import com.goodow.realtime.channel.operation.GenericOperationChannel.ReceiveOpChannel;
-import com.goodow.realtime.channel.rpc.Constants.Params;
 import com.goodow.realtime.channel.rpc.DeltaService;
 import com.goodow.realtime.channel.rpc.Rpc;
 import com.goodow.realtime.channel.util.ChannelNative;

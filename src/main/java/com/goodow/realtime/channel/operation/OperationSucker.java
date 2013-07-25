@@ -26,10 +26,13 @@ import com.goodow.realtime.operation.RealtimeTransformer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import elemental.json.JsonObject;
 import elemental.json.JsonValue;
 
 public class OperationSucker implements GenericOperationChannel.Listener<RealtimeOperation<?>> {
   public interface Listener extends OperationSink<RealtimeOperation<?>> {
+    void onCollaboratorChanged(boolean isJoined, JsonObject json);
+
     void onSaveStateChanged(boolean isSaving, boolean isPending);
   }
   public interface OutputSink extends OperationSink<RealtimeOperation<?>> {

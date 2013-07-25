@@ -13,6 +13,8 @@
  */
 package com.goodow.realtime.channel.rpc;
 
+import com.goodow.realtime.channel.constant.Constants;
+
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
