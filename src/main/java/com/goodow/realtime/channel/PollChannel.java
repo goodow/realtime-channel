@@ -24,7 +24,7 @@ import elemental.util.ArrayOfString;
 
 public class PollChannel {
   private static final Logger log = Logger.getLogger(PollChannel.class.getName());
-  private static final int HEARTBEAT_INTERVAL_MILLIS = 15 * 1000;
+  private static final int HEARTBEAT_INTERVAL_MILLIS = 150 * 1000;
   private static final PollChannel INSTANCE = new PollChannel();
 
   public static PollChannel get() {

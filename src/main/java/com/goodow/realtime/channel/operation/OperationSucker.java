@@ -86,8 +86,8 @@ public class OperationSucker implements GenericOperationChannel.Listener<Realtim
           @Override
           public void onSuccess(JsonValue snapshot, String sid, int revision) {
             bridge = listener;
-            callback.onSuccess(snapshot, sessionId, revision);
             demuxer.register(id, bridge, (ReceiveOpChannelImpl<?>) receiveChannel);
+            callback.onSuccess(snapshot, sessionId, revision);
             channel.connect(revision, sessionId);
             PollChannel.get().connect();
           }
