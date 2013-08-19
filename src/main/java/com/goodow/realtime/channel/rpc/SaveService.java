@@ -19,13 +19,13 @@ import com.goodow.realtime.channel.constant.Constants.Params;
 import com.goodow.realtime.channel.operation.GenericOperationChannel.SendOpService;
 import com.goodow.realtime.operation.Operation;
 
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import elemental.json.Json;
 import elemental.json.JsonObject;
 import elemental.json.JsonValue;
-import elemental.util.ArrayOf;
 import elemental.util.Collections;
 import elemental.util.MapFromStringToString;
 
@@ -36,12 +36,10 @@ import elemental.util.MapFromStringToString;
 public class SaveService<O extends Operation<?>> implements SendOpService<O> {
   private static final Logger log = Logger.getLogger(SaveService.class.getName());
   private final Rpc rpc;
-  private final String id;
   private final ChannelDemuxer demuxer = ChannelDemuxer.get();;
 
-  public SaveService(Rpc rpc, String id) {
+  public SaveService(Rpc rpc) {
     this.rpc = rpc;
-    this.id = id;
   }
 
   @Override
@@ -50,7 +48,7 @@ public class SaveService<O extends Operation<?>> implements SendOpService<O> {
   }
 
   @Override
-  public void requestRevision(String sessionId, final SendOpService.Callback callback) {
+  public void requestRevision(String id, String sessionId, final SendOpService.Callback callback) {
     MapFromStringToString params = Collections.mapFromStringToString();
     params.put(Params.ID, id);
     params.put(Params.ACCESS_TOKEN, demuxer.getAccessToken());
@@ -75,7 +73,7 @@ public class SaveService<O extends Operation<?>> implements SendOpService<O> {
   }
 
   @Override
-  public void submitOperations(String sessionId, int revision, ArrayOf<O> operations,
+  public void submitOperations(String id, String sessionId, int revision, List<O> operations,
       final SendOpService.Callback callback) {
     MapFromStringToString params = Collections.mapFromStringToString();
     params.put(Params.ID, id);
@@ -103,7 +101,7 @@ public class SaveService<O extends Operation<?>> implements SendOpService<O> {
     });
   }
 
-  protected JsonValue serialize(ArrayOf<O> ops) {
-    return Json.instance().parse("[" + ops.join() + "]");
+  protected JsonValue serialize(List<O> ops) {
+    return Json.instance().parse(ops.toString());
   }
 }

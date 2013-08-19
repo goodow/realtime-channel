@@ -19,7 +19,6 @@ import com.goodow.realtime.channel.operation.GenericOperationChannel.ReceiveOpCh
 import com.goodow.realtime.channel.rpc.DeltaService;
 import com.goodow.realtime.channel.rpc.Rpc;
 import com.goodow.realtime.channel.util.ChannelNative;
-import com.goodow.realtime.operation.Operation;
 import com.goodow.realtime.operation.Transformer;
 import com.goodow.realtime.operation.util.Pair;
 
@@ -41,7 +40,7 @@ import elemental.util.MapFromIntTo;
 // TODO: Move the flaky layer into a separate class - possibly
 // DeltaService, as its callback interface would be sufficient as
 // it stands now.
-public class ReceiveOpChannelImpl<O extends Operation<?>> implements ReceiveOpChannel<O> {
+public class ReceiveOpChannelImpl<T> implements ReceiveOpChannel<T> {
   private static final Logger log = Logger.getLogger(ReceiveOpChannelImpl.class.getName());
   /**
    * Delay catchup in case we receive operations in the meantime.
@@ -77,26 +76,26 @@ public class ReceiveOpChannelImpl<O extends Operation<?>> implements ReceiveOpCh
 
   private final ChannelDemuxer demuxer = ChannelDemuxer.get();
 
-  private final MapFromIntTo<Pair<String, O>> pending = Collections.mapFromIntTo();
+  private final MapFromIntTo<Pair<String, T>> pending = Collections.mapFromIntTo();
   private final String id;
   private final DeltaService service;
-  private ReceiveOpChannel.Listener<O> listener;
+  private ReceiveOpChannel.Listener<T> listener;
   private int currentRevision = 0;
   private int knownHeadRevision = 0;
   private int catchupRevision = 0;
-  private final Transformer<O> transformer;
+  private final Transformer<T> transformer;
 
   private boolean corruptedByException = false;
   private boolean receiving = false;
 
-  public ReceiveOpChannelImpl(String id, Rpc rpc, Transformer<O> transformer) {
+  public ReceiveOpChannelImpl(String id, Rpc rpc, Transformer<T> transformer) {
     this.id = id;
     this.transformer = transformer;
     this.service = new DeltaService(rpc);
   }
 
   @Override
-  public void connect(int revision, ReceiveOpChannel.Listener<O> listener) {
+  public void connect(int revision, ReceiveOpChannel.Listener<T> listener) {
     assert this.listener == null;
     this.listener = listener;
     this.currentRevision = this.knownHeadRevision = revision;
@@ -126,15 +125,16 @@ public class ReceiveOpChannelImpl<O extends Operation<?>> implements ReceiveOpCh
     JsonArray deltas = msg.getArray(Params.DELTAS);
     for (int i = 0, len = deltas.length(); i < len; i++) {
       JsonArray delta = deltas.getArray(i);
-      log.log(Level.INFO, "Store message: " + delta.toJson());
-      O op;
+      T op;
+      String sessionId = delta.getString(3);
       try {
-        op = transformer.createOperation(delta.get(0), delta.getString(1), delta.getString(3));
+        String userId = delta.getString(1);
+        op = transformer.createOperation(userId, sessionId, delta.get(0));
       } catch (JsonException e) {
         listener.onError(e);
         return;
       }
-      receiveUnorderedData((int) delta.getNumber(2), delta.getString(3), op);
+      receiveUnorderedData((int) delta.getNumber(2), sessionId, op);
     }
     if (msg.hasKey(Params.REVISION)) {
       // The head revision might be greater than expected if some
@@ -164,7 +164,7 @@ public class ReceiveOpChannelImpl<O extends Operation<?>> implements ReceiveOpCh
     }
   }
 
-  private void receiveUnorderedData(int resultingRevision, String sessionId, O op) {
+  private void receiveUnorderedData(int resultingRevision, String sessionId, T op) {
     assert !corruptedByException : "receiveUnorderedData called while corrupted";
     assert !receiving : "receiveUnorderedData called re-entrantly";
     receiving = true;
@@ -174,6 +174,7 @@ public class ReceiveOpChannelImpl<O extends Operation<?>> implements ReceiveOpCh
     } catch (RuntimeException e) {
       corruptedByException = true;
       log.log(Level.WARNING, "Op channel is now corrupted", e);
+      listener.onError(e);
       throw e;
     }
 
@@ -189,7 +190,7 @@ public class ReceiveOpChannelImpl<O extends Operation<?>> implements ReceiveOpCh
     }
   }
 
-  private void unguardedReceiveUnorderedData(int resultingRevision, String sessionId, O op) {
+  private void unguardedReceiveUnorderedData(int resultingRevision, String sessionId, T op) {
     knownHeadRevision = Math.max(knownHeadRevision, resultingRevision);
 
     if (resultingRevision <= currentRevision) {
@@ -198,7 +199,7 @@ public class ReceiveOpChannelImpl<O extends Operation<?>> implements ReceiveOpCh
       return;
     }
 
-    Pair<String, O> existing = pending.get(resultingRevision);
+    Pair<String, T> existing = pending.get(resultingRevision);
     if (existing != null) {
       // Should not have pending data at a revision we could have pushed out.
       assert resultingRevision > currentRevision + 1 : "should not have pending data";
@@ -206,10 +207,9 @@ public class ReceiveOpChannelImpl<O extends Operation<?>> implements ReceiveOpCh
       // Sanity check
       if (!existing.first.equals(sessionId)) {
         listener.onError(new Exception("Duplicates did not match at resultingRevision "
-            + resultingRevision + ": " + existing + " vs " + "(" + sessionId + "," + op.toString()
-            + ")"));
+            + resultingRevision + ": " + existing + " vs " + op));
       }
-      log.log(Level.FINE, "Dup message: " + "(" + sessionId + "," + op.toString() + ")");
+      log.log(Level.FINE, "Dup message: " + op);
       return;
     }
 
@@ -224,13 +224,12 @@ public class ReceiveOpChannelImpl<O extends Operation<?>> implements ReceiveOpCh
     assert resultingRevision == currentRevision + 1 : "other cases should have been caught";
 
     while (true) {
-      log.log(Level.FINE, "Ordered op @" + resultingRevision + " sid=" + sessionId + ", payload="
-          + op.toString());
+      log.log(Level.FINE, "Ordered op @" + resultingRevision);
       listener.onMessage(currentRevision + 1, sessionId, op);
       currentRevision++;
 
       int next = currentRevision + 1;
-      Pair<String, O> pair = pending.get(next);
+      Pair<String, T> pair = pending.get(next);
       if (pair != null) {
         sessionId = pair.first;
         op = pair.second;

@@ -21,7 +21,8 @@ import com.goodow.realtime.channel.rpc.SaveService;
 import com.goodow.realtime.channel.rpc.SnapshotService;
 import com.goodow.realtime.operation.OperationSink;
 import com.goodow.realtime.operation.RealtimeOperation;
-import com.goodow.realtime.operation.RealtimeTransformer;
+import com.goodow.realtime.operation.Transformer;
+import com.goodow.realtime.operation.TransformerImpl;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -29,13 +30,13 @@ import java.util.logging.Logger;
 import elemental.json.JsonObject;
 import elemental.json.JsonValue;
 
-public class OperationSucker implements GenericOperationChannel.Listener<RealtimeOperation<?>> {
-  public interface Listener extends OperationSink<RealtimeOperation<?>> {
+public class OperationSucker implements GenericOperationChannel.Listener<RealtimeOperation> {
+  public interface Listener extends OperationSink<RealtimeOperation> {
     void onCollaboratorChanged(boolean isJoined, JsonObject json);
 
     void onSaveStateChanged(boolean isSaving, boolean isPending);
   }
-  public interface OutputSink extends OperationSink<RealtimeOperation<?>> {
+  public interface OutputSink extends OperationSink<RealtimeOperation> {
     void close();
   }
 
@@ -43,24 +44,23 @@ public class OperationSucker implements GenericOperationChannel.Listener<Realtim
 
   private static final ChannelDemuxer demuxer = ChannelDemuxer.get();
   private final String id;
-  private final GenericOperationChannel<RealtimeOperation<?>> channel;
+  private final GenericOperationChannel<RealtimeOperation> channel;
   private final Rpc rpc;
-  private final RealtimeTransformer transformer;
+  private final Transformer<RealtimeOperation> transformer;
   private final OutputSink outputSink;
-  private final ReceiveOpChannel<RealtimeOperation<?>> receiveChannel;
+  private final ReceiveOpChannel<RealtimeOperation> receiveChannel;
   private Listener bridge;
   private final String sessionId = ChannelDemuxer.getSessionId();;
 
   public OperationSucker(final String id) {
     this.id = id;
     this.rpc = demuxer.getRpc();
-    transformer = new RealtimeTransformer();
-    receiveChannel = new ReceiveOpChannelImpl<RealtimeOperation<?>>(id, rpc, transformer);
-    TransformQueue<RealtimeOperation<?>> queue =
-        new TransformQueue<RealtimeOperation<?>>(transformer);
-    SaveService<RealtimeOperation<?>> saveService = new SaveService<RealtimeOperation<?>>(rpc, id);
+    transformer = new TransformerImpl<RealtimeOperation>();
+    receiveChannel = new ReceiveOpChannelImpl<RealtimeOperation>(id, rpc, transformer);
+    SaveService<RealtimeOperation> saveService = new SaveService<RealtimeOperation>(rpc);
     channel =
-        new GenericOperationChannel<RealtimeOperation<?>>(queue, receiveChannel, saveService, this);
+        new GenericOperationChannel<RealtimeOperation>(id, transformer, receiveChannel,
+            saveService, this);
     outputSink = new OutputSink() {
       @Override
       public void close() {
@@ -69,7 +69,7 @@ public class OperationSucker implements GenericOperationChannel.Listener<Realtim
       }
 
       @Override
-      public void consume(RealtimeOperation<?> op) {
+      public void consume(RealtimeOperation op) {
         channel.send(op);
       }
     };
@@ -95,7 +95,7 @@ public class OperationSucker implements GenericOperationChannel.Listener<Realtim
   }
 
   @Override
-  public void onAck(RealtimeOperation<?> serverHistoryOp, boolean clean) {
+  public void onAck(RealtimeOperation serverHistoryOp, boolean clean) {
   }
 
   @Override
@@ -104,7 +104,7 @@ public class OperationSucker implements GenericOperationChannel.Listener<Realtim
   }
 
   @Override
-  public void onRemoteOp(RealtimeOperation<?> serverHistoryOp) {
+  public void onRemoteOp(RealtimeOperation serverHistoryOp) {
     while (channel.peek() != null) {
       bridge.consume(channel.receive());
     }

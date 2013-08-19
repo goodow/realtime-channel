@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Goodow.com
+ * Copyright 2013 Goodow.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -15,21 +15,19 @@ package com.goodow.realtime.channel.operation;
 
 import com.goodow.realtime.channel.util.ChannelNative;
 import com.goodow.realtime.channel.util.FuzzingBackOffGenerator;
-import com.goodow.realtime.operation.Operation;
+import com.goodow.realtime.operation.Transformer;
 
+import java.util.EnumSet;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import elemental.util.ArrayOf;
-import elemental.util.ArrayOfInt;
-import elemental.util.Collections;
 
 /**
  * Service that handles transportation and transforming of client and server operations.
  * 
- * @param <O> Mutation type.
+ * @param <M> Mutation type.
  */
-public class GenericOperationChannel<O extends Operation<?>> {
+public class GenericOperationChannel<M> {
 
   /**
    * Notifies when operations and acknowledgments come in. The values passed to the methods can be
@@ -40,7 +38,7 @@ public class GenericOperationChannel<O extends Operation<?>> {
    * been transformed properly. Server history ops are for other uses. To get the server ops to
    * apply locally, use {@link GenericOperationChannel#receive()}
    */
-  public interface Listener<O> {
+  public interface Listener<M> {
     /**
      * A local op is acknowledged as applied at this point in the server history op stream.
      * 
@@ -48,7 +46,7 @@ public class GenericOperationChannel<O extends Operation<?>> {
      *          it was when passed into the channel.
      * @param clean true if the channel is now clean.
      */
-    void onAck(O serverHistoryOp, boolean clean);
+    void onAck(M serverHistoryOp, boolean clean);
 
     /**
      * Called when some unrecoverable problem occurs.
@@ -62,7 +60,7 @@ public class GenericOperationChannel<O extends Operation<?>> {
      * @param serverHistoryOp the operation as it appears in the server history (do not apply this
      *          to local state).
      */
-    void onRemoteOp(O serverHistoryOp);
+    void onRemoteOp(M serverHistoryOp);
 
     void onSaveStateChanged(boolean isSaving, boolean isPending);
   }
@@ -70,14 +68,14 @@ public class GenericOperationChannel<O extends Operation<?>> {
   /**
    * Provides a channel for incoming operations.
    */
-  public interface ReceiveOpChannel<O> {
-    public interface Listener<O> {
+  public interface ReceiveOpChannel<M> {
+    public interface Listener<M> {
       void onError(Throwable e);
 
-      void onMessage(int resultingRevision, String sid, O op);
+      void onMessage(int resultingRevision, String sid, M mutation);
     }
 
-    void connect(int revision, Listener<O> listener);
+    void connect(int revision, Listener<M> listener);
 
     void disconnect();
 
@@ -88,7 +86,7 @@ public class GenericOperationChannel<O extends Operation<?>> {
    * Provides a service to send outgoing operations and synchronize the concurrent object with the
    * server.
    */
-  public interface SendOpService<O> {
+  public interface SendOpService<M> {
     public interface Callback {
       void onConnectionError(Throwable e);
 
@@ -113,7 +111,7 @@ public class GenericOperationChannel<O extends Operation<?>> {
      * <p>
      * Useful for synchronizing with the channel for retrying/reconnection.
      */
-    void requestRevision(String sessionId, Callback callback);
+    void requestRevision(String id, String sid, Callback callback);
 
     /**
      * Submit operations at the given revision.
@@ -121,7 +119,7 @@ public class GenericOperationChannel<O extends Operation<?>> {
      * <p>
      * Will be called back with the revision at which the ops were applied.
      */
-    void submitOperations(String sessionId, int revision, ArrayOf<O> operations, Callback callback);
+    void submitOperations(String id, String sid, int revision, List<M> operations, Callback callback);
   }
 
   /**
@@ -211,7 +209,7 @@ public class GenericOperationChannel<O extends Operation<?>> {
      */
     WAITING_SYNC;
 
-    private ArrayOfInt to;
+    private EnumSet<State> to;
     static {
       UNINITIALISED.transitionsTo(ALL_ACKED);
       ALL_ACKED.transitionsTo(WAITING_ACK);
@@ -222,17 +220,10 @@ public class GenericOperationChannel<O extends Operation<?>> {
 
     private void transitionsTo(State... validTransitionStates) {
       // Also, everything may transition to UNINITIALISED
-      to = Collections.arrayOfInt();
-      to.push(UNINITIALISED.ordinal());
-      for (State state : validTransitionStates) {
-        to.push(state.ordinal());
-      }
+      to = EnumSet.of(UNINITIALISED, validTransitionStates);
     }
   }
 
-  private static final Logger logger = Logger.getLogger(GenericOperationChannel.class.getName());
-  private final FuzzingBackOffGenerator backoffGenerator = new FuzzingBackOffGenerator(1500,
-      1800 * 1000, 0.5);
   private boolean isMaybeSendTaskScheduled;
   private final Runnable maybeSendTask = new Runnable() {
     @Override
@@ -253,7 +244,7 @@ public class GenericOperationChannel<O extends Operation<?>> {
     }
   };
 
-  private final ReceiveOpChannel.Listener<O> receiveListener = new ReceiveOpChannel.Listener<O>() {
+  private final ReceiveOpChannel.Listener<M> receiveListener = new ReceiveOpChannel.Listener<M>() {
     @Override
     public void onError(Throwable e) {
       if (!isConnected()) {
@@ -263,12 +254,11 @@ public class GenericOperationChannel<O extends Operation<?>> {
     }
 
     @Override
-    public void onMessage(int resultingRevision, String sid, O operation) {
+    public void onMessage(int resultingRevision, String sid, M operation) {
       if (!isConnected()) {
         return;
       }
 
-      logger.log(Level.FINE, "my sid=" + sessionId + ", incoming sid=" + sid);
       if (sessionId.equals(sid)) {
         onAckOwnOperation(resultingRevision, operation);
       } else {
@@ -279,21 +269,26 @@ public class GenericOperationChannel<O extends Operation<?>> {
     }
   };
 
-  private final ReceiveOpChannel<O> channel;
-  private final SendOpService<O> submitService;
-  private final Listener<O> listener;
+  private final FuzzingBackOffGenerator backoffGenerator = new FuzzingBackOffGenerator(1500,
+      1800 * 1000, 0.5);
+  private static final Logger logger = Logger.getLogger(GenericOperationChannel.class.getName());
+  private final ReceiveOpChannel<M> channel;
+  private final SendOpService<M> submitService;
+  private final Listener<M> listener;
 
   // State variables
   private State state = State.UNINITIALISED;
-  private final TransformQueue<O> queue;
+  private final TransformQueue<M> queue;
   private String sessionId;
   private int retryVersion = -1;
   private DiscardableCallback submitCallback; // mutable to discard out of date ones
   private DiscardableCallback versionCallback;
+  private final String id;
 
-  public GenericOperationChannel(TransformQueue<O> queue, ReceiveOpChannel<O> channel,
-      SendOpService<O> submitService, Listener<O> listener) {
-    this.queue = queue;
+  public GenericOperationChannel(String id, Transformer<M> transformer,
+      ReceiveOpChannel<M> channel, SendOpService<M> submitService, Listener<M> listener) {
+    this.id = id;
+    this.queue = new TransformQueue<M>(transformer);
     this.channel = channel;
     this.submitService = submitService;
     this.listener = listener;
@@ -333,12 +328,12 @@ public class GenericOperationChannel<O extends Operation<?>> {
     return sessionId != null;
   }
 
-  public O peek() {
+  public M peek() {
     checkConnected();
     return queue.hasServerOp() ? queue.peekServerOp() : null;
   }
 
-  public O receive() {
+  public M receive() {
     checkConnected();
     return queue.hasServerOp() ? queue.removeServerOp() : null;
   }
@@ -348,17 +343,14 @@ public class GenericOperationChannel<O extends Operation<?>> {
     return queue.revision();
   }
 
-  public void send(O operation) {
-    if (operation.isNoOp()) {
-      return;
-    }
+  public void send(M operation) {
     checkConnected();
     queue.clientOp(operation);
     // Defer the send to allow multiple ops to batch up, and
     // to avoid waiting for the browser's network stack in case
     // we are in a time critical piece of code. Note, we could even
     // go further and avoid doing the transform inside the queue.
-    if (!queue.hasUnacknowledgedClientOps()) {
+    if (!isMaybeSendTaskScheduled && !queue.hasUnacknowledgedClientOps()) {
       assert state == State.ALL_ACKED;
       isMaybeSendTaskScheduled = true;
       ChannelNative.get().scheduleDeferred(maybeSendTask);
@@ -378,7 +370,7 @@ public class GenericOperationChannel<O extends Operation<?>> {
     submitCallback.discard();
 
     setState(State.ALL_ACKED);
-    if (queue.hasQueuedClientOps()) {
+    if (!isMaybeSendTaskScheduled && queue.hasQueuedClientOps()) {
       isMaybeSendTaskScheduled = true;
       ChannelNative.get().scheduleDeferred(maybeSendTask);
     }
@@ -429,8 +421,11 @@ public class GenericOperationChannel<O extends Operation<?>> {
   }
 
   private void delayResync() {
-    isResyncTaskScheduled = true;
-    ChannelNative.get().scheduleFixedDelay(delayedResyncTask, backoffGenerator.next().targetDelay);
+    if (!isResyncTaskScheduled) {
+      isResyncTaskScheduled = true;
+      ChannelNative.get()
+          .scheduleFixedDelay(delayedResyncTask, backoffGenerator.next().targetDelay);
+    }
     setState(State.DELAY_RESYNC);
   }
 
@@ -443,11 +438,12 @@ public class GenericOperationChannel<O extends Operation<?>> {
         maybeSynced();
       }
     };
-    submitService.requestRevision(sessionId, versionCallback);
+    submitService.requestRevision(id, sessionId, versionCallback);
     setState(State.WAITING_SYNC);
   }
 
   private void fail(Throwable e) {
+
     logger.log(Level.WARNING, "channel.fail()");
     if (!isConnected()) {
       logger.log(Level.WARNING, "not connected");
@@ -466,11 +462,11 @@ public class GenericOperationChannel<O extends Operation<?>> {
   }
 
   private void maybeEagerlyHandleAck(int appliedRevision) {
-    ArrayOf<O> ownOps = queue.ackOpsIfVersionMatches(appliedRevision);
+    List<M> ownOps = queue.ackOpsIfVersionMatches(appliedRevision);
     if (ownOps == null) {
-      channel.onKnownHeadRevision(appliedRevision);
       return;
     }
+
     logger.log(Level.INFO, "Eagerly acked @" + appliedRevision);
 
     // Special optimization: there were no concurrent ops on the server,
@@ -483,8 +479,8 @@ public class GenericOperationChannel<O extends Operation<?>> {
     allAcked();
 
     boolean isClean = isClean();
-    for (int i = 0, len = ownOps.length(); i < len; i++) {
-      boolean isLast = i == ownOps.length() - 1;
+    for (int i = 0; i < ownOps.size(); i++) {
+      boolean isLast = i == ownOps.size() - 1;
       listener.onAck(ownOps.get(i), isClean && isLast);
     }
   }
@@ -494,6 +490,7 @@ public class GenericOperationChannel<O extends Operation<?>> {
       logger.log(Level.INFO, state + ", Has " + queue.unackedClientOpsCount() + " unacked...");
       return;
     }
+
     if (queue.hasQueuedClientOps()) {
       queue.pushQueuedOpsToUnacked();
       if (queue.hasUnacknowledgedClientOps()) {
@@ -520,7 +517,7 @@ public class GenericOperationChannel<O extends Operation<?>> {
     }
   }
 
-  private void onAckOwnOperation(int resultingRevision, O ackedOp) {
+  private void onAckOwnOperation(int resultingRevision, M ackedOp) {
     boolean alreadyAckedByXhr = queue.expectedAck(resultingRevision);
     if (alreadyAckedByXhr) {
       // Nothing to do, just receiving expected operations that we've
@@ -541,7 +538,7 @@ public class GenericOperationChannel<O extends Operation<?>> {
     listener.onAck(ackedOp, isClean());
   }
 
-  private void onIncomingOperation(int revision, O operation) {
+  private void onIncomingOperation(int revision, M operation) {
     logger.log(Level.INFO, "Incoming " + revision + " " + state);
     queue.serverOp(revision, operation);
     listener.onRemoteOp(operation);
@@ -551,9 +548,9 @@ public class GenericOperationChannel<O extends Operation<?>> {
    * Sends unacknowledged ops and transitions to the WAITING_ACK state
    */
   private void sendUnackedOps() {
-    ArrayOf<O> ops = queue.unackedClientOps();
-    assert ops.length() > 0;
-    logger.log(Level.INFO, "Sending " + ops.length() + " ops @" + queue.revision());
+    List<M> ops = queue.unackedClientOps();
+    assert ops.size() > 0;
+    logger.log(Level.INFO, "Sending " + ops.size() + " ops @" + queue.revision());
     submitCallback = new DiscardableCallback() {
       @Override
       void success(int appliedRevision) {
@@ -561,7 +558,7 @@ public class GenericOperationChannel<O extends Operation<?>> {
       }
     };
 
-    submitService.submitOperations(sessionId, queue.revision(), ops, submitCallback);
+    submitService.submitOperations(id, sessionId, queue.revision(), ops, submitCallback);
     setState(State.WAITING_ACK);
   }
 
@@ -573,7 +570,8 @@ public class GenericOperationChannel<O extends Operation<?>> {
    */
   private void setState(State newState) {
     // Check transitioning from valid old state
-    assert state.to.contains(newState.ordinal()) : "Invalid state transition " + state + " -> "
+    State oldState = state;
+    assert oldState.to.contains(newState) : "Invalid state transition " + oldState + " -> "
         + newState;
 
     // Check consistency of variables with new state
