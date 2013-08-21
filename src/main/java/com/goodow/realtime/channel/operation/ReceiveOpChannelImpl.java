@@ -121,20 +121,25 @@ public class ReceiveOpChannelImpl<T> implements ReceiveOpChannel<T> {
     assert knownHeadRevision == currentRevision || isCatchupTaskScheduled;
   }
 
+  @Override
+  public void onMessage(int resultingRevision, String sid, T mutation) {
+    receiveUnorderedData(resultingRevision, sid, mutation);
+  }
+
   public void onMessage(JsonObject msg) {
     JsonArray deltas = msg.getArray(Params.DELTAS);
     for (int i = 0, len = deltas.length(); i < len; i++) {
       JsonArray delta = deltas.getArray(i);
       T op;
-      String sessionId = delta.getString(3);
+      String sessionId = delta.getString(2);
       try {
         String userId = delta.getString(1);
-        op = transformer.createOperation(userId, sessionId, delta.get(0));
+        op = transformer.createOperation(userId, sessionId, delta.get(3));
       } catch (JsonException e) {
         listener.onError(e);
         return;
       }
-      receiveUnorderedData((int) delta.getNumber(2), sessionId, op);
+      receiveUnorderedData((int) delta.getNumber(0), sessionId, op);
     }
     if (msg.hasKey(Params.REVISION)) {
       // The head revision might be greater than expected if some
@@ -182,9 +187,9 @@ public class ReceiveOpChannelImpl<T> implements ReceiveOpChannel<T> {
   }
 
   private void scheduleCatchup() {
-    log.log(Level.FINE, "scheduleCatchup()");
     // Check, to avoid resetting the delay.
     if (!isCatchupTaskScheduled) {
+      log.log(Level.FINE, "scheduleCatchup()");
       isCatchupTaskScheduled = true;
       ChannelNative.get().scheduleFixedDelay(catchupTask, CATCHUP_DELAY_MILLIS);
     }
@@ -223,8 +228,8 @@ public class ReceiveOpChannelImpl<T> implements ReceiveOpChannel<T> {
 
     assert resultingRevision == currentRevision + 1 : "other cases should have been caught";
 
+    log.log(Level.FINE, "Ordered op @" + resultingRevision);
     while (true) {
-      log.log(Level.FINE, "Ordered op @" + resultingRevision);
       listener.onMessage(currentRevision + 1, sessionId, op);
       currentRevision++;
 

@@ -52,7 +52,7 @@ public class Constants {
   public static class Services {
     public static final String SERVICE = "otservice/";
     public static final String SNAPSHOT = SERVICE + "gs";
-    public static final String DELTA = SERVICE + "delta";
+    public static final String DELTA = SERVICE + "catchup";
     public static final String REVISION = SERVICE + "revision";
     public static final String SAVE = SERVICE + "save";
     public static final String POLL = SERVICE + "poll";

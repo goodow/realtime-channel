@@ -80,6 +80,8 @@ public class GenericOperationChannel<M> {
     void disconnect();
 
     void onKnownHeadRevision(int headRevison);
+
+    void onMessage(int resultingRevision, String sid, M mutation);
   }
 
   /**
@@ -464,6 +466,7 @@ public class GenericOperationChannel<M> {
   private void maybeEagerlyHandleAck(int appliedRevision) {
     List<M> ownOps = queue.ackOpsIfVersionMatches(appliedRevision);
     if (ownOps == null) {
+      channel.onKnownHeadRevision(appliedRevision);
       return;
     }
 
@@ -479,9 +482,13 @@ public class GenericOperationChannel<M> {
     allAcked();
 
     boolean isClean = isClean();
-    for (int i = 0; i < ownOps.size(); i++) {
-      boolean isLast = i == ownOps.size() - 1;
-      listener.onAck(ownOps.get(i), isClean && isLast);
+    int size = ownOps.size();
+    int startRev = appliedRevision - size + 1;
+    int i = 0;
+    for (M serverHistoryOp : ownOps) {
+      boolean isLast = i == size - 1;
+      channel.onMessage(startRev + i++, sessionId, serverHistoryOp);
+      listener.onAck(serverHistoryOp, isClean && isLast);
     }
   }
 
@@ -581,7 +588,9 @@ public class GenericOperationChannel<M> {
 
     switch (newState) {
       case ALL_ACKED:
-        listener.onSaveStateChanged(false, queue.hasQueuedClientOps());
+        if (oldState != State.UNINITIALISED) {
+          listener.onSaveStateChanged(false, queue.hasQueuedClientOps());
+        }
         break;
       case WAITING_ACK:
         listener.onSaveStateChanged(true, queue.hasQueuedClientOps());
