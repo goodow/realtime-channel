@@ -32,6 +32,8 @@ import elemental.json.JsonValue;
 
 public class OperationSucker implements GenericOperationChannel.Listener<RealtimeOperation> {
   public interface Listener extends OperationSink<RealtimeOperation> {
+    void handleError(String type, String message, boolean isFatal);
+
     void onCollaboratorChanged(boolean isJoined, JsonObject json);
 
     void onSaveStateChanged(boolean isSaving, boolean isPending);
@@ -100,7 +102,8 @@ public class OperationSucker implements GenericOperationChannel.Listener<Realtim
 
   @Override
   public void onError(Throwable e) {
-    logger.log(Level.WARNING, "Unable to save", e);
+    logger.log(Level.WARNING, "Channel error occurs", e);
+    bridge.handleError("SERVER_ERROR", "Channel error occurs", true);
   }
 
   @Override

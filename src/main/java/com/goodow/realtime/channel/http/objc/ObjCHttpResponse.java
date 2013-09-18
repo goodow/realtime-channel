@@ -15,12 +15,10 @@ package com.goodow.realtime.channel.http.objc;
 
 import com.goodow.realtime.channel.http.HttpResponse;
 
-import java.io.IOException;
-
 /**
  * Stub implementation.
  */
-class ObjCHttpResponse extends HttpResponse {
+class ObjCHttpResponse implements HttpResponse {
 
   @Override
   public String getContent() {
@@ -28,47 +26,7 @@ class ObjCHttpResponse extends HttpResponse {
   }
 
   @Override
-  public String getContentEncoding() throws IOException {
-    throw new RuntimeException("Stub!");
-  }
-
-  @Override
-  public long getContentLength() throws IOException {
-    throw new RuntimeException("Stub!");
-  }
-
-  @Override
-  public String getContentType() throws IOException {
-    throw new RuntimeException("Stub!");
-  }
-
-  @Override
-  public int getHeaderCount() throws IOException {
-    throw new RuntimeException("Stub!");
-  }
-
-  @Override
-  public String getHeaderName(int index) throws IOException {
-    throw new RuntimeException("Stub!");
-  }
-
-  @Override
-  public String getHeaderValue(int index) throws IOException {
-    throw new RuntimeException("Stub!");
-  }
-
-  @Override
-  public String getReasonPhrase() throws IOException {
-    throw new RuntimeException("Stub!");
-  }
-
-  @Override
   public int getStatusCode() {
-    throw new RuntimeException("Stub!");
-  }
-
-  @Override
-  public String getStatusLine() throws IOException {
     throw new RuntimeException("Stub!");
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Goodow.com
+ * Copyright 2013 Goodow.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -23,11 +23,9 @@ import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.Response;
 
-import java.io.IOException;
-
 import elemental.client.Browser;
 
-final class JsHttpRequest extends HttpRequest {
+final class JsHttpRequest implements HttpRequest {
 
   private final RequestBuilder request;
 
@@ -41,27 +39,13 @@ final class JsHttpRequest extends HttpRequest {
   }
 
   @Override
-  public void addHeader(String name, String value) {
-    request.setHeader(name, value);
-  }
-
-  @Override
-  public void executeAsync(final HttpRequestCallback callback) throws IOException {
+  public void executeAsync(final HttpRequestCallback callback, String content) {
     // write content
-    if (getContent() != null) {
-      String contentType = getContentType();
-      if (contentType != null) {
-        addHeader("Content-Type", contentType);
-      }
-      String contentEncoding = getContentEncoding();
-      if (contentEncoding != null) {
-        addHeader("Content-Encoding", contentEncoding);
-      }
-      request.setRequestData(getContent());
+    if (content != null) {
+      request.setRequestData(content);
     }
     // connect
     request.setCallback(new RequestCallback() {
-
       @Override
       public void onError(Request request, Throwable exception) {
         callback.onFailure(exception);
@@ -75,7 +59,7 @@ final class JsHttpRequest extends HttpRequest {
     try {
       request.send();
     } catch (RequestException e) {
-      throw new IOException(e);
+      callback.onFailure(e);
     }
   }
 }

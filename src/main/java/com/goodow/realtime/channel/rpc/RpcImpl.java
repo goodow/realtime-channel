@@ -18,7 +18,6 @@ import com.goodow.realtime.channel.http.HttpRequestCallback;
 import com.goodow.realtime.channel.http.HttpResponse;
 import com.goodow.realtime.channel.util.ChannelNative;
 
-import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -286,17 +285,10 @@ public class RpcImpl implements Rpc {
 
     RpcRequestCallback innerCallback = new RpcRequestCallback(requestId, rpcCallback, url);
 
-    try {
-      // TODO: store the Request object somewhere so we can e.g. cancel it
-      Handle handle = new Handle(requestId);
-      handles.put(handle.getId(), handle);
-      r.setContent(requestData);
-      r.executeAsync(innerCallback);
-      return handle;
-    } catch (IOException e) {
-      // TODO: Decide if this should be a badRequest.
-      innerCallback.error(e);
-      return null;
-    }
+    // TODO: store the Request object somewhere so we can e.g. cancel it
+    Handle handle = new Handle(requestId);
+    handles.put(handle.getId(), handle);
+    r.executeAsync(innerCallback, requestData);
+    return handle;
   }
 }

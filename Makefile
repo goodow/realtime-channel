@@ -3,21 +3,19 @@
 
 include ../resources/make/common.mk
 
-MAIN_SOURCES = $(shell find $(MAIN_SRC_DIR) -name *.java ! -name ChannelNative.java \
-  ! -name JreChannelFactory.java ! -name Js*.java)
-MAIN_TEMP_SOURCES = $(subst $(MAIN_SRC_DIR), $(CHANNEL_GEN_DIR), $(MAIN_SOURCES))
-MAIN_GEN_SOURCES = $(MAIN_TEMP_SOURCES:.java=.m)
+MAIN_SOURCES = $(subst ./,,$(shell cd $(MAIN_SRC_DIR); find . -name *.java \
+  ! -name ChannelNative.java ! -name JreChannelFactory.java ! -name Js*.java))
+MAIN_GEN_SOURCES = $(MAIN_SOURCES:%.java=$(CHANNEL_GEN_DIR)/%.m)
 OVERRIDE_GEN_DIR = $(GDREALTIME_DIR)/Classes/override_generated/channel
 
-OCNI_SOURCES = $(shell find $(OCNI_SRC_DIR) -name *.java)
-OCNI_TEMP_SOURCES = $(subst $(OCNI_SRC_DIR), $(BUILD_DIR), $(OCNI_SOURCES))
-OCNI_GEN_SOURCES = $(OCNI_TEMP_SOURCES:.java=.placeholder)
+OCNI_SOURCES = $(subst ./,,$(shell cd $(OCNI_SRC_DIR); find . -name *.java))
+OCNI_GEN_SOURCES = $(OCNI_SOURCES:%.java=$(BUILD_DIR)/%.placeholder)
 
 TEMP_PATH = $(J2OBJC_DIST)/lib/guava-13.0.jar
 TEMP_PATH += :$(M2_REPO)/com/goodow/gwt/gwt-elemental/2.5.1-SNAPSHOT/gwt-elemental-2.5.1-SNAPSHOT.jar
 TEMP_PATH += :$(M2_REPO)/org/timepedia/exporter/gwtexporter/2.5.0-SNAPSHOT/gwtexporter-2.5.0-SNAPSHOT.jar
 TEMP_PATH += :$(M2_REPO)/com/google/gwt/gwt-user/2.5.1/gwt-user-2.5.1.jar
-TEMP_PATH += :$(M2_REPO)/com/goodow/realtime/realtime-operation/0.0.1-SNAPSHOT/realtime-operation-0.0.1-SNAPSHOT.jar
+TEMP_PATH += :$(M2_REPO)/com/goodow/realtime/realtime-operation/0.3.0-SNAPSHOT/realtime-operation-0.3.0-SNAPSHOT.jar
 CLASSPATH = $(shell echo $(TEMP_PATH) | sed 's/ //g')
     
 default: clean translate pod_update
@@ -42,7 +40,7 @@ $(BUILD_DIR)/%.placeholder: $(OCNI_SRC_DIR)/%.java
 translate_main: pre_translate_main $(MAIN_GEN_SOURCES) $(OCNI_GEN_SOURCES)
 	@if [ `cat $(MAIN_SOURCE_LIST) | wc -l` -ge 1 ] ; then \
 	  $(J2OBJC) -sourcepath $(MAIN_SRC_DIR) -d $(CHANNEL_GEN_DIR) \
-	    -classpath $(CLASSPATH) -use-arc \
+	    -classpath $(CLASSPATH) \
 	    `cat $(MAIN_SOURCE_LIST)` ; \
 	fi
 	@cp -r $(OVERRIDE_GEN_DIR)/ $(CHANNEL_GEN_DIR)

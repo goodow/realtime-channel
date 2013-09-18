@@ -16,26 +16,17 @@ package com.goodow.realtime.channel.http.objc;
 import com.goodow.realtime.channel.http.HttpRequest;
 import com.goodow.realtime.channel.http.HttpRequestCallback;
 
-import java.io.IOException;
-
 /**
  * Stub implementation.
  */
-class ObjCHttpRequest extends HttpRequest {
+class ObjCHttpRequest implements HttpRequest {
 
-  @SuppressWarnings("unused")
   ObjCHttpRequest(String method, String url) {
     throw new RuntimeException("Stub!");
   }
 
   @Override
-  public void addHeader(String name, String value) {
+  public void executeAsync(HttpRequestCallback callback, String content) {
     throw new RuntimeException("Stub!");
   }
-
-  @Override
-  public void executeAsync(HttpRequestCallback callback) throws IOException {
-    throw new RuntimeException("Stub!");
-  }
-
 }

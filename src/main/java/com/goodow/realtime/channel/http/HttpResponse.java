@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Goodow.com
+ * Copyright 2013 Goodow.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -13,68 +13,12 @@
  */
 package com.goodow.realtime.channel.http;
 
-import java.io.IOException;
-
-/**
- * Low-level HTTP response.
- * 
- * <p>
- * This allows providing a different implementation of the HTTP response that is more compatible
- * with the Java environment used.
- * </p>
- * 
- * <p>
- * Implementation has no fields and therefore thread-safe, but sub-classes are not necessarily
- * thread-safe.
- * </p>
- */
-public abstract class HttpResponse {
-
-  /**
-   * Default implementation does nothing, but subclasses may override to attempt to abort the
-   * connection or release allocated system resources for this connection.
-   * 
-   * @throws IOException I/O exception
-   */
-  public void disconnect() throws IOException {
-  }
-
+public interface HttpResponse {
   /**
    * Returns the HTTP response content input stream or {@code null} for none.
    */
-  public abstract String getContent();
-
-  /** Returns the content encoding (for example {@code "gzip"}) or {@code null} for none. */
-  public abstract String getContentEncoding() throws IOException;
-
-  /** Returns the content length or {@code 0} for none. */
-  public abstract long getContentLength() throws IOException;
-
-  /** Returns the content type or {@code null} for none. */
-  public abstract String getContentType() throws IOException;
-
-  /**
-   * Returns the number of HTTP response headers.
-   * 
-   * <p>
-   * Note that multiple headers of the same name need to be supported, in which case each header
-   * value is treated as a separate header.
-   * </p>
-   */
-  public abstract int getHeaderCount() throws IOException;
-
-  /** Returns the HTTP response header name at the given zero-based index. */
-  public abstract String getHeaderName(int index) throws IOException;
-
-  /** Returns the HTTP response header value at the given zero-based index. */
-  public abstract String getHeaderValue(int index) throws IOException;
-
-  /** Returns the HTTP reason phrase or {@code null} for none. */
-  public abstract String getReasonPhrase() throws IOException;
+  String getContent();
 
   /** Returns the response status code or {@code 0} for none. */
-  public abstract int getStatusCode();
-
-  /** Returns the response status line or {@code null} for none. */
-  public abstract String getStatusLine() throws IOException;
+  int getStatusCode();
 }

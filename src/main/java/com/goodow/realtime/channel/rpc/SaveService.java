@@ -30,7 +30,7 @@ import elemental.util.Collections;
 import elemental.util.MapFromStringToString;
 
 /**
- * Low-level service that submits a delta to a wave. Does not handle being called while another
+ * Low-level service that submits a delta to a document. Does not handle being called while another
  * delta is still in flight, that is a job for the channel layer above.
  */
 public class SaveService<O extends Operation<?>> implements SendOpService<O> {
