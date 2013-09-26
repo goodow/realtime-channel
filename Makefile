@@ -3,12 +3,12 @@
 
 include ../resources/make/common.mk
 
-MAIN_SOURCES = $(subst ./,,$(shell cd $(MAIN_SRC_DIR); find . -name *.java \
+MAIN_SOURCES = $(subst $(MAIN_SRC_DIR)/,,$(shell find $(MAIN_SRC_DIR) -name *.java \
   ! -name ChannelNative.java ! -name JreChannelFactory.java ! -name Js*.java))
 MAIN_GEN_SOURCES = $(MAIN_SOURCES:%.java=$(CHANNEL_GEN_DIR)/%.m)
 OVERRIDE_GEN_DIR = $(GDREALTIME_DIR)/Classes/override_generated/channel
 
-OCNI_SOURCES = $(subst ./,,$(shell cd $(OCNI_SRC_DIR); find . -name *.java))
+OCNI_SOURCES = $(subst $(OCNI_SRC_DIR)/,,$(shell find $(OCNI_SRC_DIR) -name *.java))
 OCNI_GEN_SOURCES = $(OCNI_SOURCES:%.java=$(BUILD_DIR)/%.placeholder)
 
 TEMP_PATH = $(J2OBJC_DIST)/lib/guava-13.0.jar
@@ -25,9 +25,8 @@ translate: translate_main
 pod_update: 
 	@cd $(GDREALTIME_DIR)/Project;pod update
 
-pre_translate_main: $(CHANNEL_GEN_DIR)
+pre_translate_main: $(BUILD_DIR) $(CHANNEL_GEN_DIR)
 	@rm -f $(MAIN_SOURCE_LIST)
-	@mkdir -p `dirname $(MAIN_SOURCE_LIST)`
 	@touch $(MAIN_SOURCE_LIST)
         
 $(CHANNEL_GEN_DIR)/%.m $(CHANNEL_GEN_DIR)/%.h: $(MAIN_SRC_DIR)/%.java
