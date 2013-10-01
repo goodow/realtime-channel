@@ -37,7 +37,7 @@ public class ObjCChannelFactory implements ChannelFactory {
     static NSString * userAgent;
     if (!userAgent) {
       UIWebView *webView = [[UIWebView alloc]initWithFrame:CGRectZero];
-      userAgent = [webView stringByEvaluatingJavaScriptFromString:"@navigator.userAgent"];
+      userAgent = [webView stringByEvaluatingJavaScriptFromString:@"navigator.userAgent"];
     }
     return userAgent;
   ]-*/;
