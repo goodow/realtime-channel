@@ -35,10 +35,12 @@ public class ObjCChannelFactory implements ChannelFactory {
   @Override
   public native String getDefaultUserAgent() /*-[
     static NSString * userAgent;
-    if (!userAgent) {
-      UIWebView *webView = [[UIWebView alloc]initWithFrame:CGRectZero];
-      userAgent = [webView stringByEvaluatingJavaScriptFromString:@"navigator.userAgent"];
-    }
+    #if TARGET_OS_IPHONE == 1 || TARGET_OS_IPHONE_SIMULATOR == 1
+      if (!userAgent) {
+        UIWebView *webView = [[UIWebView alloc]initWithFrame:CGRectZero];
+        userAgent = [webView stringByEvaluatingJavaScriptFromString:@"navigator.userAgent"];
+      }
+    #endif
     return userAgent;
   ]-*/;
 
