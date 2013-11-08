@@ -16,11 +16,11 @@ package com.goodow.realtime.channel;
 import com.goodow.realtime.channel.rpc.PollService;
 import com.goodow.realtime.channel.util.ChannelNative;
 
+import java.util.Set;
 import java.util.logging.Logger;
 
 import elemental.json.Json;
 import elemental.json.JsonArray;
-import elemental.util.ArrayOfString;
 
 public class PollChannel {
   private static final Logger log = Logger.getLogger(PollChannel.class.getName());
@@ -65,15 +65,15 @@ public class PollChannel {
   }
 
   private void runImpl() {
-    ArrayOfString ids = demuxer.getIds();
+    Set<String> ids = demuxer.getIds();
     JsonArray array = Json.createArray();
-    if (ids.length() != 0) {
-      for (int i = 0, len = ids.length(); i < len; i++) {
+    if (!ids.isEmpty()) {
+      int i = 0;
+      for (String id : ids) {
         JsonArray req = Json.createArray();
-        String id = ids.get(i);
         req.set(0, id);
         req.set(1, demuxer.getRevision(id) + 1);
-        array.set(i, req);
+        array.set(i++, req);
       }
       // log.log(Level.FINE, "Heartbeat");
     }

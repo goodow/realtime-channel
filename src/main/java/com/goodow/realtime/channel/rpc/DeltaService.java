@@ -17,11 +17,11 @@ import com.goodow.realtime.channel.ChannelDemuxer;
 import com.goodow.realtime.channel.constant.Constants;
 import com.goodow.realtime.channel.constant.Constants.Params;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Logger;
 
 import elemental.json.JsonObject;
-import elemental.util.Collections;
-import elemental.util.MapFromStringToString;
 
 /**
  * Handles getting a channel token for connecting a browser channel, and fetching missing messages.
@@ -43,7 +43,7 @@ public class DeltaService {
   }
 
   public void fetchHistory(String key, final int startRev, final Callback callback) {
-    MapFromStringToString params = Collections.mapFromStringToString();
+    Map<String, String> params = new HashMap<String, String>();
     params.put(Constants.Params.ID, key);
     params.put(Constants.Params.ACCESS_TOKEN, ChannelDemuxer.get().getAccessToken());
     params.put(Constants.Params.START_REVISION, startRev + "");

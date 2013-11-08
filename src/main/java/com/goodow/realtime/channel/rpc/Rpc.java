@@ -13,8 +13,9 @@
  */
 package com.goodow.realtime.channel.rpc;
 
+import java.util.Map;
+
 import elemental.json.JsonException;
-import elemental.util.MapFromStringToString;
 
 /**
  * Interface for an RPC mechanism.
@@ -110,7 +111,7 @@ public interface Rpc {
    * @param rpcCallback called back on success or failure.
    * @return a handle to the request, or null if sending failed
    */
-  RpcHandle get(String serviceName, MapFromStringToString params, final Rpc.RpcCallback rpcCallback);
+  RpcHandle get(String serviceName, Map<String, String> params, final Rpc.RpcCallback rpcCallback);
 
   /**
    * Modifies the state if the transition is permitted.
@@ -126,6 +127,6 @@ public interface Rpc {
    * @param rpcCallback called back on success or failure.
    * @return a handle to the request, or null if sending failed
    */
-  RpcHandle post(String serviceName, MapFromStringToString params, String formData,
+  RpcHandle post(String serviceName, Map<String, String> params, String formData,
       final Rpc.RpcCallback rpcCallback);
 }

@@ -18,15 +18,12 @@ import com.goodow.realtime.channel.http.HttpRequestCallback;
 import com.goodow.realtime.channel.http.HttpResponse;
 import com.goodow.realtime.channel.util.ChannelNative;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import elemental.json.JsonException;
-import elemental.util.ArrayOfInt;
-import elemental.util.ArrayOfString;
-import elemental.util.Collections;
-import elemental.util.MapFromIntTo;
-import elemental.util.MapFromStringToString;
 
 /**
  * Ajax HTTP-Request based implementation of the Rpc interface.
@@ -63,7 +60,7 @@ public class RpcImpl implements Rpc {
 
     @Override
     public boolean isPending() {
-      return handles.hasKey(id);
+      return handles.containsKey(id);
     }
   }
 
@@ -90,16 +87,13 @@ public class RpcImpl implements Rpc {
   /** Incrementing id counter */
   private static int nextRequestId;
 
-  private static MapFromIntTo<Handle> handles = Collections.mapFromIntTo();
+  private static Map<Integer, Handle> handles = new HashMap<Integer, Handle>();
 
   /**
    * Drops all pending AJAX requests
    */
   public static void dropAll() {
-    ArrayOfInt keys = handles.keys();
-    for (int i = 0, len = keys.length(); i < len; i++) {
-      handles.remove(keys.get(i));
-    }
+    handles.clear();
   }
 
   /**
@@ -111,7 +105,7 @@ public class RpcImpl implements Rpc {
   }
 
   @Override
-  public RpcHandle get(String serviceName, MapFromStringToString params, RpcCallback rpcCallback) {
+  public RpcHandle get(String serviceName, Map<String, String> params, RpcCallback rpcCallback) {
     return makeRequest(Method.GET, serviceName, params, null, rpcCallback);
   }
 
@@ -131,24 +125,21 @@ public class RpcImpl implements Rpc {
   }
 
   @Override
-  public RpcHandle post(String serviceName, MapFromStringToString params, String formData,
+  public RpcHandle post(String serviceName, Map<String, String> params, String formData,
       RpcCallback rpcCallback) {
     return makeRequest(Method.POST, serviceName, params, formData, rpcCallback);
   }
 
-  private StringBuilder addParams(final StringBuilder b, MapFromStringToString params) {
-    ArrayOfString keys = params.keys();
-    for (int i = 0, len = keys.length(); i < len; i++) {
-      String key = keys.get(i);
-      String value = params.get(key);
-      if (value != null) {
-        b.append(key + "=" + ChannelNative.get().escapeUriQuery(value) + "&");
+  private StringBuilder addParams(final StringBuilder b, Map<String, String> params) {
+    for (Map.Entry<String, String> entry : params.entrySet()) {
+      if (entry.getValue() != null) {
+        b.append(entry.getKey() + "=" + ChannelNative.get().escapeUriQuery(entry.getValue()) + "&");
       }
     }
     return b;
   }
 
-  private RpcHandle makeRequest(Method method, String serviceName, MapFromStringToString params,
+  private RpcHandle makeRequest(Method method, String serviceName, Map<String, String> params,
       String requestData, final Rpc.RpcCallback rpcCallback) {
     final int requestId = nextRequestId;
     nextRequestId++;
@@ -184,7 +175,7 @@ public class RpcImpl implements Rpc {
 
       @Override
       public void onFailure(Throwable exception) {
-        if (!handles.hasKey(id)) {
+        if (!handles.containsKey(id)) {
           log.log(Level.INFO, "RPC FailureDrop, id=" + id + " " + exception.getMessage());
           return;
         }

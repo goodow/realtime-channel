@@ -15,13 +15,13 @@ package com.goodow.realtime.channel.rpc;
 
 import com.goodow.realtime.channel.constant.Constants;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import elemental.json.JsonObject;
 import elemental.json.JsonValue;
-import elemental.util.Collections;
-import elemental.util.MapFromStringToString;
 
 public class SnapshotService {
   public interface Callback {
@@ -38,7 +38,7 @@ public class SnapshotService {
 
   public void load(final String id, String token, String sessionId, boolean autoCreate,
       final Callback callback) {
-    MapFromStringToString params = Collections.mapFromStringToString();
+    Map<String, String> params = new HashMap<String, String>();
     params.put(Constants.Params.ID, id);
     if (sessionId != null) {
       params.put(Constants.Params.SESSION_ID, sessionId);

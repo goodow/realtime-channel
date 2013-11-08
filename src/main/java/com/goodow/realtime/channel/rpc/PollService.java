@@ -17,21 +17,21 @@ import com.goodow.realtime.channel.ChannelDemuxer;
 import com.goodow.realtime.channel.constant.Constants;
 import com.goodow.realtime.channel.constant.Constants.Params;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import elemental.json.Json;
 import elemental.json.JsonArray;
 import elemental.json.JsonObject;
-import elemental.util.Collections;
-import elemental.util.MapFromStringToString;
 
 public class PollService {
   private static final Logger log = Logger.getLogger(DeltaService.class.getName());
   private static final ChannelDemuxer demuxer = ChannelDemuxer.get();
 
   public void poll(JsonArray ids, String sessionId) {
-    MapFromStringToString params = Collections.mapFromStringToString();
+    Map<String, String> params = new HashMap<String, String>();
     params.put(Params.ACCESS_TOKEN, demuxer.getAccessToken());
     params.put(Params.SESSION_ID, sessionId);
     JsonObject obj = Json.createObject();

@@ -22,14 +22,14 @@ import com.goodow.realtime.channel.util.ChannelNative;
 import com.goodow.realtime.operation.Transformer;
 import com.goodow.realtime.operation.util.Pair;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import elemental.json.JsonArray;
 import elemental.json.JsonException;
 import elemental.json.JsonObject;
-import elemental.util.Collections;
-import elemental.util.MapFromIntTo;
 
 /**
  * Implementation of a {@link ReceiveOpChannel} based on Google App Engine's channel API.
@@ -76,7 +76,7 @@ public class ReceiveOpChannelImpl<T> implements ReceiveOpChannel<T> {
 
   private final ChannelDemuxer demuxer = ChannelDemuxer.get();
 
-  private final MapFromIntTo<Pair<String, T>> pending = Collections.mapFromIntTo();
+  private final Map<Integer, Pair<String, T>> pending = new HashMap<Integer, Pair<String, T>>();
   private final String id;
   private final DeltaService service;
   private ReceiveOpChannel.Listener<T> listener;
@@ -244,6 +244,6 @@ public class ReceiveOpChannelImpl<T> implements ReceiveOpChannel<T> {
       }
     }
 
-    assert !pending.hasKey(currentRevision + 1);
+    assert !pending.containsKey(currentRevision + 1);
   }
 }

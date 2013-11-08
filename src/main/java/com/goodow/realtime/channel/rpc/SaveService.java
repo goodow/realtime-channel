@@ -19,15 +19,15 @@ import com.goodow.realtime.channel.constant.Constants.Params;
 import com.goodow.realtime.channel.operation.GenericOperationChannel.SendOpService;
 import com.goodow.realtime.operation.Operation;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import elemental.json.Json;
 import elemental.json.JsonObject;
 import elemental.json.JsonValue;
-import elemental.util.Collections;
-import elemental.util.MapFromStringToString;
 
 /**
  * Low-level service that submits a delta to a document. Does not handle being called while another
@@ -49,7 +49,7 @@ public class SaveService<O extends Operation<?>> implements SendOpService<O> {
 
   @Override
   public void requestRevision(String id, String sessionId, final SendOpService.Callback callback) {
-    MapFromStringToString params = Collections.mapFromStringToString();
+    Map<String, String> params = new HashMap<String, String>();
     params.put(Params.ID, id);
     params.put(Params.ACCESS_TOKEN, demuxer.getAccessToken());
     rpc.get(Constants.Services.REVISION, params, new Rpc.RpcCallback() {
@@ -75,7 +75,7 @@ public class SaveService<O extends Operation<?>> implements SendOpService<O> {
   @Override
   public void submitOperations(String id, String sessionId, int revision, List<O> operations,
       final SendOpService.Callback callback) {
-    MapFromStringToString params = Collections.mapFromStringToString();
+    Map<String, String> params = new HashMap<String, String>();
     params.put(Params.ID, id);
     params.put(Params.ACCESS_TOKEN, demuxer.getAccessToken());
     params.put(Params.SESSION_ID, sessionId);

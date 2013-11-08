@@ -24,14 +24,14 @@ import com.goodow.realtime.channel.util.ChannelNative;
 import com.goodow.realtime.operation.OperationSink;
 import com.goodow.realtime.operation.id.IdGenerator;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import elemental.json.Json;
 import elemental.json.JsonObject;
-import elemental.util.ArrayOfString;
-import elemental.util.Collections;
-import elemental.util.MapFromStringTo;
 
 /**
  * De-multiplexes object channels a client is listening to.
@@ -52,7 +52,7 @@ public class ChannelDemuxer implements SocketListener {
 
   private static final Logger log = Logger.getLogger(ChannelDemuxer.class.getName());
   private static final ChannelDemuxer INSTANCE = new ChannelDemuxer();
-  private static final MapFromStringTo<Entry> entries = Collections.<Entry> mapFromStringTo();
+  private static final Map<String, Entry> entries = new HashMap<String, Entry>();
   private static final Rpc rpc = new RpcImpl("", null);
   private static String sessionId;
 
@@ -79,9 +79,7 @@ public class ChannelDemuxer implements SocketListener {
   }
 
   public void clear() {
-    for (int i = 0, len = entries.keys().length(); i < len; i++) {
-      close(entries.keys().get(i));
-    }
+    entries.clear();
   }
 
   public void close() {
@@ -109,8 +107,8 @@ public class ChannelDemuxer implements SocketListener {
     return accessToken;
   }
 
-  public ArrayOfString getIds() {
-    return entries.keys();
+  public Set<String> getIds() {
+    return entries.keySet();
   }
 
   public int getRevision(String id) {
@@ -122,7 +120,7 @@ public class ChannelDemuxer implements SocketListener {
   }
 
   public OperationSink<?> getSnapshot(String id) {
-    if (!entries.hasKey(id)) {
+    if (!entries.containsKey(id)) {
       return null;
     }
     return entries.get(id).snapshot;
@@ -172,7 +170,7 @@ public class ChannelDemuxer implements SocketListener {
   }
 
   public void register(String id, OperationSucker.Listener snapshot, ReceiveOpChannelImpl<?> channel) {
-    assert !entries.hasKey(id) : "Channel handler already registered for " + id;
+    assert !entries.containsKey(id) : "Channel handler already registered for " + id;
     entries.put(id, new Entry(snapshot, channel));
   }
 
