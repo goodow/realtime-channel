@@ -19,7 +19,7 @@ import com.goodow.realtime.json.JsonObject;
 import com.google.gwt.core.client.JavaScriptObject;
 
 /**
- * SockJS implementation of {@link WebSocket}.
+ * ObjCWebSocket implementation of {@link WebSocket}.
  */
 final class SockJS extends JavaScriptObject implements WebSocket {
 
@@ -32,7 +32,7 @@ final class SockJS extends JavaScriptObject implements WebSocket {
   }
 
   @Override
-  public final native void close() /*-{
+  public native void close() /*-{
     this.close();
   }-*/;
  

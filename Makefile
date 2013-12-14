@@ -2,28 +2,21 @@
 .PHONY: default clean translate link
 
 include ../resources/make/common.mk
+# J2OBJC_DIST = Project/Pods/J2ObjC/dist
 
-MAIN_SOURCES = $(subst $(MAIN_SRC_DIR)/,,$(shell find $(MAIN_SRC_DIR) -name *.java \
-  ! -name ChannelNative.java ! -name JreChannelFactory.java ! -name Js*.java))
+CHANNEL_GEN_DIR = Classes/generated
+MAIN_SOURCES = $(subst $(MAIN_SRC_DIR)/,,$(shell find $(MAIN_SRC_DIR) -name *.java ! -path "*/html/*"))
 MAIN_GEN_SOURCES = $(MAIN_SOURCES:%.java=$(CHANNEL_GEN_DIR)/%.m)
-OVERRIDE_GEN_DIR = $(GDREALTIME_DIR)/Classes/override_generated/channel
+OVERRIDE_GEN_DIR = Classes/override
+MAIN_OBJECTS = $(MAIN_SOURCES:%.java=$(BUILD_DIR)/main/%.o)
+SUPPORT_LIB = $(BUILD_DIR)/libGDChannel.a
 
-OCNI_SOURCES = $(subst $(OCNI_SRC_DIR)/,,$(shell find $(OCNI_SRC_DIR) -name *.java))
-OCNI_GEN_SOURCES = $(OCNI_SOURCES:%.java=$(BUILD_DIR)/%.placeholder)
-
-TEMP_PATH = $(J2OBJC_DIST)/lib/guava-13.0.jar
-TEMP_PATH += :$(M2_REPO)/com/goodow/gwt/gwt-elemental/2.5.1-SNAPSHOT/gwt-elemental-2.5.1-SNAPSHOT.jar
-TEMP_PATH += :$(M2_REPO)/org/timepedia/exporter/gwtexporter/2.5.0-SNAPSHOT/gwtexporter-2.5.0-SNAPSHOT.jar
-TEMP_PATH += :$(M2_REPO)/com/google/gwt/gwt-user/2.5.1/gwt-user-2.5.1.jar
-TEMP_PATH += :$(M2_REPO)/com/goodow/realtime/realtime-operation/0.3.0-SNAPSHOT/realtime-operation-0.3.0-SNAPSHOT.jar
+TEMP_PATH = $(M2_REPO)/com/goodow/realtime/realtime-json/0.5.0-SNAPSHOT/realtime-json-0.5.0-SNAPSHOT.jar
 CLASSPATH = $(shell echo $(TEMP_PATH) | sed 's/ //g')
-    
-default: clean translate pod_update
+
+default: clean translate
 
 translate: translate_main
-
-pod_update: 
-	@cd $(GDREALTIME_DIR)/Project;pod update
 
 pre_translate_main: $(BUILD_DIR) $(CHANNEL_GEN_DIR)
 	@rm -f $(MAIN_SOURCE_LIST)
@@ -31,24 +24,28 @@ pre_translate_main: $(BUILD_DIR) $(CHANNEL_GEN_DIR)
         
 $(CHANNEL_GEN_DIR)/%.m $(CHANNEL_GEN_DIR)/%.h: $(MAIN_SRC_DIR)/%.java
 	@echo $? >> $(MAIN_SOURCE_LIST)
-$(BUILD_DIR)/%.placeholder: $(OCNI_SRC_DIR)/%.java
-	@echo $? >> $(MAIN_SOURCE_LIST)
-	@mkdir -p `dirname $@`
-	@touch $@
 
-translate_main: pre_translate_main $(MAIN_GEN_SOURCES) $(OCNI_GEN_SOURCES)
+translate_main: pre_translate_main $(MAIN_GEN_SOURCES)
 	@if [ `cat $(MAIN_SOURCE_LIST) | wc -l` -ge 1 ] ; then \
 	  $(J2OBJC) -sourcepath $(MAIN_SRC_DIR) -d $(CHANNEL_GEN_DIR) \
 	    -classpath $(CLASSPATH) \
 	    `cat $(MAIN_SOURCE_LIST)` ; \
 	fi
-	@cp -r $(OVERRIDE_GEN_DIR)/ $(CHANNEL_GEN_DIR)
-	@cd $(CHANNEL_GEN_DIR);mkdir -p ../include;tar -c . | tar -x -C ../include --include=*.h
+	cp -r $(OVERRIDE_GEN_DIR)/ $(CHANNEL_GEN_DIR)
+
+$(BUILD_DIR)/main/%.o: $(CHANNEL_GEN_DIR)/%.m $(MAIN_SRC_DIR)/%.java
+	@mkdir -p `dirname $@`
+	@$(J2OBJCC) -c $< -o $@ -g -I$(CHANNEL_GEN_DIR)
+
+$(SUPPORT_LIB): $(MAIN_OBJECTS)
+	libtool -static -o $(SUPPORT_LIB) $(MAIN_OBJECTS) $(SUPPORT_LIB)
+
+link: translate $(SUPPORT_LIB)
 
 $(CHANNEL_GEN_DIR):
 	@mkdir -p $(CHANNEL_GEN_DIR)
 $(BUILD_DIR):
-	@mkdir -p $(BUILD_DIR)
+	@mkdir -p $(BUILD_DIR)/main
 
 clean:
 	@rm -rf $(CHANNEL_GEN_DIR) $(BUILD_DIR)

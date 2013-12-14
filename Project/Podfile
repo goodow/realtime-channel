@@ -1,0 +1,9 @@
+platform :osx
+link_with 'GDChannel', 'GDChannelTests'
+
+# pod 'J2ObjC', :git => 'https://github.com/goodow/j2objc.git'
+# pod 'J2ObjC', :path => '~/dev/tools/lib/j2objc/J2ObjC.podspec'
+# pod 'GDJson', :path => '~/dev/workspace/realtime/realtime-json/GDJson.podspec'
+# pod 'SocketRocket', :path => '~/dev/tools/lib/SocketRocket/SocketRocket.podspec'
+
+pod 'GDChannel', :path => '..'

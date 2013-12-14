@@ -51,7 +51,7 @@ public abstract class Platform {
   /**
    * A deferred command is executed after the event loop returns.
    */
-  public abstract void scheduleDeferred(Runnable cmd);
+  public abstract void scheduleDeferred(VoidHandler handler);
 
   /**
    * Set a periodic timer to fire every {@code delayMs} milliseconds, at which point {@code handler}
@@ -59,7 +59,7 @@ public abstract class Platform {
    * 
    * @return the unique ID of the timer
    */
-  public abstract int setPeriodic(int delayMs, Handler<Integer> handler);
+  public abstract int setPeriodic(int delayMs, VoidHandler handler);
 
   public abstract Platform.Type type();
 }

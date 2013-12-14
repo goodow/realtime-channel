@@ -13,9 +13,9 @@
  */
 package com.goodow.realtime.html;
 
-import com.goodow.realtime.core.Handler;
 import com.goodow.realtime.core.Net;
 import com.goodow.realtime.core.Platform;
+import com.goodow.realtime.core.VoidHandler;
 import com.goodow.realtime.json.Json;
 import com.goodow.realtime.json.JsonObject;
 
@@ -55,23 +55,23 @@ public class HtmlPlatform extends Platform {
   }
 
   @Override
-  public void scheduleDeferred(final Runnable cmd) {
+  public void scheduleDeferred(final VoidHandler handler) {
     Scheduler.get().scheduleDeferred(new ScheduledCommand() {
       @Override
       public void execute() {
-        cmd.run();
+        handler.handle(null);
       }
     });
   }
 
   @Override
-  public int setPeriodic(int delayMs, final Handler<Integer> handler) {
+  public int setPeriodic(int delayMs, final VoidHandler handler) {
     final int id = timerId++;
     RepeatingCommand cmd = new RepeatingCommand() {
       @Override
       public boolean execute() {
         if (timers.has("" + id)) {
-          handler.handle(id);
+          handler.handle(null);
           return true;
         }
         return false;

@@ -17,16 +17,7 @@
   <inherits name='com.goodow.realtime.Platform'/>
   <inherits name='org.timepedia.exporter.Exporter'/>
   
-  <replace-with class="com.goodow.realtime.channel.http.js.JsXDomainRequestBuilder">
-    <when-type-is class="com.google.gwt.http.client.RequestBuilder"/>
-    <any>
-      <when-property-is name="user.agent" value="ie8" />
-      <when-property-is name="user.agent" value="ie9" />
-    </any>
-  </replace-with>
-  
-  <source path="" includes="*.java"/>
-  <source path="util" includes="IdGenerator.java"/>
+  <source path=""/>
   
   <!-- Logging -->
   <inherits name="com.google.gwt.logging.Logging" />
@@ -40,7 +31,7 @@
   <set-property name="gwt.logging.systemHandler" value="ENABLED" />
   <set-property name="gwt.logging.simpleRemoteHandler" value="DISABLED" />
   
-  <entry-point class="com.goodow.realtime.html.HtmlChannelEntryPoint"/>
+  <entry-point class="com.goodow.realtime.html.ChannelEntryPoint"/>
 
   <add-linker name="xsiframe"/>
   <set-property name="export" value="yes"/>

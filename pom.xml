@@ -18,7 +18,7 @@
     <!-- Internal modules -->
     <dependency>
       <groupId>com.goodow.realtime</groupId>
-      <artifactId>realtime-operation</artifactId>
+      <artifactId>realtime-json</artifactId>
       <version>${project.version}</version>
     </dependency>
     
@@ -32,8 +32,10 @@
       <artifactId>gwt-codeserver</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.goodow.gwt</groupId>
-      <artifactId>gwt-exporter</artifactId>
+      <groupId>org.timepedia.exporter</groupId>
+      <artifactId>gwtexporter</artifactId>
+      <version>2.5.1</version>
+      <scope>provided</scope>
     </dependency>
     
     <!-- Test -->

@@ -14,9 +14,6 @@
 package com.goodow.realtime.core;
 
 public interface WebSocket {
-  enum State {
-    CONNECTING, OPEN, CLOSING, CLOSED;
-  }
   /**
    * Listens for events on a {@link WebSocket}.
    */
