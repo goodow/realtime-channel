@@ -21,7 +21,6 @@ import com.goodow.realtime.core.Platform;
 import com.goodow.realtime.core.VoidHandler;
 import com.goodow.realtime.core.WebSocket;
 import com.goodow.realtime.json.Json;
-import com.goodow.realtime.json.JsonArray;
 import com.goodow.realtime.json.JsonElement;
 import com.goodow.realtime.json.JsonObject;
 
@@ -30,68 +29,84 @@ import java.util.logging.Logger;
 @SuppressWarnings("rawtypes")
 public class WebSocketBusClient extends SimpleBus {
   private static final Logger log = Logger.getLogger(WebSocketBusClient.class.getName());
-  private WebSocket webSocket = WebSocket.EMPTY;
+  private final String url;
+  private final JsonObject options;
+  private final int pingInterval;
+  private final WebSocket.WebSocketHandler webSocketHandler;
+  private WebSocket webSocket;
   private String sessionID;
   private int pingTimerID = 0;
-  private int pingInterval;
+  private boolean reconnect = true;
 
   public WebSocketBusClient(String url, JsonObject options) {
-    webSocket = Platform.get().net().createWebSocket(url, options);
-    if (options != null) {
-      pingInterval = (int) options.getNumber("vertxbus_ping_interval");
-    }
-    if (pingInterval == 0) {
-      pingInterval = 5 * 1000;
-    }
+    super(options);
+    state = State.CONNECTING;
+    this.url = url;
+    this.options = options;
+    pingInterval =
+        options != null && options.has("vertxbus_ping_interval") ? (int) options
+            .getNumber("vertxbus_ping_interval") : 5 * 1000;
 
-    webSocket.setListen(new WebSocket.WebSocketHandler() {
+    webSocketHandler = new WebSocket.WebSocketHandler() {
       @Override
-      public void onClose() {
+      public void onClose(JsonObject reason) {
         state = State.CLOSED;
-        WebSocketBusClient.this.publish(Bus.LOCAL + Bus.LOCAL_ON_CLOSE, null);
+        assert pingTimerID > 0;
+        Platform.get().cancelTimer(pingTimerID);
+        deliverMessage(Bus.LOCAL_ON_CLOSE, new DefaultMessage<JsonObject>(false, null,
+            Bus.LOCAL_ON_CLOSE, null, reason));
+        if (reconnect) {
+          reconnect();
+        }
       }
 
       @Override
       public void onError(String error) {
-        log.warning(error);
-        WebSocketBusClient.this.publish(Bus.LOCAL + Bus.LOCAL_ON_ERROR, null);
+        reconnect = false;
+        deliverMessage(Bus.LOCAL_ON_ERROR, new DefaultMessage<JsonObject>(false, null,
+            Bus.LOCAL_ON_ERROR, null, Json.createObject().set("message", error)));
       }
 
       @Override
       public void onMessage(String msg) {
         JsonObject json = Json.parse(msg);
-        final String replyAddress = json.getString("replyAddress");
         String address = json.getString("address");
         @SuppressWarnings({"unchecked"})
         DefaultMessage message =
-            new DefaultMessage(false, WebSocketBusClient.this, address, replyAddress, json
-                .get("body"));
+            new DefaultMessage(false, WebSocketBusClient.this, address, json
+                .getString("replyAddress"), json.get("body"));
         deliverMessage(address, message);
       }
 
       @Override
       public void onOpen() {
         // Send the first ping then send a ping every 5 seconds
+        state = State.OPEN;
+        reconnect = true;
         sendPing();
-        pingTimerID = Platform.get().setPeriodic(5000, new VoidHandler() {
+        pingTimerID = Platform.get().setPeriodic(pingInterval, new VoidHandler() {
           @Override
           protected void handle() {
             sendPing();
           }
         });
-        state = State.OPEN;
-        WebSocketBusClient.this.publish(Bus.LOCAL + Bus.LOCAL_ON_OPEN, null);
+        String[] keys = handlerMap.keys();
+        for (String key : keys) {
+          assert handlerMap.getArray(key).length() > 0;
+          sendRegister(key);
+        }
+        deliverMessage(Bus.LOCAL_ON_OPEN, new DefaultMessage<Void>(false, null, Bus.LOCAL_ON_OPEN,
+            null, null));
       }
-    });
+    };
+
+    reconnect();
   }
 
   @Override
   public void close() {
-    checkOpen();
-    if (pingTimerID > 0) {
-      Platform.get().cancelTimer(pingTimerID);
-    }
     state = State.CLOSING;
+    reconnect = false;
     webSocket.close();
     registerHandler(LOCAL_ON_CLOSE, new Handler<Message>() {
       @Override
@@ -102,9 +117,7 @@ public class WebSocketBusClient extends SimpleBus {
   }
 
   public void login(String username, String password, final Handler<JsonObject> replyHandler) {
-    JsonObject msg = Json.createObject();
-    msg.set("username", username);
-    msg.set("password", password);
+    JsonObject msg = Json.createObject().set("username", username).set("password", password);
     sendOrPub(true, "vertx.basicauthmanager.login", msg, new Handler<Message<JsonObject>>() {
       @Override
       public void handle(Message<JsonObject> msg) {
@@ -113,61 +126,43 @@ public class WebSocketBusClient extends SimpleBus {
           sessionID = body.getString("sessionID");
         }
         if (replyHandler != null) {
-          body.remove("sessionID");
-          nativeHandle(body, replyHandler);
+          scheduleHandle(body.remove("sessionID"), replyHandler);
         }
       }
     });
   }
 
+  public void reconnect() {
+    if (state == State.OPEN) {
+      return;
+    }
+    if (webSocket != null) {
+      webSocket.close();
+    }
+
+    state = State.CONNECTING;
+    replyHandlers.clear();
+    webSocket = Platform.get().net().createWebSocket(url, options);
+    webSocket.setListen(webSocketHandler);
+  }
+
   @Override
   public Bus registerHandler(String address, Handler<? extends Message> handler) {
-    checkNotNull("address", address);
-    checkNotNull("handler", handler);
-    if (address.charAt(0) != Bus.LOCAL) {
-      checkOpen();
-    }
-    JsonArray handlers = handlerMap.getArray(address);
-    if (handlers == null) {
-      handlers = Json.createArray();
-      handlers.push(handler);
-      handlerMap.set(address, handlers);
-      if (address.charAt(0) != Bus.LOCAL) {
-        // First handler for this address so we should register the connection
-        JsonObject msg = Json.createObject();
-        msg.set("type", "register");
-        msg.set("address", address);
-        webSocket.send(msg.toJsonString());
-      }
-    } else if (handlers.indexOf(handler) == -1) {
-      handlers.push(handler);
+    boolean first = super.registerHandlerImpl(address, handler);
+    if (first) {
+      // First handler for this address so we should register the connection
+      sendRegister(address);
     }
     return this;
   }
 
   @Override
   public Bus unregisterHandler(String address, Handler<? extends Message> handler) {
-    checkNotNull("address", address);
-    checkNotNull("handler", handler);
-    if (address.charAt(0) != Bus.LOCAL) {
-      checkOpen();
-    }
-    JsonArray handlers = handlerMap.get(address); // List<Handler<Message>>
-    if (handlers != null) {
-      int idx = handlers.indexOf(handler);
-      if (idx != -1) {
-        handlers.remove(idx);
-      }
-      if (handlers.length() == 0) {
-        // No more local handlers so we should unregister the connection
-        if (address.charAt(0) != Bus.LOCAL) {
-          JsonObject msg = Json.createObject();
-          msg.set("type", "unregister");
-          msg.set("address", address);
-          webSocket.send(msg.toJsonString());
-        }
-        handlerMap.remove(address);
-      }
+    boolean last = super.unregisterHandlerImpl(address, handler);
+    if (last && !super.isLocalFork(address)) {
+      // No more handlers so we should unregister the connection
+      JsonObject msg = Json.createObject().set("type", "unregister").set("address", address);
+      send(msg.toJsonString());
     }
     return this;
   }
@@ -175,15 +170,15 @@ public class WebSocketBusClient extends SimpleBus {
   @Override
   protected void sendOrPub(boolean send, String address, JsonElement msg, Object replyHandler) {
     checkNotNull("address", address);
-    if (address.charAt(0) == Bus.LOCAL) {
-      sendOrPubLocal(send, address.substring(1), msg, replyHandler);
+    if (super.isLocalFork(address)) {
+      super.sendOrPub(send, address, msg, replyHandler);
       return;
     }
-    checkOpen();
-    JsonObject envelope = Json.createObject();
-    envelope.set("type", send ? "send" : "publish");
-    envelope.set("address", address);
-    envelope.set("body", msg);
+    if (state != State.OPEN) {
+      throw new IllegalStateException("INVALID_STATE_ERR");
+    }
+    JsonObject envelope = Json.createObject().set("type", send ? "send" : "publish");
+    envelope.set("address", address).set("body", msg);
     if (sessionID != null) {
       envelope.set("sessionID", sessionID);
     }
@@ -192,29 +187,27 @@ public class WebSocketBusClient extends SimpleBus {
       envelope.set("replyAddress", replyAddress);
       replyHandlers.set(replyAddress, replyHandler);
     }
-    webSocket.send(envelope.toJsonString());
+    send(envelope.toJsonString());
   }
 
-  private void checkOpen() {
-    if (state != State.OPEN) {
-      throw new IllegalStateException("INVALID_STATE_ERR");
+  private void send(String msg) {
+    if (state == State.OPEN) {
+      webSocket.send(msg);
+    } else {
+      log.warning("WebSocket is in " + state + " state. Cannot send: " + msg);
     }
-  }
-
-  @SuppressWarnings({"unchecked"})
-  private void sendOrPubLocal(boolean send, String address, JsonElement msg, Object replyHandler) {
-    String replyAddress = null;
-    if (replyHandler != null) {
-      replyAddress = makeUUID();
-      replyHandlers.set(replyAddress, replyHandler);
-    }
-    deliverMessage(address, new DefaultMessage(false, this, address, replyAddress == null ? null
-        : (LOCAL + replyAddress), msg));
   }
 
   private void sendPing() {
-    JsonObject msg = Json.createObject();
-    msg.set("type", "ping");
-    webSocket.send(msg.toJsonString());
+    send(Json.createObject().set("type", "ping").toJsonString());
+  }
+
+  private void sendRegister(String address) {
+    assert address != null;
+    if (super.isLocalFork(address)) {
+      return;
+    }
+    JsonObject msg = Json.createObject().set("type", "register").set("address", address);
+    send(msg.toJsonString());
   }
 }

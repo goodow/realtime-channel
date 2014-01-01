@@ -9,6 +9,7 @@
 #include "com/goodow/realtime/objc/ObjCWebSocket.h"
 
 #import "SocketRocket/SRWebSocket.h"
+#import "GDJson.h"
 
 @interface ComGoodowRealtimeObjcObjCWebSocket() <SRWebSocketDelegate> {
   SRWebSocket *_webSocket;
@@ -20,7 +21,6 @@
 
 - (id)initWithNSString:(NSString *)url
       withGDJsonObject:(id<GDJsonObject>)options {
-  _webSocket.delegate = nil;
   [_webSocket close];
   
   _webSocket = [[SRWebSocket alloc] initWithURLRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:url]]];
@@ -31,12 +31,11 @@
 }
 
 -(void)close {
-  _webSocket.delegate = nil;
   [_webSocket close];
-  _webSocket = nil;
 }
 
 -(void)sendWithNSString:(NSString *)data {
+  NSLog(@"Websocket send \"%@\"", data);
   [_webSocket send:data];
 }
 
@@ -52,6 +51,9 @@
 -(void)webSocket:(SRWebSocket *)webSocket didFailWithError:(NSError *)error {
   NSLog(@":( Websocket Failed With Error %@", error);
   [_handler onErrorWithNSString:[error description]];
+  
+  _handler = nil;
+  _webSocket.delegate = nil;
   _webSocket = nil;
 }
 -(void)webSocket:(SRWebSocket *)webSocket didReceiveMessage:(id)message {
@@ -61,12 +63,16 @@
   } else {
     messageString = [[NSString alloc] initWithData:message encoding:NSUTF8StringEncoding];
   }
+  NSLog(@"Websocket Received \"%@\"", messageString);
   [_handler onMessageWithNSString:messageString];
 }
 -(void)webSocket:(SRWebSocket *)webSocket didCloseWithCode:(NSInteger)code reason:(NSString *)reason wasClean:(BOOL)wasClean {
   NSLog(@"WebSocket closed");
-  [_handler onClose];
-  webSocket = nil;
+  [_handler onCloseWithGDJsonObject:@{@"code":[NSNumber numberWithInteger:code], @"reason":reason, @"wasClean":[NSNumber numberWithBool:wasClean]}];
+  
+  _handler = nil;
+  _webSocket.delegate = nil;
+  _webSocket = nil;
 }
 
 @end

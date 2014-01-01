@@ -30,6 +30,7 @@
 - (void)testExample
 {
   id<GDCBus> bus = [[GDCSimpleBus alloc] init];
+  __block BOOL testComplete = NO;
   
   [bus registerHandler:@"someaddress" handler:^(id<GDCMessage> message) {
     NSMutableDictionary *body = [message body];
@@ -42,7 +43,12 @@
   [bus send:@"someaddress" message:@{@"text": @"send1"} replyHandler:^(id<GDCMessage> message) {
     NSMutableDictionary *body = [message body];
     XCTAssertTrue([@"reply1" isEqualToString:[body objectForKey:@"text"]]);
+    
+    testComplete = YES;
   }];
+  
+  // Begin a run loop terminated when the testComplete it set to true
+  while (!testComplete && [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:0.01]]);
 }
 
 @end

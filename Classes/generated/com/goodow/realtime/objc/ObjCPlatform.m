@@ -36,11 +36,7 @@
 }
 
 - (void)scheduleDeferredWithComGoodowRealtimeCoreVoidHandler:(ComGoodowRealtimeCoreVoidHandler *)handler {
-  #if TARGET_OS_IPHONE == 1 || TARGET_OS_IPHONE_SIMULATOR == 1
-  [[NSRunLoop currentRunLoop] performSelector:@selector(handleWithId:) target:handler argument:nil order:0 modes:@[NSDefaultRunLoopMode]];
-  #else
-  [handler handleWithId:nil];
-  #endif
+  [[NSRunLoop mainRunLoop] performSelector:@selector(handleWithId:) target:handler argument:nil order:0 modes:@[NSDefaultRunLoopMode]];
 }
 
 - (int)setPeriodicWithInt:(int)delayMs
@@ -70,7 +66,7 @@ withComGoodowRealtimeCoreVoidHandler:(ComGoodowRealtimeCoreVoidHandler *)handler
 
 - (id)init {
   if (self = [super init]) {
-    timerId_ = [[JavaUtilConcurrentAtomicAtomicInteger alloc] initWithInt:0];
+    timerId_ = [[JavaUtilConcurrentAtomicAtomicInteger alloc] initWithInt:1];
     timers_ = [GDJson createObject];
     net__ = [[ComGoodowRealtimeObjcObjCNet alloc] init];
   }

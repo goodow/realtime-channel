@@ -13,9 +13,7 @@
 
 @end
 
-@implementation GDCEventBusTests {
-  BOOL testComplete;
-}
+@implementation GDCEventBusTests
 
 - (void)setUp
 {
@@ -31,23 +29,21 @@
 
 - (void)testExample
 {
-  id<GDCBus> bus = [GDCWebSocketBusClient create:@"ws://data.goodow.com:8080/eventbus/websocket" options:nil];
+  id<GDCBus> bus = [GDCWebSocketBusClient create:@"ws://data.goodow.com:8080/eventbus/websocket" options:@{@"forkLocal":@YES}];
+  __block BOOL testComplete = NO;
   
   [bus registerHandler:[GDCBus LOCAL_ON_OPEN] handler:^(id<GDCMessage> message) {
     [self handlerEventBusOpened:bus];
   }];
   [bus registerHandler:[GDCBus LOCAL_ON_CLOSE] handler:^(id<GDCMessage> message) {
     NSLog(@"%@", @"EventBus closed");
+    testComplete = YES;
+  }];
+  [bus registerHandler:[GDCBus LOCAL_ON_ERROR] handler:^(id<GDCMessage> message) {
+    NSLog(@"%@", @"EventBus Error");
   }];
   
-  NSRunLoop *loop = [NSRunLoop currentRunLoop];
-  // Begin a run loop terminated when the testComplete it set to true
-  while (!testComplete && [loop runMode:NSDefaultRunLoopMode beforeDate:[NSDate distantFuture]]) {
-  }
-}
-
--(void)handlerEventBusOpened:(id<GDCBus>) bus {
-  [bus registerHandler:@"someaddress" handler:^(id<GDCMessage> message) {
+  [bus registerHandler:@"objc.someaddress" handler:^(id<GDCMessage> message) {
     NSMutableDictionary *body = [message body];
     XCTAssertTrue([@"send1" isEqualToString:[body objectForKey:@"text"]]);
     
@@ -56,11 +52,16 @@
       NSMutableDictionary *body = [message body];
       XCTAssertTrue([@"reply2" isEqualToString:[body objectForKey:@"text"]]);
       
-      testComplete = YES;
+      [bus close];
     }];
   }];
   
-  [bus send:@"someaddress" message:@{@"text": @"send1"} replyHandler:^(id<GDCMessage> message) {
+  // Begin a run loop terminated when the testComplete it set to true
+  while (!testComplete && [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:0.01]]);
+}
+
+-(void)handlerEventBusOpened:(id<GDCBus>) bus {
+  [bus send:@"objc.someaddress" message:@{@"text": @"send1"} replyHandler:^(id<GDCMessage> message) {
     NSMutableDictionary *body = [message body];
     XCTAssertTrue([@"reply1" isEqualToString:[body objectForKey:@"text"]]);
     

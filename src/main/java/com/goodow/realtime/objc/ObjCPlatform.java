@@ -18,7 +18,7 @@ public class ObjCPlatform extends Platform {
     return platform;
   }
 
-  private final AtomicInteger timerId = new AtomicInteger(0);
+  private final AtomicInteger timerId = new AtomicInteger(1);
   private final JsonObject timers = Json.createObject();
 
   private final Net net = new ObjCNet();
@@ -41,11 +41,7 @@ public class ObjCPlatform extends Platform {
   @Override
   // @formatter:off
   public native void scheduleDeferred(VoidHandler handler) /*-[
-    #if TARGET_OS_IPHONE == 1 || TARGET_OS_IPHONE_SIMULATOR == 1
-      [[NSRunLoop currentRunLoop] performSelector:@selector(handleWithId:) target:handler argument:nil order:0 modes:@[NSDefaultRunLoopMode]];
-    #else
-      [handler handleWithId:nil];
-    #endif
+    [[NSRunLoop mainRunLoop] performSelector:@selector(handleWithId:) target:handler argument:nil order:0 modes:@[NSDefaultRunLoopMode]];
   ]-*/;
   // @formatter:on
 

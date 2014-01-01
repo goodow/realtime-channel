@@ -67,6 +67,8 @@ public abstract class BusOverlay implements ExportOverlay<HtmlWebSocketBusClient
 
   public abstract Bus publish(String address, JsonElement message);
 
+  public abstract void reconnect();
+
   public abstract Bus registerHandler(String address, Handler<? extends Message> handler);
 
   public abstract <T> Bus send(String address, JsonElement message, Handler<Message<T>> replyHandler);

@@ -47,17 +47,21 @@ final class SockJS extends JavaScriptObject implements WebSocket {
       this.onopen = null;
       this.onclose = null;
       this.onmessage = null;
+      this.onerror = null;
       return;
     }
     
-    this.onopen = function() {
+    this.onopen = function(e) {
       handler.@com.goodow.realtime.core.WebSocket.WebSocketHandler::onOpen()();
     };
-    this.onclose = function() {
-      handler.@com.goodow.realtime.core.WebSocket.WebSocketHandler::onClose()();
+    this.onclose = function(e) {
+      handler.@com.goodow.realtime.core.WebSocket.WebSocketHandler::onClose(Lcom/goodow/realtime/json/JsonObject;)(e);
     };
     this.onmessage = function(e) {
       handler.@com.goodow.realtime.core.WebSocket.WebSocketHandler::onMessage(Ljava/lang/String;)(e.data);
+    };
+    this.onerror = function(e) {
+      handler.@com.goodow.realtime.core.WebSocket.WebSocketHandler::onError(Ljava/lang/String;)(e);
     };
   }-*/;
   // @formatter:on

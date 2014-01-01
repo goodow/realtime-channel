@@ -13,6 +13,8 @@
  */
 package com.goodow.realtime.core;
 
+import com.goodow.realtime.json.JsonObject;
+
 public interface WebSocket {
   /**
    * Listens for events on a {@link WebSocket}.
@@ -22,7 +24,7 @@ public interface WebSocket {
     /**
      * Called when the socket is closed. When the socket is closed, it cannot be reopened.
      */
-    void onClose();
+    void onClose(JsonObject reason);
 
     /**
      * Called when an error occurs on the socket.

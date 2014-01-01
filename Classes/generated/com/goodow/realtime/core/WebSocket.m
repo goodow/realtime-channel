@@ -6,6 +6,7 @@
 //
 
 #include "com/goodow/realtime/core/WebSocket.h"
+#include "com/goodow/realtime/json/JsonObject.h"
 
 
 @interface ComGoodowRealtimeCoreWebSocket_WebSocketHandler : NSObject
@@ -15,7 +16,7 @@
 
 + (J2ObjcClassInfo *)__metadata {
   static J2ObjcMethodInfo methods[] = {
-    { "onClose", NULL, "V", 0x401, NULL },
+    { "onCloseWithGDJsonObject:", NULL, "V", 0x401, NULL },
     { "onErrorWithNSString:", NULL, "V", 0x401, NULL },
     { "onMessageWithNSString:", NULL, "V", 0x401, NULL },
     { "onOpen", NULL, "V", 0x401, NULL },

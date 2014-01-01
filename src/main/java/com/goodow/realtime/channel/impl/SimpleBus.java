@@ -18,6 +18,8 @@ import com.goodow.realtime.channel.Message;
 import com.goodow.realtime.channel.State;
 import com.goodow.realtime.channel.util.IdGenerator;
 import com.goodow.realtime.core.Handler;
+import com.goodow.realtime.core.Platform;
+import com.goodow.realtime.core.VoidHandler;
 import com.goodow.realtime.json.Json;
 import com.goodow.realtime.json.JsonArray;
 import com.goodow.realtime.json.JsonElement;
@@ -25,22 +27,31 @@ import com.goodow.realtime.json.JsonObject;
 
 @SuppressWarnings("rawtypes")
 public class SimpleBus implements Bus {
-  protected final JsonObject handlerMap; // Map<String, List<Handler<Message>>>
-  protected final JsonObject replyHandlers; // Map<String, Handler<Message>>
-  protected State state = State.CONNECTING;
+  protected final JsonObject handlerMap; // LinkedHashMap<String, LinkedHashSet<Handler<Message>>>
+  protected final JsonObject replyHandlers; // LinkedHashMap<String, Handler<Message>>
   private final IdGenerator idGenerator;
+  private final boolean forkLocal;
+  protected State state = State.CONNECTING;
 
   public SimpleBus() {
+    this(null);
+  }
+
+  public SimpleBus(JsonObject options) {
     handlerMap = Json.createObject();
     replyHandlers = Json.createObject();
     idGenerator = new IdGenerator();
     state = State.OPEN;
+
+    forkLocal =
+        options != null && options.has("forkLocal") ? options.getBoolean("forkLocal") : false;
   }
 
   @Override
   public void close() {
     state = State.CLOSING;
-    publish(Bus.LOCAL + Bus.LOCAL_ON_CLOSE, null);
+    deliverMessage(Bus.LOCAL_ON_CLOSE, new DefaultMessage<Void>(false, null, Bus.LOCAL_ON_CLOSE,
+        null, null));
     state = State.CLOSED;
     clearHandlers();
   }
@@ -58,16 +69,7 @@ public class SimpleBus implements Bus {
 
   @Override
   public Bus registerHandler(String address, Handler<? extends Message> handler) {
-    checkNotNull("address", address);
-    checkNotNull("handler", handler);
-    JsonArray handlers = handlerMap.getArray(address);
-    if (handlers == null) {
-      handlers = Json.createArray();
-      handlers.push(handler);
-      handlerMap.set(address, handlers);
-    } else if (handlers.indexOf(handler) == -1) {
-      handlers.push(handler);
-    }
+    registerHandlerImpl(address, handler);
     return this;
   }
 
@@ -79,18 +81,7 @@ public class SimpleBus implements Bus {
 
   @Override
   public Bus unregisterHandler(String address, Handler<? extends Message> handler) {
-    checkNotNull("address", address);
-    checkNotNull("handler", handler);
-    JsonArray handlers = handlerMap.get(address); // List<Handler<Message>>
-    if (handlers != null) {
-      int idx = handlers.indexOf(handler);
-      if (idx != -1) {
-        handlers.remove(idx);
-      }
-      if (handlers.length() == 0) {
-        handlerMap.remove(address);
-      }
-    }
+    unregisterHandlerImpl(address, handler);
     return this;
   }
 
@@ -101,37 +92,32 @@ public class SimpleBus implements Bus {
   }
 
   protected void clearHandlers() {
-    String[] keys = replyHandlers.keys();
-    for (String key : keys) {
-      replyHandlers.remove(key);
-    }
-    keys = handlerMap.keys();
-    for (String key : keys) {
-      JsonArray handlers = handlerMap.getArray(key);
-      for (int i = handlers.length() - 1; i >= 0; i--) {
-        handlers.remove(i);
-      }
-      handlerMap.remove(key);
-    }
+    replyHandlers.clear();
+    handlerMap.clear();
   }
 
   protected void deliverMessage(String address, Message message) {
-    JsonArray handlers = handlerMap.get(address);
+    JsonArray handlers = handlerMap.getArray(address);
     if (handlers != null) {
       // We make a copy since the handler might get unregistered from within the
       // handler itself, which would screw up our iteration
       // JsonArray copy = new ArrayList<Handler<Message>>(handlers);
       for (int i = 0, len = handlers.length(); i < len; i++) {
-        nativeHandle(message, handlers.get(i));
+        scheduleHandle(message, handlers.get(i));
       }
     } else {
       // Might be a reply message
       Object handler = replyHandlers.get(address);
       if (handler != null) {
         replyHandlers.remove(address);
-        nativeHandle(message, handler);
+        scheduleHandle(message, handler);
       }
     }
+  }
+
+  protected boolean isLocalFork(String address) {
+    assert address != null;
+    return forkLocal && !address.isEmpty() && address.charAt(0) == Bus.LOCAL;
   }
 
   protected String makeUUID() {
@@ -143,6 +129,28 @@ public class SimpleBus implements Bus {
     ((Handler<T>) handler).handle(message);
   }
 
+  protected boolean registerHandlerImpl(String address, Handler<? extends Message> handler) {
+    checkNotNull("address", address);
+    checkNotNull("handler", handler);
+    JsonArray handlers = handlerMap.getArray(address);
+    if (handlers == null) {
+      handlerMap.set(address, Json.createArray().push(handler));
+      return true;
+    } else if (handlers.indexOf(handler) == -1) {
+      handlers.push(handler);
+    }
+    return false;
+  }
+
+  protected void scheduleHandle(final Object message, final Object handler) {
+    Platform.get().scheduleDeferred(new VoidHandler() {
+      @Override
+      protected void handle() {
+        nativeHandle(message, handler);
+      }
+    });
+  }
+
   @SuppressWarnings("unchecked")
   protected void sendOrPub(boolean send, String address, JsonElement msg, Object replyHandler) {
     checkNotNull("address", address);
@@ -151,7 +159,29 @@ public class SimpleBus implements Bus {
       replyAddress = makeUUID();
       replyHandlers.set(replyAddress, replyHandler);
     }
-    deliverMessage(address, new DefaultMessage(false, this, address, replyAddress, msg));
-    return;
+    if (isLocalFork(address)) {
+      address = address.substring(1);
+      if (replyAddress != null) {
+        replyAddress = LOCAL + replyAddress;
+      }
+    }
+    deliverMessage(address, new DefaultMessage(send, this, address, replyAddress, msg));
+  }
+
+  protected boolean unregisterHandlerImpl(String address, Handler<? extends Message> handler) {
+    checkNotNull("address", address);
+    checkNotNull("handler", handler);
+    JsonArray handlers = handlerMap.getArray(address);
+    if (handlers != null) {
+      int idx = handlers.indexOf(handler);
+      if (idx != -1) {
+        handlers.remove(idx);
+      }
+      if (handlers.length() == 0) {
+        handlerMap.remove(address);
+        return true;
+      }
+    }
+    return false;
   }
 }

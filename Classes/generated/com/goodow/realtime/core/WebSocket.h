@@ -8,10 +8,12 @@
 #ifndef _ComGoodowRealtimeCoreWebSocket_H_
 #define _ComGoodowRealtimeCoreWebSocket_H_
 
+@protocol GDJsonObject;
+
 #import "JreEmulation.h"
 
 @protocol ComGoodowRealtimeCoreWebSocket_WebSocketHandler < NSObject, JavaObject >
-- (void)onClose;
+- (void)onCloseWithGDJsonObject:(id<GDJsonObject>)reason;
 - (void)onErrorWithNSString:(NSString *)error;
 - (void)onMessageWithNSString:(NSString *)message;
 - (void)onOpen;
