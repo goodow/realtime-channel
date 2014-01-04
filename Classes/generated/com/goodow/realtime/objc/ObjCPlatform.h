@@ -15,16 +15,16 @@
 @protocol GDJsonObject;
 
 #import "JreEmulation.h"
-#include "com/goodow/realtime/core/Platform.h"
+#include "com/goodow/realtime/core/PlatformFactory.h"
 
-@interface ComGoodowRealtimeObjcObjCPlatform : ComGoodowRealtimeCorePlatform {
+@interface ComGoodowRealtimeObjcObjCPlatform : NSObject < ComGoodowRealtimeCorePlatformFactory > {
  @public
   JavaUtilConcurrentAtomicAtomicInteger *timerId_;
   id<GDJsonObject> timers_;
   id<ComGoodowRealtimeCoreNet> net__;
 }
 
-+ (ComGoodowRealtimeObjcObjCPlatform *)register__;
++ (void)register__;
 - (BOOL)cancelTimerWithInt:(int)id_;
 - (id<ComGoodowRealtimeCoreNet>)net;
 - (void)scheduleDeferredWithComGoodowRealtimeCoreVoidHandler:(ComGoodowRealtimeCoreVoidHandler *)handler;

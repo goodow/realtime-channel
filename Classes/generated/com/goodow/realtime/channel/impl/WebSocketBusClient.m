@@ -68,7 +68,7 @@ static JavaUtilLoggingLogger * ComGoodowRealtimeChannelImplWebSocketBusClient_lo
   }
   state_ = [GDCStateEnum CONNECTING];
   (void) [((id<GDJsonObject>) nil_chk(replyHandlers_)) clear];
-  webSocket_ = [((id<ComGoodowRealtimeCoreNet>) nil_chk([((ComGoodowRealtimeCorePlatform *) nil_chk([ComGoodowRealtimeCorePlatform get])) net])) createWebSocketWithNSString:url_ withGDJsonObject:options_];
+  webSocket_ = [((id<ComGoodowRealtimeCoreNet>) nil_chk([ComGoodowRealtimeCorePlatform net])) createWebSocketWithNSString:url_ withGDJsonObject:options_];
   [((id<ComGoodowRealtimeCoreWebSocket>) nil_chk(webSocket_)) setListenWithComGoodowRealtimeCoreWebSocket_WebSocketHandler:webSocketHandler_];
 }
 
@@ -178,7 +178,7 @@ static JavaUtilLoggingLogger * ComGoodowRealtimeChannelImplWebSocketBusClient_lo
 - (void)onCloseWithGDJsonObject:(id<GDJsonObject>)reason {
   this$0_->state_ = [GDCStateEnum CLOSED];
   NSAssert(this$0_->pingTimerID_ > 0, @"/Users/retechretech/dev/workspace/realtime/realtime-channel/src/main/java/com/goodow/realtime/channel/impl/WebSocketBusClient.java:54 condition failed: assert pingTimerID > 0;");
-  [((ComGoodowRealtimeCorePlatform *) nil_chk([ComGoodowRealtimeCorePlatform get])) cancelTimerWithInt:this$0_->pingTimerID_];
+  [ComGoodowRealtimeCorePlatform cancelTimerWithInt:this$0_->pingTimerID_];
   [this$0_ deliverMessageWithNSString:[GDCBus LOCAL_ON_CLOSE] withGDCMessage:[[ComGoodowRealtimeChannelImplDefaultMessage alloc] initWithBoolean:NO withGDCBus:nil withNSString:[GDCBus LOCAL_ON_CLOSE] withNSString:nil withId:reason]];
   if (this$0_->reconnect__) {
     [this$0_ reconnect];
@@ -201,7 +201,7 @@ static JavaUtilLoggingLogger * ComGoodowRealtimeChannelImplWebSocketBusClient_lo
   this$0_->state_ = [GDCStateEnum OPEN];
   this$0_->reconnect__ = YES;
   [this$0_ sendPing];
-  this$0_->pingTimerID_ = [((ComGoodowRealtimeCorePlatform *) nil_chk([ComGoodowRealtimeCorePlatform get])) setPeriodicWithInt:this$0_->pingInterval_ withComGoodowRealtimeCoreVoidHandler:[[ComGoodowRealtimeChannelImplWebSocketBusClient_$1_$1 alloc] initWithComGoodowRealtimeChannelImplWebSocketBusClient_$1:self]];
+  this$0_->pingTimerID_ = [ComGoodowRealtimeCorePlatform setPeriodicWithInt:this$0_->pingInterval_ withComGoodowRealtimeCoreVoidHandler:[[ComGoodowRealtimeChannelImplWebSocketBusClient_$1_$1 alloc] initWithComGoodowRealtimeChannelImplWebSocketBusClient_$1:self]];
   IOSObjectArray *keys = [((id<GDJsonObject>) nil_chk(this$0_->handlerMap_)) keys];
   {
     IOSObjectArray *a__ = keys;

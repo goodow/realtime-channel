@@ -42,7 +42,7 @@
     { "_nativeHandleWithId:withId:", NULL, "V", 0x10a, NULL },
     { "nativeHandleWithId:withId:", NULL, "V", 0x4, NULL },
   };
-  static J2ObjcClassInfo _ComGoodowRealtimeObjcObjCSimpleBus = { "ObjCSimpleBus", "com.goodow.realtime.objc", NULL, 0x1, 3, methods, 0, NULL, 0, NULL};
+  static J2ObjcClassInfo _ComGoodowRealtimeObjcObjCSimpleBus = { "ObjCSimpleBus", "com.goodow.realtime.objc", NULL, 0x0, 3, methods, 0, NULL, 0, NULL};
   return &_ComGoodowRealtimeObjcObjCSimpleBus;
 }
 

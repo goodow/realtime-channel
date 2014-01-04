@@ -14,44 +14,47 @@
 package com.goodow.realtime.core;
 
 /**
- * Generic platform interface. New platforms are defined as implementations of this interface.
+ * The main Platform interface. The static methods in this class provide access to the various
+ * available subsystems.
+ * 
+ * <p>
+ * You must register a {@link Platform} before calling any of these methods. For example,
+ * <code>JavaPlatform.register();</code>.
+ * </p>
  */
-public abstract class Platform {
+public class Platform {
   public enum Type {
     JAVA, HTML, ANDROID, IOS, FLASH, STUB
   }
 
-  private static Platform platform;
+  private static PlatformFactory FACTORY;
 
-  public static Platform get() {
-    assert platform != null : "You must register a platform first by invoke {Java|Android}Platform.register()";
-    return platform;
+  /**
+   * Cancel the timer with the specified {@code id}. Returns {@code} true if the timer was
+   * successfully cancelled, or {@code false} if the timer does not exist.
+   */
+  public static boolean cancelTimer(int id) {
+    return get().cancelTimer(id);
+  }
+
+  public static Net net() {
+    return get().net();
+  }
+
+  /**
+   * A deferred command is executed after the event loop returns.
+   */
+  public static void scheduleDeferred(VoidHandler handler) {
+    get().scheduleDeferred(handler);
   }
 
   /**
    * Configures the current {@link Platform}. Do not call this directly unless you're implementing a
    * new platform.
    */
-  public static void setPlatform(Platform platform) {
-    Platform.platform = platform;
+  public static void setFactory(PlatformFactory factory) {
+    FACTORY = factory;
   }
-
-  // Non-instantiable
-  protected Platform() {
-  }
-
-  /**
-   * Cancel the timer with the specified {@code id}. Returns {@code} true if the timer was
-   * successfully cancelled, or {@code false} if the timer does not exist.
-   */
-  public abstract boolean cancelTimer(int id);
-
-  public abstract Net net();
-
-  /**
-   * A deferred command is executed after the event loop returns.
-   */
-  public abstract void scheduleDeferred(VoidHandler handler);
 
   /**
    * Set a periodic timer to fire every {@code delayMs} milliseconds, at which point {@code handler}
@@ -59,7 +62,20 @@ public abstract class Platform {
    * 
    * @return the unique ID of the timer
    */
-  public abstract int setPeriodic(int delayMs, VoidHandler handler);
+  public static int setPeriodic(int delayMs, VoidHandler handler) {
+    return get().setPeriodic(delayMs, handler);
+  }
 
-  public abstract Platform.Type type();
+  public static Platform.Type type() {
+    return get().type();
+  }
+
+  private static PlatformFactory get() {
+    assert FACTORY != null : "You must register a platform first by invoke {Java|Android}Platform.register()";
+    return FACTORY;
+  }
+
+  // Non-instantiable
+  protected Platform() {
+  }
 }

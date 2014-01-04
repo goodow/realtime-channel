@@ -15,6 +15,8 @@ package com.goodow.realtime.html;
 
 import com.goodow.realtime.core.Net;
 import com.goodow.realtime.core.Platform;
+import com.goodow.realtime.core.Platform.Type;
+import com.goodow.realtime.core.PlatformFactory;
 import com.goodow.realtime.core.VoidHandler;
 import com.goodow.realtime.json.Json;
 import com.goodow.realtime.json.JsonObject;
@@ -23,14 +25,12 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 
-public class HtmlPlatform extends Platform {
+class HtmlPlatform implements PlatformFactory {
   /**
    * Prepares the HTML platform for operation.
    */
-  public static HtmlPlatform register() {
-    HtmlPlatform platform = new HtmlPlatform();
-    Platform.setPlatform(platform);
-    return platform;
+  public static void register() {
+    Platform.setFactory(new HtmlPlatform());
   }
 
   private int timerId = 0;

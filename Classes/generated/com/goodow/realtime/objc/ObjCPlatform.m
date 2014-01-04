@@ -16,10 +16,8 @@
 
 @implementation ComGoodowRealtimeObjcObjCPlatform
 
-+ (ComGoodowRealtimeObjcObjCPlatform *)register__ {
-  ComGoodowRealtimeObjcObjCPlatform *platform = [[ComGoodowRealtimeObjcObjCPlatform alloc] init];
-  [ComGoodowRealtimeCorePlatform setPlatformWithComGoodowRealtimeCorePlatform:platform];
-  return platform;
++ (void)register__ {
+  [ComGoodowRealtimeCorePlatform setFactoryWithComGoodowRealtimeCorePlatformFactory:[[ComGoodowRealtimeObjcObjCPlatform alloc] init]];
 }
 
 - (BOOL)cancelTimerWithInt:(int)id_ {
@@ -82,7 +80,6 @@ withComGoodowRealtimeCoreVoidHandler:(ComGoodowRealtimeCoreVoidHandler *)handler
 
 + (J2ObjcClassInfo *)__metadata {
   static J2ObjcMethodInfo methods[] = {
-    { "register__", NULL, "LComGoodowRealtimeObjcObjCPlatform", 0x9, NULL },
     { "cancelTimerWithInt:", NULL, "Z", 0x1, NULL },
     { "net", NULL, "LComGoodowRealtimeCoreNet", 0x1, NULL },
     { "scheduleDeferredWithComGoodowRealtimeCoreVoidHandler:", NULL, "V", 0x101, NULL },
@@ -95,7 +92,7 @@ withComGoodowRealtimeCoreVoidHandler:(ComGoodowRealtimeCoreVoidHandler *)handler
     { "timers_", NULL, 0x12, "LGDJsonObject" },
     { "net__", "net", 0x12, "LComGoodowRealtimeCoreNet" },
   };
-  static J2ObjcClassInfo _ComGoodowRealtimeObjcObjCPlatform = { "ObjCPlatform", "com.goodow.realtime.objc", NULL, 0x1, 7, methods, 3, fields, 0, NULL};
+  static J2ObjcClassInfo _ComGoodowRealtimeObjcObjCPlatform = { "ObjCPlatform", "com.goodow.realtime.objc", NULL, 0x0, 6, methods, 3, fields, 0, NULL};
   return &_ComGoodowRealtimeObjcObjCPlatform;
 }
 

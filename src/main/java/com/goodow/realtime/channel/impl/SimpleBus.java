@@ -143,7 +143,7 @@ public class SimpleBus implements Bus {
   }
 
   protected void scheduleHandle(final Object message, final Object handler) {
-    Platform.get().scheduleDeferred(new VoidHandler() {
+    Platform.scheduleDeferred(new VoidHandler() {
       @Override
       protected void handle() {
         nativeHandle(message, handler);

@@ -133,7 +133,7 @@
 
 - (void)scheduleHandleWithId:(id)message
                       withId:(id)handler {
-  [((ComGoodowRealtimeCorePlatform *) nil_chk([ComGoodowRealtimeCorePlatform get])) scheduleDeferredWithComGoodowRealtimeCoreVoidHandler:[[ComGoodowRealtimeChannelImplSimpleBus_$1 alloc] initWithComGoodowRealtimeChannelImplSimpleBus:self withId:message withId:handler]];
+  [ComGoodowRealtimeCorePlatform scheduleDeferredWithComGoodowRealtimeCoreVoidHandler:[[ComGoodowRealtimeChannelImplSimpleBus_$1 alloc] initWithComGoodowRealtimeChannelImplSimpleBus:self withId:message withId:handler]];
 }
 
 - (void)sendOrPubWithBoolean:(BOOL)send

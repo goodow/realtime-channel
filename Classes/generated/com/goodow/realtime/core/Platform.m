@@ -8,78 +8,68 @@
 #include "IOSClass.h"
 #include "com/goodow/realtime/core/Net.h"
 #include "com/goodow/realtime/core/Platform.h"
+#include "com/goodow/realtime/core/PlatformFactory.h"
 #include "com/goodow/realtime/core/VoidHandler.h"
 #include "java/lang/IllegalArgumentException.h"
 
 @implementation ComGoodowRealtimeCorePlatform
 
-static ComGoodowRealtimeCorePlatform * ComGoodowRealtimeCorePlatform_platform_;
+static id<ComGoodowRealtimeCorePlatformFactory> ComGoodowRealtimeCorePlatform_FACTORY_;
 
-+ (ComGoodowRealtimeCorePlatform *)platform {
-  return ComGoodowRealtimeCorePlatform_platform_;
++ (id<ComGoodowRealtimeCorePlatformFactory>)FACTORY {
+  return ComGoodowRealtimeCorePlatform_FACTORY_;
 }
 
-+ (void)setPlatform:(ComGoodowRealtimeCorePlatform *)platform {
-  ComGoodowRealtimeCorePlatform_platform_ = platform;
++ (void)setFACTORY:(id<ComGoodowRealtimeCorePlatformFactory>)FACTORY {
+  ComGoodowRealtimeCorePlatform_FACTORY_ = FACTORY;
 }
 
-+ (ComGoodowRealtimeCorePlatform *)get {
-  NSAssert(ComGoodowRealtimeCorePlatform_platform_ != nil, @"You must register a platform first by invoke {Java|Android}Platform.register()");
-  return ComGoodowRealtimeCorePlatform_platform_;
++ (BOOL)cancelTimerWithInt:(int)id_ {
+  return [((id<ComGoodowRealtimeCorePlatformFactory>) nil_chk([ComGoodowRealtimeCorePlatform get])) cancelTimerWithInt:id_];
 }
 
-+ (void)setPlatformWithComGoodowRealtimeCorePlatform:(ComGoodowRealtimeCorePlatform *)platform {
-  ComGoodowRealtimeCorePlatform_platform_ = platform;
++ (id<ComGoodowRealtimeCoreNet>)net {
+  return [((id<ComGoodowRealtimeCorePlatformFactory>) nil_chk([ComGoodowRealtimeCorePlatform get])) net];
+}
+
++ (void)scheduleDeferredWithComGoodowRealtimeCoreVoidHandler:(ComGoodowRealtimeCoreVoidHandler *)handler {
+  [((id<ComGoodowRealtimeCorePlatformFactory>) nil_chk([ComGoodowRealtimeCorePlatform get])) scheduleDeferredWithComGoodowRealtimeCoreVoidHandler:handler];
+}
+
++ (void)setFactoryWithComGoodowRealtimeCorePlatformFactory:(id<ComGoodowRealtimeCorePlatformFactory>)factory {
+  ComGoodowRealtimeCorePlatform_FACTORY_ = factory;
+}
+
++ (int)setPeriodicWithInt:(int)delayMs
+withComGoodowRealtimeCoreVoidHandler:(ComGoodowRealtimeCoreVoidHandler *)handler {
+  return [((id<ComGoodowRealtimeCorePlatformFactory>) nil_chk([ComGoodowRealtimeCorePlatform get])) setPeriodicWithInt:delayMs withComGoodowRealtimeCoreVoidHandler:handler];
+}
+
++ (ComGoodowRealtimeCorePlatform_TypeEnum *)type {
+  return [((id<ComGoodowRealtimeCorePlatformFactory>) nil_chk([ComGoodowRealtimeCorePlatform get])) type];
+}
+
++ (id<ComGoodowRealtimeCorePlatformFactory>)get {
+  NSAssert(ComGoodowRealtimeCorePlatform_FACTORY_ != nil, @"You must register a platform first by invoke {Java|Android}Platform.register()");
+  return ComGoodowRealtimeCorePlatform_FACTORY_;
 }
 
 - (id)init {
   return [super init];
 }
 
-- (BOOL)cancelTimerWithInt:(int)id_ {
-  // can't call an abstract method
-  [self doesNotRecognizeSelector:_cmd];
-  return 0;
-}
-
-- (id<ComGoodowRealtimeCoreNet>)net {
-  // can't call an abstract method
-  [self doesNotRecognizeSelector:_cmd];
-  return 0;
-}
-
-- (void)scheduleDeferredWithComGoodowRealtimeCoreVoidHandler:(ComGoodowRealtimeCoreVoidHandler *)handler {
-  // can't call an abstract method
-  [self doesNotRecognizeSelector:_cmd];
-}
-
-- (int)setPeriodicWithInt:(int)delayMs
-withComGoodowRealtimeCoreVoidHandler:(ComGoodowRealtimeCoreVoidHandler *)handler {
-  // can't call an abstract method
-  [self doesNotRecognizeSelector:_cmd];
-  return 0;
-}
-
-- (ComGoodowRealtimeCorePlatform_TypeEnum *)type {
-  // can't call an abstract method
-  [self doesNotRecognizeSelector:_cmd];
-  return 0;
-}
-
 + (J2ObjcClassInfo *)__metadata {
   static J2ObjcMethodInfo methods[] = {
-    { "get", NULL, "LComGoodowRealtimeCorePlatform", 0x9, NULL },
+    { "cancelTimerWithInt:", NULL, "Z", 0x9, NULL },
+    { "net", NULL, "LComGoodowRealtimeCoreNet", 0x9, NULL },
+    { "type", NULL, "LComGoodowRealtimeCorePlatform_TypeEnum", 0x9, NULL },
+    { "get", NULL, "LComGoodowRealtimeCorePlatformFactory", 0xa, NULL },
     { "init", NULL, NULL, 0x4, NULL },
-    { "cancelTimerWithInt:", NULL, "Z", 0x401, NULL },
-    { "net", NULL, "LComGoodowRealtimeCoreNet", 0x401, NULL },
-    { "scheduleDeferredWithComGoodowRealtimeCoreVoidHandler:", NULL, "V", 0x401, NULL },
-    { "setPeriodicWithInt:withComGoodowRealtimeCoreVoidHandler:", NULL, "I", 0x401, NULL },
-    { "type", NULL, "LComGoodowRealtimeCorePlatform_TypeEnum", 0x401, NULL },
   };
   static J2ObjcFieldInfo fields[] = {
-    { "platform_", NULL, 0xa, "LComGoodowRealtimeCorePlatform" },
+    { "FACTORY_", NULL, 0xa, "LComGoodowRealtimeCorePlatformFactory" },
   };
-  static J2ObjcClassInfo _ComGoodowRealtimeCorePlatform = { "Platform", "com.goodow.realtime.core", NULL, 0x401, 7, methods, 1, fields, 0, NULL};
+  static J2ObjcClassInfo _ComGoodowRealtimeCorePlatform = { "Platform", "com.goodow.realtime.core", NULL, 0x1, 5, methods, 1, fields, 0, NULL};
   return &_ComGoodowRealtimeCorePlatform;
 }
 

@@ -52,7 +52,7 @@ public class WebSocketBusClient extends SimpleBus {
       public void onClose(JsonObject reason) {
         state = State.CLOSED;
         assert pingTimerID > 0;
-        Platform.get().cancelTimer(pingTimerID);
+        Platform.cancelTimer(pingTimerID);
         deliverMessage(Bus.LOCAL_ON_CLOSE, new DefaultMessage<JsonObject>(false, null,
             Bus.LOCAL_ON_CLOSE, null, reason));
         if (reconnect) {
@@ -84,7 +84,7 @@ public class WebSocketBusClient extends SimpleBus {
         state = State.OPEN;
         reconnect = true;
         sendPing();
-        pingTimerID = Platform.get().setPeriodic(pingInterval, new VoidHandler() {
+        pingTimerID = Platform.setPeriodic(pingInterval, new VoidHandler() {
           @Override
           protected void handle() {
             sendPing();
@@ -142,7 +142,7 @@ public class WebSocketBusClient extends SimpleBus {
 
     state = State.CONNECTING;
     replyHandlers.clear();
-    webSocket = Platform.get().net().createWebSocket(url, options);
+    webSocket = Platform.net().createWebSocket(url, options);
     webSocket.setListen(webSocketHandler);
   }
 

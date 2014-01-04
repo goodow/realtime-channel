@@ -11,6 +11,7 @@
 @class ComGoodowRealtimeCorePlatform_TypeEnum;
 @class ComGoodowRealtimeCoreVoidHandler;
 @protocol ComGoodowRealtimeCoreNet;
+@protocol ComGoodowRealtimeCorePlatformFactory;
 
 #import "JreEmulation.h"
 #include "java/lang/Enum.h"
@@ -18,17 +19,17 @@
 @interface ComGoodowRealtimeCorePlatform : NSObject {
 }
 
-+ (ComGoodowRealtimeCorePlatform *)platform;
-+ (void)setPlatform:(ComGoodowRealtimeCorePlatform *)platform;
-+ (ComGoodowRealtimeCorePlatform *)get;
-+ (void)setPlatformWithComGoodowRealtimeCorePlatform:(ComGoodowRealtimeCorePlatform *)platform;
-- (id)init;
-- (BOOL)cancelTimerWithInt:(int)id_;
-- (id<ComGoodowRealtimeCoreNet>)net;
-- (void)scheduleDeferredWithComGoodowRealtimeCoreVoidHandler:(ComGoodowRealtimeCoreVoidHandler *)handler;
-- (int)setPeriodicWithInt:(int)delayMs
++ (id<ComGoodowRealtimeCorePlatformFactory>)FACTORY;
++ (void)setFACTORY:(id<ComGoodowRealtimeCorePlatformFactory>)FACTORY;
++ (BOOL)cancelTimerWithInt:(int)id_;
++ (id<ComGoodowRealtimeCoreNet>)net;
++ (void)scheduleDeferredWithComGoodowRealtimeCoreVoidHandler:(ComGoodowRealtimeCoreVoidHandler *)handler;
++ (void)setFactoryWithComGoodowRealtimeCorePlatformFactory:(id<ComGoodowRealtimeCorePlatformFactory>)factory;
++ (int)setPeriodicWithInt:(int)delayMs
 withComGoodowRealtimeCoreVoidHandler:(ComGoodowRealtimeCoreVoidHandler *)handler;
-- (ComGoodowRealtimeCorePlatform_TypeEnum *)type;
++ (ComGoodowRealtimeCorePlatform_TypeEnum *)type;
++ (id<ComGoodowRealtimeCorePlatformFactory>)get;
+- (id)init;
 @end
 
 typedef enum {

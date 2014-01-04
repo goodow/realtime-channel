@@ -2,20 +2,20 @@ package com.goodow.realtime.objc;
 
 import com.goodow.realtime.core.Net;
 import com.goodow.realtime.core.Platform;
+import com.goodow.realtime.core.Platform.Type;
+import com.goodow.realtime.core.PlatformFactory;
 import com.goodow.realtime.core.VoidHandler;
 import com.goodow.realtime.json.Json;
 import com.goodow.realtime.json.JsonObject;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class ObjCPlatform extends Platform {
+ class ObjCPlatform implements PlatformFactory {
   /**
    * Registers the Objective-C platform with a default configuration.
    */
-  public static ObjCPlatform register() {
-    ObjCPlatform platform = new ObjCPlatform();
-    Platform.setPlatform(platform);
-    return platform;
+  public static void register() {
+    Platform.setFactory(new ObjCPlatform());
   }
 
   private final AtomicInteger timerId = new AtomicInteger(1);

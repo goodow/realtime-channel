@@ -17,7 +17,7 @@ import com.goodow.realtime.channel.impl.WebSocketBusClient;
 import com.goodow.realtime.core.Handler;
 import com.goodow.realtime.json.JsonObject;
 
-public class HtmlWebSocketBusClient extends WebSocketBusClient {
+class HtmlWebSocketBusClient extends WebSocketBusClient {
 
   // @formatter:off 
   private static native <T> void handle(T message, Object handler) /*-{

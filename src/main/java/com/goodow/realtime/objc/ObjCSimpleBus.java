@@ -6,7 +6,7 @@ import com.goodow.realtime.core.Handler;
 /*-[
  #import "GDChannel.h"
  ]-*/
-public class ObjCSimpleBus extends SimpleBus {
+class ObjCSimpleBus extends SimpleBus {
   @SuppressWarnings("unchecked")
   protected static <T> void handle(T message, Object handler) {
     if (handler instanceof Handler) {

@@ -29,7 +29,7 @@
 + (void)initialize {
   if (self == [ComGoodowRealtimeObjcObjCWebSocketBusClient class]) {
     {
-      (void) [ComGoodowRealtimeObjcObjCPlatform register__];
+      [ComGoodowRealtimeObjcObjCPlatform register__];
     }
   }
 }
