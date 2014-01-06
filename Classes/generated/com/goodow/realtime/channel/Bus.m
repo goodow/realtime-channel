@@ -8,7 +8,6 @@
 #include "com/goodow/realtime/channel/Bus.h"
 #include "com/goodow/realtime/channel/State.h"
 #include "com/goodow/realtime/core/Handler.h"
-#include "com/goodow/realtime/json/JsonElement.h"
 
 
 @implementation GDCBus

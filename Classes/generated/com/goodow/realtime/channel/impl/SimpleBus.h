@@ -12,7 +12,6 @@
 @class GDCStateEnum;
 @protocol ComGoodowRealtimeCoreHandler;
 @protocol GDCMessage;
-@protocol GDJsonElement;
 @protocol GDJsonObject;
 
 #import "JreEmulation.h"
@@ -32,9 +31,9 @@
 - (id)initWithGDJsonObject:(id<GDJsonObject>)options;
 - (void)close;
 - (GDCStateEnum *)getReadyState;
-- (id<GDCBus>)publish:(NSString *)address message:(id<GDJsonElement>)msg;
+- (id<GDCBus>)publish:(NSString *)address message:(id)msg;
 - (id<GDCBus>)registerHandler:(NSString *)address handler:(id)handler;
-- (id<GDCBus>)send:(NSString *)address message:(id<GDJsonElement>)msg replyHandler:(id)replyHandler;
+- (id<GDCBus>)send:(NSString *)address message:(id)msg replyHandler:(id)replyHandler;
 - (id<GDCBus>)unregisterHandler:(NSString *)address handler:(id)handler;
 - (void)checkNotNullWithNSString:(NSString *)paramName
                           withId:(id)param;
@@ -51,7 +50,7 @@
                       withId:(id)handler;
 - (void)sendOrPubWithBoolean:(BOOL)send
                 withNSString:(NSString *)address
-           withGDJsonElement:(id<GDJsonElement>)msg
+                      withId:(id)msg
                       withId:(id)replyHandler;
 - (BOOL)unregisterHandlerImplWithNSString:(NSString *)address
          withComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)handler;

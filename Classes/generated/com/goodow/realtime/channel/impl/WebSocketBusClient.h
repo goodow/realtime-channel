@@ -12,7 +12,6 @@
 @protocol ComGoodowRealtimeCoreWebSocket;
 @protocol GDCBus;
 @protocol GDCMessage;
-@protocol GDJsonElement;
 @protocol GDJsonObject;
 
 #import "JreEmulation.h"
@@ -43,7 +42,7 @@
 - (id<GDCBus>)unregisterHandler:(NSString *)address handler:(id)handler;
 - (void)sendOrPubWithBoolean:(BOOL)send
                 withNSString:(NSString *)address
-           withGDJsonElement:(id<GDJsonElement>)msg
+                      withId:(id)msg
                       withId:(id)replyHandler;
 - (void)sendWithNSString:(NSString *)msg;
 - (void)sendPing;

@@ -16,7 +16,6 @@
 #include "com/goodow/realtime/core/Platform.h"
 #include "com/goodow/realtime/json/Json.h"
 #include "com/goodow/realtime/json/JsonArray.h"
-#include "com/goodow/realtime/json/JsonElement.h"
 #include "com/goodow/realtime/json/JsonObject.h"
 #include "java/lang/IllegalArgumentException.h"
 
@@ -53,8 +52,8 @@
   return state_;
 }
 
-- (id<GDCBus>)publish:(NSString *)address message:(id<GDJsonElement>)msg {
-  [self sendOrPubWithBoolean:NO withNSString:address withGDJsonElement:msg withId:nil];
+- (id<GDCBus>)publish:(NSString *)address message:(id)msg {
+  [self sendOrPubWithBoolean:NO withNSString:address withId:msg withId:nil];
   return self;
 }
 
@@ -63,8 +62,8 @@
   return self;
 }
 
-- (id<GDCBus>)send:(NSString *)address message:(id<GDJsonElement>)msg replyHandler:(id)replyHandler {
-  [self sendOrPubWithBoolean:YES withNSString:address withGDJsonElement:msg withId:replyHandler];
+- (id<GDCBus>)send:(NSString *)address message:(id)msg replyHandler:(id)replyHandler {
+  [self sendOrPubWithBoolean:YES withNSString:address withId:msg withId:replyHandler];
   return self;
 }
 
@@ -103,7 +102,7 @@
 }
 
 - (BOOL)isLocalForkWithNSString:(NSString *)address {
-  NSAssert(address != nil, @"/Users/retechretech/dev/workspace/realtime/realtime-channel/src/main/java/com/goodow/realtime/channel/impl/SimpleBus.java:119 condition failed: assert address != null;");
+  NSAssert(address != nil, @"address shouldn't be null");
   return forkLocal_ && ![((NSString *) nil_chk(address)) isEmpty] && [address charAtWithInt:0] == GDCBus_LOCAL;
 }
 
@@ -138,7 +137,7 @@
 
 - (void)sendOrPubWithBoolean:(BOOL)send
                 withNSString:(NSString *)address
-           withGDJsonElement:(id<GDJsonElement>)msg
+                      withId:(id)msg
                       withId:(id)replyHandler {
   [self checkNotNullWithNSString:@"address" withId:address];
   NSString *replyAddress = nil;
@@ -193,7 +192,7 @@
     { "nativeHandleWithId:withId:", NULL, "V", 0x4, NULL },
     { "registerHandlerImplWithNSString:withComGoodowRealtimeCoreHandler:", NULL, "Z", 0x4, NULL },
     { "scheduleHandleWithId:withId:", NULL, "V", 0x4, NULL },
-    { "sendOrPubWithBoolean:withNSString:withGDJsonElement:withId:", NULL, "V", 0x4, NULL },
+    { "sendOrPubWithBoolean:withNSString:withId:withId:", NULL, "V", 0x4, NULL },
     { "unregisterHandlerImplWithNSString:withComGoodowRealtimeCoreHandler:", NULL, "Z", 0x4, NULL },
   };
   static J2ObjcFieldInfo fields[] = {

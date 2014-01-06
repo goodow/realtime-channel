@@ -9,7 +9,6 @@
 #include "com/goodow/realtime/channel/Bus.h"
 #include "com/goodow/realtime/channel/impl/DefaultMessage.h"
 #include "com/goodow/realtime/core/Handler.h"
-#include "com/goodow/realtime/json/JsonElement.h"
 
 @implementation ComGoodowRealtimeChannelImplDefaultMessage
 
@@ -39,12 +38,12 @@
 - (void)fail:(int)failureCode message:(NSString *)msg {
 }
 
-- (void)reply:(id<GDJsonElement>)msg {
-  [self sendReplyWithGDJsonElement:msg withComGoodowRealtimeCoreHandler:nil];
+- (void)reply:(id)msg {
+  [self sendReplyWithId:msg withComGoodowRealtimeCoreHandler:nil];
 }
 
-- (void)reply:(id<GDJsonElement>)msg replyHandler:(id)replyHandler {
-  [self sendReplyWithGDJsonElement:msg withComGoodowRealtimeCoreHandler:replyHandler];
+- (void)reply:(id)msg replyHandler:(id)replyHandler {
+  [self sendReplyWithId:msg withComGoodowRealtimeCoreHandler:replyHandler];
 }
 
 - (NSString *)replyAddress {
@@ -55,8 +54,8 @@
   return body__ == nil ? nil : [body__ description];
 }
 
-- (void)sendReplyWithGDJsonElement:(id<GDJsonElement>)msg
-  withComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)replyHandler {
+- (void)sendReplyWithId:(id)msg
+withComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)replyHandler {
   if (bus_ != nil && replyAddress__ != nil) {
     (void) [bus_ send:replyAddress__ message:msg replyHandler:replyHandler];
   }
@@ -76,7 +75,7 @@
     { "address", NULL, "LNSString", 0x1, NULL },
     { "body", NULL, "TU", 0x1, NULL },
     { "replyAddress", NULL, "LNSString", 0x1, NULL },
-    { "sendReplyWithGDJsonElement:withComGoodowRealtimeCoreHandler:", NULL, "V", 0x2, NULL },
+    { "sendReplyWithId:withComGoodowRealtimeCoreHandler:", NULL, "V", 0x2, NULL },
   };
   static J2ObjcFieldInfo fields[] = {
     { "body__", "body", 0x4, "TU" },

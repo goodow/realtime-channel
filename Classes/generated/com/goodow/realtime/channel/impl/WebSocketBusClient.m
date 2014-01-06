@@ -19,7 +19,6 @@
 #include "com/goodow/realtime/core/WebSocket.h"
 #include "com/goodow/realtime/json/Json.h"
 #include "com/goodow/realtime/json/JsonArray.h"
-#include "com/goodow/realtime/json/JsonElement.h"
 #include "com/goodow/realtime/json/JsonObject.h"
 #include "java/lang/IllegalStateException.h"
 #include "java/util/logging/Logger.h"
@@ -56,7 +55,7 @@ static JavaUtilLoggingLogger * ComGoodowRealtimeChannelImplWebSocketBusClient_lo
 
 - (void)login:(NSString *)username password:(NSString *)password replyHandler:(id)replyHandler {
   id<GDJsonObject> msg = [((id<GDJsonObject>) nil_chk([((id<GDJsonObject>) nil_chk([GDJson createObject])) set:@"username" value:username])) set:@"password" value:password];
-  [self sendOrPubWithBoolean:YES withNSString:@"vertx.basicauthmanager.login" withGDJsonElement:msg withId:[[ComGoodowRealtimeChannelImplWebSocketBusClient_$3 alloc] initWithComGoodowRealtimeChannelImplWebSocketBusClient:self withComGoodowRealtimeCoreHandler:replyHandler]];
+  [self sendOrPubWithBoolean:YES withNSString:@"vertx.basicauthmanager.login" withId:msg withId:[[ComGoodowRealtimeChannelImplWebSocketBusClient_$3 alloc] initWithComGoodowRealtimeChannelImplWebSocketBusClient:self withComGoodowRealtimeCoreHandler:replyHandler]];
 }
 
 - (void)reconnect {
@@ -91,11 +90,11 @@ static JavaUtilLoggingLogger * ComGoodowRealtimeChannelImplWebSocketBusClient_lo
 
 - (void)sendOrPubWithBoolean:(BOOL)send
                 withNSString:(NSString *)address
-           withGDJsonElement:(id<GDJsonElement>)msg
+                      withId:(id)msg
                       withId:(id)replyHandler {
   [self checkNotNullWithNSString:@"address" withId:address];
   if ([super isLocalForkWithNSString:address]) {
-    [super sendOrPubWithBoolean:send withNSString:address withGDJsonElement:msg withId:replyHandler];
+    [super sendOrPubWithBoolean:send withNSString:address withId:msg withId:replyHandler];
     return;
   }
   if (state_ != [GDCStateEnum OPEN]) {
@@ -128,7 +127,7 @@ static JavaUtilLoggingLogger * ComGoodowRealtimeChannelImplWebSocketBusClient_lo
 }
 
 - (void)sendRegisterWithNSString:(NSString *)address {
-  NSAssert(address != nil, @"/Users/retechretech/dev/workspace/realtime/realtime-channel/src/main/java/com/goodow/realtime/channel/impl/WebSocketBusClient.java:206 condition failed: assert address != null;");
+  NSAssert(address != nil, @"address shouldn't be null");
   if ([super isLocalForkWithNSString:address]) {
     return;
   }
@@ -156,7 +155,7 @@ static JavaUtilLoggingLogger * ComGoodowRealtimeChannelImplWebSocketBusClient_lo
 
 + (J2ObjcClassInfo *)__metadata {
   static J2ObjcMethodInfo methods[] = {
-    { "sendOrPubWithBoolean:withNSString:withGDJsonElement:withId:", NULL, "V", 0x4, NULL },
+    { "sendOrPubWithBoolean:withNSString:withId:withId:", NULL, "V", 0x4, NULL },
     { "sendWithNSString:", NULL, "V", 0x2, NULL },
     { "sendPing", NULL, "V", 0x2, NULL },
     { "sendRegisterWithNSString:", NULL, "V", 0x2, NULL },
@@ -177,7 +176,7 @@ static JavaUtilLoggingLogger * ComGoodowRealtimeChannelImplWebSocketBusClient_lo
 
 - (void)onCloseWithGDJsonObject:(id<GDJsonObject>)reason {
   this$0_->state_ = [GDCStateEnum CLOSED];
-  NSAssert(this$0_->pingTimerID_ > 0, @"/Users/retechretech/dev/workspace/realtime/realtime-channel/src/main/java/com/goodow/realtime/channel/impl/WebSocketBusClient.java:54 condition failed: assert pingTimerID > 0;");
+  NSAssert(this$0_->pingTimerID_ > 0, @"pingTimerID should > 0");
   [ComGoodowRealtimeCorePlatform cancelTimerWithInt:this$0_->pingTimerID_];
   [this$0_ deliverMessageWithNSString:[GDCBus LOCAL_ON_CLOSE] withGDCMessage:[[ComGoodowRealtimeChannelImplDefaultMessage alloc] initWithBoolean:NO withGDCBus:nil withNSString:[GDCBus LOCAL_ON_CLOSE] withNSString:nil withId:reason]];
   if (this$0_->reconnect__) {
@@ -209,7 +208,7 @@ static JavaUtilLoggingLogger * ComGoodowRealtimeChannelImplWebSocketBusClient_lo
     id const *e__ = b__ + a__->size_;
     while (b__ < e__) {
       NSString *key = (*b__++);
-      NSAssert([((id<GDJsonArray>) nil_chk([this$0_->handlerMap_ getArray:key])) count] > 0, @"/Users/retechretech/dev/workspace/realtime/realtime-channel/src/main/java/com/goodow/realtime/channel/impl/WebSocketBusClient.java:95 condition failed: assert handlerMap.getArray(key).length() > 0;");
+      NSAssert([((id<GDJsonArray>) nil_chk([this$0_->handlerMap_ getArray:key])) count] > 0, [[NSString stringWithFormat:@"Handlers registried on %@ shouldn't be empty" J2OBJC_COMMA() key] description]);
       [this$0_ sendRegisterWithNSString:key];
     }
   }

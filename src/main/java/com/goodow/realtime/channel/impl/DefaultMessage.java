@@ -16,7 +16,6 @@ package com.goodow.realtime.channel.impl;
 import com.goodow.realtime.channel.Bus;
 import com.goodow.realtime.channel.Message;
 import com.goodow.realtime.core.Handler;
-import com.goodow.realtime.json.JsonElement;
 
 public class DefaultMessage<U> implements Message<U> {
 
@@ -50,12 +49,12 @@ public class DefaultMessage<U> implements Message<U> {
   }
 
   @Override
-  public void reply(JsonElement msg) {
+  public void reply(Object msg) {
     sendReply(msg, null);
   }
 
   @Override
-  public <T> void reply(JsonElement msg, Handler<Message<T>> replyHandler) {
+  public <T> void reply(Object msg, Handler<Message<T>> replyHandler) {
     sendReply(msg, replyHandler);
   }
 
@@ -69,7 +68,7 @@ public class DefaultMessage<U> implements Message<U> {
     return body == null ? null : body.toString();
   }
 
-  private <T> void sendReply(JsonElement msg, Handler<Message<T>> replyHandler) {
+  private <T> void sendReply(Object msg, Handler<Message<T>> replyHandler) {
     if (bus != null && replyAddress != null) {
       // Send back reply
       bus.send(replyAddress, msg, replyHandler);

@@ -14,7 +14,6 @@
 package com.goodow.realtime.channel;
 
 import com.goodow.realtime.core.Handler;
-import com.goodow.realtime.json.JsonElement;
 
 /**
  * Represents a message on the event bus.
@@ -45,14 +44,14 @@ public interface Message<T> {
    * called when it has received a reply. If the message wasn't sent specifying a receipt handler
    * this method does nothing.
    */
-  void reply(JsonElement msg);
+  void reply(Object msg);
 
   /**
-   * The same as {@code reply(JsonObject message)} but you can specify handler for the reply - i.e.
-   * to receive the reply to the reply.
+   * The same as {@code reply(Object msg)} but you can specify handler for the reply - i.e. to
+   * receive the reply to the reply.
    */
   @SuppressWarnings("hiding")
-  <T> void reply(JsonElement msg, Handler<Message<T>> replyHandler);
+  <T> void reply(Object msg, Handler<Message<T>> replyHandler);
 
   /**
    * The reply address (if any)

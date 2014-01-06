@@ -9,7 +9,6 @@
 #define _GDCMessage_H_
 
 @protocol ComGoodowRealtimeCoreHandler;
-@protocol GDJsonElement;
 
 #import "JreEmulation.h"
 
@@ -17,8 +16,8 @@
 - (NSString *)address;
 - (id)body;
 - (void)fail:(int)failureCode message:(NSString *)msg;
-- (void)reply:(id<GDJsonElement>)msg;
-- (void)reply:(id<GDJsonElement>)msg replyHandler:(id)replyHandler;
+- (void)reply:(id)msg;
+- (void)reply:(id)msg replyHandler:(id)replyHandler;
 - (NSString *)replyAddress;
 @end
 

@@ -7,7 +7,6 @@
 
 #include "com/goodow/realtime/channel/Message.h"
 #include "com/goodow/realtime/core/Handler.h"
-#include "com/goodow/realtime/json/JsonElement.h"
 
 
 @interface GDCMessage : NSObject

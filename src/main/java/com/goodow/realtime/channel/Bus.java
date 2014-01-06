@@ -14,7 +14,6 @@
 package com.goodow.realtime.channel;
 
 import com.goodow.realtime.core.Handler;
-import com.goodow.realtime.json.JsonElement;
 
 public interface Bus {
   char LOCAL = '@';
@@ -30,12 +29,12 @@ public interface Bus {
   State getReadyState();
 
   /**
-   * Publish a JSON element as a message
+   * Publish a message
    * 
    * @param address The address to publish it to
    * @param msg The message
    */
-  Bus publish(String address, JsonElement msg);
+  Bus publish(String address, Object msg);
 
   /**
    * Registers a handler against the specified address
@@ -47,13 +46,13 @@ public interface Bus {
   Bus registerHandler(String address, Handler<? extends Message> handler);
 
   /**
-   * Send a JSON element as a message
+   * Send a message
    * 
    * @param address The address to send it to
    * @param msg The message
    * @param replyHandler Reply handler will be called when any reply from the recipient is received
    */
-  <T> Bus send(String address, JsonElement msg, Handler<Message<T>> replyHandler);
+  <T> Bus send(String address, Object msg, Handler<Message<T>> replyHandler);
 
   /**
    * Unregisters a handler given the address and the handler

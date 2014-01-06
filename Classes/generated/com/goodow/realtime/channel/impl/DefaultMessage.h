@@ -10,7 +10,6 @@
 
 @protocol ComGoodowRealtimeCoreHandler;
 @protocol GDCBus;
-@protocol GDJsonElement;
 
 #import "JreEmulation.h"
 #include "com/goodow/realtime/channel/Message.h"
@@ -32,12 +31,12 @@
 - (NSString *)address;
 - (id)body;
 - (void)fail:(int)failureCode message:(NSString *)msg;
-- (void)reply:(id<GDJsonElement>)msg;
-- (void)reply:(id<GDJsonElement>)msg replyHandler:(id)replyHandler;
+- (void)reply:(id)msg;
+- (void)reply:(id)msg replyHandler:(id)replyHandler;
 - (NSString *)replyAddress;
 - (NSString *)description;
-- (void)sendReplyWithGDJsonElement:(id<GDJsonElement>)msg
-  withComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)replyHandler;
+- (void)sendReplyWithId:(id)msg
+withComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)replyHandler;
 - (void)copyAllFieldsTo:(ComGoodowRealtimeChannelImplDefaultMessage *)other;
 @end
 

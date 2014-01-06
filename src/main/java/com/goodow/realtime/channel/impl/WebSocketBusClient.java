@@ -21,7 +21,6 @@ import com.goodow.realtime.core.Platform;
 import com.goodow.realtime.core.VoidHandler;
 import com.goodow.realtime.core.WebSocket;
 import com.goodow.realtime.json.Json;
-import com.goodow.realtime.json.JsonElement;
 import com.goodow.realtime.json.JsonObject;
 
 import java.util.logging.Logger;
@@ -51,7 +50,7 @@ public class WebSocketBusClient extends SimpleBus {
       @Override
       public void onClose(JsonObject reason) {
         state = State.CLOSED;
-        assert pingTimerID > 0;
+        assert pingTimerID > 0 : "pingTimerID should > 0";
         Platform.cancelTimer(pingTimerID);
         deliverMessage(Bus.LOCAL_ON_CLOSE, new DefaultMessage<JsonObject>(false, null,
             Bus.LOCAL_ON_CLOSE, null, reason));
@@ -92,7 +91,8 @@ public class WebSocketBusClient extends SimpleBus {
         });
         String[] keys = handlerMap.keys();
         for (String key : keys) {
-          assert handlerMap.getArray(key).length() > 0;
+          assert handlerMap.getArray(key).length() > 0 : "Handlers registried on " + key
+              + " shouldn't be empty";
           sendRegister(key);
         }
         deliverMessage(Bus.LOCAL_ON_OPEN, new DefaultMessage<Void>(false, null, Bus.LOCAL_ON_OPEN,
@@ -168,7 +168,7 @@ public class WebSocketBusClient extends SimpleBus {
   }
 
   @Override
-  protected void sendOrPub(boolean send, String address, JsonElement msg, Object replyHandler) {
+  protected void sendOrPub(boolean send, String address, Object msg, Object replyHandler) {
     checkNotNull("address", address);
     if (super.isLocalFork(address)) {
       super.sendOrPub(send, address, msg, replyHandler);
@@ -203,7 +203,7 @@ public class WebSocketBusClient extends SimpleBus {
   }
 
   private void sendRegister(String address) {
-    assert address != null;
+    assert address != null : "address shouldn't be null";
     if (super.isLocalFork(address)) {
       return;
     }

@@ -22,7 +22,6 @@ import com.goodow.realtime.core.Platform;
 import com.goodow.realtime.core.VoidHandler;
 import com.goodow.realtime.json.Json;
 import com.goodow.realtime.json.JsonArray;
-import com.goodow.realtime.json.JsonElement;
 import com.goodow.realtime.json.JsonObject;
 
 @SuppressWarnings("rawtypes")
@@ -62,7 +61,7 @@ public class SimpleBus implements Bus {
   }
 
   @Override
-  public Bus publish(String address, JsonElement msg) {
+  public Bus publish(String address, Object msg) {
     sendOrPub(false, address, msg, null);
     return this;
   }
@@ -74,7 +73,7 @@ public class SimpleBus implements Bus {
   }
 
   @Override
-  public <T> Bus send(String address, JsonElement msg, Handler<Message<T>> replyHandler) {
+  public <T> Bus send(String address, Object msg, Handler<Message<T>> replyHandler) {
     sendOrPub(true, address, msg, replyHandler);
     return this;
   }
@@ -116,7 +115,7 @@ public class SimpleBus implements Bus {
   }
 
   protected boolean isLocalFork(String address) {
-    assert address != null;
+    assert address != null : "address shouldn't be null";
     return forkLocal && !address.isEmpty() && address.charAt(0) == Bus.LOCAL;
   }
 
@@ -152,7 +151,7 @@ public class SimpleBus implements Bus {
   }
 
   @SuppressWarnings("unchecked")
-  protected void sendOrPub(boolean send, String address, JsonElement msg, Object replyHandler) {
+  protected void sendOrPub(boolean send, String address, Object msg, Object replyHandler) {
     checkNotNull("address", address);
     String replyAddress = null;
     if (replyHandler != null) {

@@ -23,8 +23,8 @@ class ChannelEntryPoint implements EntryPoint {
   @Override
   public void onModuleLoad() {
     HtmlPlatform.register();
-    GWT.create(BusOverlay.class);
     GWT.create(DefaultMessageOverlay.class);
+    GWT.create(BusOverlay.class);
     // GWT.create(MessageHandlerOverlay.class);
     __jsniOnLoad__();
   }

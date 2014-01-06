@@ -33,16 +33,15 @@
   __block BOOL testComplete = NO;
   
   [bus registerHandler:@"someaddress" handler:^(id<GDCMessage> message) {
-    NSMutableDictionary *body = [message body];
-    XCTAssertTrue([@"send1" isEqualToString:[body objectForKey:@"text"]]);
+    XCTAssertTrue(self == [message body]);
     
-    NSDictionary *msg = @{@"text": @"reply1"};
+    NSDictionary *msg = @{@"text": @"reply"};
     [message reply:msg];
   }];
   
-  [bus send:@"someaddress" message:@{@"text": @"send1"} replyHandler:^(id<GDCMessage> message) {
+  [bus send:@"someaddress" message:self replyHandler:^(id<GDCMessage> message) {
     NSMutableDictionary *body = [message body];
-    XCTAssertTrue([@"reply1" isEqualToString:[body objectForKey:@"text"]]);
+    XCTAssertTrue([@"reply" isEqualToString:[body objectForKey:@"text"]]);
     
     testComplete = YES;
   }];

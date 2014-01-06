@@ -33,7 +33,7 @@ class HtmlPlatform implements PlatformFactory {
     Platform.setFactory(new HtmlPlatform());
   }
 
-  private int timerId = 0;
+  private int timerId = 1;
   private final JsonObject timers = Json.createObject();
   private final HtmlNet net = new HtmlNet();
 
