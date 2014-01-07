@@ -52,8 +52,8 @@ public class WebSocketBusClient extends SimpleBus {
         state = State.CLOSED;
         assert pingTimerID > 0 : "pingTimerID should > 0";
         Platform.cancelTimer(pingTimerID);
-        deliverMessage(Bus.LOCAL_ON_CLOSE, new DefaultMessage<JsonObject>(false, null,
-            Bus.LOCAL_ON_CLOSE, null, reason));
+        deliverMessage(LOCAL_ON_CLOSE, new DefaultMessage<JsonObject>(false, null, LOCAL_ON_CLOSE,
+            null, reason));
         if (reconnect) {
           reconnect();
         }
@@ -62,8 +62,8 @@ public class WebSocketBusClient extends SimpleBus {
       @Override
       public void onError(String error) {
         reconnect = false;
-        deliverMessage(Bus.LOCAL_ON_ERROR, new DefaultMessage<JsonObject>(false, null,
-            Bus.LOCAL_ON_ERROR, null, Json.createObject().set("message", error)));
+        deliverMessage(LOCAL_ON_ERROR, new DefaultMessage<JsonObject>(false, null, LOCAL_ON_ERROR,
+            null, Json.createObject().set("message", error)));
       }
 
       @Override
@@ -95,8 +95,8 @@ public class WebSocketBusClient extends SimpleBus {
               + " shouldn't be empty";
           sendRegister(key);
         }
-        deliverMessage(Bus.LOCAL_ON_OPEN, new DefaultMessage<Void>(false, null, Bus.LOCAL_ON_OPEN,
-            null, null));
+        deliverMessage(LOCAL_ON_OPEN, new DefaultMessage<Void>(false, null, LOCAL_ON_OPEN, null,
+            null));
       }
     };
 

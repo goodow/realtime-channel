@@ -49,8 +49,8 @@ public class SimpleBus implements Bus {
   @Override
   public void close() {
     state = State.CLOSING;
-    deliverMessage(Bus.LOCAL_ON_CLOSE, new DefaultMessage<Void>(false, null, Bus.LOCAL_ON_CLOSE,
-        null, null));
+    deliverMessage(LOCAL_ON_CLOSE,
+        new DefaultMessage<Void>(false, null, LOCAL_ON_CLOSE, null, null));
     state = State.CLOSED;
     clearHandlers();
   }
@@ -116,7 +116,7 @@ public class SimpleBus implements Bus {
 
   protected boolean isLocalFork(String address) {
     assert address != null : "address shouldn't be null";
-    return forkLocal && !address.isEmpty() && address.charAt(0) == Bus.LOCAL;
+    return forkLocal && address.startsWith(LOCAL);
   }
 
   protected String makeUUID() {
@@ -159,7 +159,7 @@ public class SimpleBus implements Bus {
       replyHandlers.set(replyAddress, replyHandler);
     }
     if (isLocalFork(address)) {
-      address = address.substring(1);
+      address = address.substring(LOCAL.length());
       if (replyAddress != null) {
         replyAddress = LOCAL + replyAddress;
       }

@@ -12,12 +12,13 @@
 
 @implementation GDCBus
 
+static NSString * GDCBus_LOCAL_ = @"@";
 static NSString * GDCBus_LOCAL_ON_OPEN_ = @"@bus.onOpen";
 static NSString * GDCBus_LOCAL_ON_CLOSE_ = @"@bus.onClose";
 static NSString * GDCBus_LOCAL_ON_ERROR_ = @"@bus.onError";
 
-+ (unichar)LOCAL {
-  return GDCBus_LOCAL;
++ (NSString *)LOCAL {
+  return GDCBus_LOCAL_;
 }
 
 + (NSString *)LOCAL_ON_OPEN {
@@ -38,7 +39,7 @@ static NSString * GDCBus_LOCAL_ON_ERROR_ = @"@bus.onError";
     { "getReadyState", NULL, "LGDCStateEnum", 0x401, NULL },
   };
   static J2ObjcFieldInfo fields[] = {
-    { "LOCAL_", NULL, 0x19, "C" },
+    { "LOCAL_", NULL, 0x19, "LNSString" },
     { "LOCAL_ON_OPEN_", NULL, 0x19, "LNSString" },
     { "LOCAL_ON_CLOSE_", NULL, 0x19, "LNSString" },
     { "LOCAL_ON_ERROR_", NULL, 0x19, "LNSString" },

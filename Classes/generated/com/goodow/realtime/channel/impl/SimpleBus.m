@@ -103,7 +103,7 @@
 
 - (BOOL)isLocalForkWithNSString:(NSString *)address {
   NSAssert(address != nil, @"address shouldn't be null");
-  return forkLocal_ && ![((NSString *) nil_chk(address)) isEmpty] && [address charAtWithInt:0] == GDCBus_LOCAL;
+  return forkLocal_ && [((NSString *) nil_chk(address)) hasPrefix:[GDCBus LOCAL]];
 }
 
 - (NSString *)makeUUID {
@@ -146,9 +146,9 @@
     (void) [((id<GDJsonObject>) nil_chk(replyHandlers_)) set:replyAddress value:replyHandler];
   }
   if ([self isLocalForkWithNSString:address]) {
-    address = [((NSString *) nil_chk(address)) substring:1];
+    address = [((NSString *) nil_chk(address)) substring:[((NSString *) nil_chk([GDCBus LOCAL])) length]];
     if (replyAddress != nil) {
-      replyAddress = [NSString stringWithFormat:@"@%@", replyAddress];
+      replyAddress = [NSString stringWithFormat:@"%@%@", [GDCBus LOCAL], replyAddress];
     }
   }
   [self deliverMessageWithNSString:address withGDCMessage:[[ComGoodowRealtimeChannelImplDefaultMessage alloc] initWithBoolean:send withGDCBus:self withNSString:address withNSString:replyAddress withId:msg]];

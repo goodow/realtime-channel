@@ -13,8 +13,6 @@
 
 #import "JreEmulation.h"
 
-#define GDCBus_LOCAL '@'
-
 @protocol GDCBus < NSObject, JavaObject >
 - (void)close;
 - (GDCStateEnum *)getReadyState;
@@ -26,7 +24,7 @@
 
 @interface GDCBus : NSObject {
 }
-+ (unichar)LOCAL;
++ (NSString *)LOCAL;
 + (NSString *)LOCAL_ON_OPEN;
 + (NSString *)LOCAL_ON_CLOSE;
 + (NSString *)LOCAL_ON_ERROR;
