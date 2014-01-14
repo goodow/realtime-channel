@@ -21,7 +21,7 @@
 
 # define GDCSimpleBus ComGoodowRealtimeObjcObjCSimpleBus
 # define GDCWebSocketBusClient ComGoodowRealtimeObjcObjCWebSocketBusClient
-
+# define GDCHandlerRegistration ComGoodowRealtimeCoreHandlerRegistration
 
 @protocol GDCMessage;
 typedef void (^GDCMessageBlock)(id<GDCMessage> message);
@@ -30,5 +30,7 @@ typedef void (^GDCMessageBlock)(id<GDCMessage> message);
 #import "GDJson.h"
 #import "com/goodow/realtime/channel/Bus.h"
 #import "com/goodow/realtime/channel/Message.h"
+#import "com/goodow/realtime/channel/State.h"
+#import "com/goodow/realtime/core/HandlerRegistration.h"
 #import "com/goodow/realtime/objc/ObjCSimpleBus.h"
 #import "com/goodow/realtime/objc/ObjCWebSocketBusClient.h"

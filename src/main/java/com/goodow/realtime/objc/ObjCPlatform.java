@@ -1,16 +1,29 @@
+/*
+ * Copyright 2014 Goodow.com
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.goodow.realtime.objc;
 
+import com.goodow.realtime.core.Handler;
 import com.goodow.realtime.core.Net;
 import com.goodow.realtime.core.Platform;
 import com.goodow.realtime.core.Platform.Type;
 import com.goodow.realtime.core.PlatformFactory;
-import com.goodow.realtime.core.VoidHandler;
 import com.goodow.realtime.json.Json;
 import com.goodow.realtime.json.JsonObject;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
- class ObjCPlatform implements PlatformFactory {
+class ObjCPlatform implements PlatformFactory {
   /**
    * Registers the Objective-C platform with a default configuration.
    */
@@ -40,13 +53,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 
   @Override
   // @formatter:off
-  public native void scheduleDeferred(VoidHandler handler) /*-[
+  public native void scheduleDeferred(Handler<Void> handler) /*-[
     [[NSRunLoop mainRunLoop] performSelector:@selector(handleWithId:) target:handler argument:nil order:0 modes:@[NSDefaultRunLoopMode]];
   ]-*/;
   // @formatter:on
 
   @Override
-  public int setPeriodic(int delayMs, VoidHandler handler) {
+  public int setPeriodic(int delayMs, Handler<Void> handler) {
     final int id = timerId.getAndIncrement();
     timers.set("" + id, setPeriodicNative(delayMs, handler));
     return id;
@@ -62,7 +75,7 @@ import java.util.concurrent.atomic.AtomicInteger;
     [(NSTimer *)timer invalidate];
   ]-*/;
   
-  private native Object setPeriodicNative(int delayMs, VoidHandler handler) /*-[
+  private native Object setPeriodicNative(int delayMs, Handler<Void> handler) /*-[
     return
     [NSTimer scheduledTimerWithTimeInterval:delayMs/1000 
                                      target:handler

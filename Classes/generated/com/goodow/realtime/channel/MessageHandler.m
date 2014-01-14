@@ -16,7 +16,7 @@
 
 + (J2ObjcClassInfo *)__metadata {
   static J2ObjcMethodInfo methods[] = {
-    { "handleWithGDCMessage:", NULL, "V", 0x401, NULL },
+    { "handleWithGDCMessage:", "handle", "V", 0x401, NULL },
   };
   static J2ObjcClassInfo _GDCMessageHandler = { "MessageHandler", "com.goodow.realtime.channel", NULL, 0x201, 1, methods, 0, NULL, 0, NULL};
   return &_GDCMessageHandler;

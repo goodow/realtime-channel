@@ -5,9 +5,9 @@
 //  Created by retechretech.
 //
 
+#include "com/goodow/realtime/core/Handler.h"
 #include "com/goodow/realtime/core/Net.h"
 #include "com/goodow/realtime/core/Platform.h"
-#include "com/goodow/realtime/core/VoidHandler.h"
 #include "com/goodow/realtime/json/Json.h"
 #include "com/goodow/realtime/json/JsonObject.h"
 #include "com/goodow/realtime/objc/ObjCNet.h"
@@ -33,14 +33,14 @@
   return net__;
 }
 
-- (void)scheduleDeferredWithComGoodowRealtimeCoreVoidHandler:(ComGoodowRealtimeCoreVoidHandler *)handler {
+- (void)scheduleDeferredWithComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)handler {
   [[NSRunLoop mainRunLoop] performSelector:@selector(handleWithId:) target:handler argument:nil order:0 modes:@[NSDefaultRunLoopMode]];
 }
 
 - (int)setPeriodicWithInt:(int)delayMs
-withComGoodowRealtimeCoreVoidHandler:(ComGoodowRealtimeCoreVoidHandler *)handler {
+withComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)handler {
   int id_ = [((JavaUtilConcurrentAtomicAtomicInteger *) nil_chk(timerId_)) getAndIncrement];
-  (void) [((id<GDJsonObject>) nil_chk(timers_)) set:[NSString stringWithFormat:@"%d", id_] value:[self setPeriodicNativeWithInt:delayMs withComGoodowRealtimeCoreVoidHandler:handler]];
+  (void) [((id<GDJsonObject>) nil_chk(timers_)) set:[NSString stringWithFormat:@"%d", id_] value:[self setPeriodicNativeWithInt:delayMs withComGoodowRealtimeCoreHandler:handler]];
   return id_;
 }
 
@@ -53,7 +53,7 @@ withComGoodowRealtimeCoreVoidHandler:(ComGoodowRealtimeCoreVoidHandler *)handler
 }
 
 - (id)setPeriodicNativeWithInt:(int)delayMs
-withComGoodowRealtimeCoreVoidHandler:(ComGoodowRealtimeCoreVoidHandler *)handler {
+withComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)handler {
   return
   [NSTimer scheduledTimerWithTimeInterval:delayMs/1000
   target:handler
@@ -80,19 +80,22 @@ withComGoodowRealtimeCoreVoidHandler:(ComGoodowRealtimeCoreVoidHandler *)handler
 
 + (J2ObjcClassInfo *)__metadata {
   static J2ObjcMethodInfo methods[] = {
-    { "cancelTimerWithInt:", NULL, "Z", 0x1, NULL },
-    { "net", NULL, "LComGoodowRealtimeCoreNet", 0x1, NULL },
-    { "scheduleDeferredWithComGoodowRealtimeCoreVoidHandler:", NULL, "V", 0x101, NULL },
-    { "type", NULL, "LComGoodowRealtimeCorePlatform_TypeEnum", 0x1, NULL },
-    { "cancelTimerWithId:", NULL, "V", 0x102, NULL },
-    { "setPeriodicNativeWithInt:withComGoodowRealtimeCoreVoidHandler:", NULL, "LNSObject", 0x102, NULL },
+    { "register__", "register", "V", 0x9, NULL },
+    { "cancelTimerWithInt:", "cancelTimer", "Z", 0x1, NULL },
+    { "net", NULL, "Lcom.goodow.realtime.core.Net;", 0x1, NULL },
+    { "scheduleDeferredWithComGoodowRealtimeCoreHandler:", "scheduleDeferred", "V", 0x101, NULL },
+    { "setPeriodicWithInt:withComGoodowRealtimeCoreHandler:", "setPeriodic", "I", 0x1, NULL },
+    { "type", NULL, "Lcom.goodow.realtime.core.Platform$Type;", 0x1, NULL },
+    { "cancelTimerWithId:", "cancelTimer", "V", 0x102, NULL },
+    { "setPeriodicNativeWithInt:withComGoodowRealtimeCoreHandler:", "setPeriodicNative", "Ljava.lang.Object;", 0x102, NULL },
+    { "init", NULL, NULL, 0x0, NULL },
   };
   static J2ObjcFieldInfo fields[] = {
-    { "timerId_", NULL, 0x12, "LJavaUtilConcurrentAtomicAtomicInteger" },
-    { "timers_", NULL, 0x12, "LGDJsonObject" },
-    { "net__", "net", 0x12, "LComGoodowRealtimeCoreNet" },
+    { "timerId_", NULL, 0x12, "Ljava.util.concurrent.atomic.AtomicInteger;" },
+    { "timers_", NULL, 0x12, "Lcom.goodow.realtime.json.JsonObject;" },
+    { "net__", "net", 0x12, "Lcom.goodow.realtime.core.Net;" },
   };
-  static J2ObjcClassInfo _ComGoodowRealtimeObjcObjCPlatform = { "ObjCPlatform", "com.goodow.realtime.objc", NULL, 0x0, 6, methods, 3, fields, 0, NULL};
+  static J2ObjcClassInfo _ComGoodowRealtimeObjcObjCPlatform = { "ObjCPlatform", "com.goodow.realtime.objc", NULL, 0x0, 9, methods, 3, fields, 0, NULL};
   return &_ComGoodowRealtimeObjcObjCPlatform;
 }
 

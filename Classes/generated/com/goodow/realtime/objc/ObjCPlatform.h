@@ -9,8 +9,8 @@
 #define _ComGoodowRealtimeObjcObjCPlatform_H_
 
 @class ComGoodowRealtimeCorePlatform_TypeEnum;
-@class ComGoodowRealtimeCoreVoidHandler;
 @class JavaUtilConcurrentAtomicAtomicInteger;
+@protocol ComGoodowRealtimeCoreHandler;
 @protocol ComGoodowRealtimeCoreNet;
 @protocol GDJsonObject;
 
@@ -27,13 +27,13 @@
 + (void)register__;
 - (BOOL)cancelTimerWithInt:(int)id_;
 - (id<ComGoodowRealtimeCoreNet>)net;
-- (void)scheduleDeferredWithComGoodowRealtimeCoreVoidHandler:(ComGoodowRealtimeCoreVoidHandler *)handler;
+- (void)scheduleDeferredWithComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)handler;
 - (int)setPeriodicWithInt:(int)delayMs
-withComGoodowRealtimeCoreVoidHandler:(ComGoodowRealtimeCoreVoidHandler *)handler;
+withComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)handler;
 - (ComGoodowRealtimeCorePlatform_TypeEnum *)type;
 - (void)cancelTimerWithId:(id)timer;
 - (id)setPeriodicNativeWithInt:(int)delayMs
-withComGoodowRealtimeCoreVoidHandler:(ComGoodowRealtimeCoreVoidHandler *)handler;
+withComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)handler;
 - (id)init;
 - (void)copyAllFieldsTo:(ComGoodowRealtimeObjcObjCPlatform *)other;
 @end

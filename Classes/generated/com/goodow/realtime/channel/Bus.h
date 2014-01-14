@@ -10,6 +10,7 @@
 
 @class GDCStateEnum;
 @protocol ComGoodowRealtimeCoreHandler;
+@protocol ComGoodowRealtimeCoreHandlerRegistration;
 
 #import "JreEmulation.h"
 
@@ -17,9 +18,8 @@
 - (void)close;
 - (GDCStateEnum *)getReadyState;
 - (id<GDCBus>)publish:(NSString *)address message:(id)msg;
-- (id<GDCBus>)registerHandler:(NSString *)address handler:(id)handler;
+- (id<ComGoodowRealtimeCoreHandlerRegistration>)registerHandler:(NSString *)address handler:(id)handler;
 - (id<GDCBus>)send:(NSString *)address message:(id)msg replyHandler:(id)replyHandler;
-- (id<GDCBus>)unregisterHandler:(NSString *)address handler:(id)handler;
 @end
 
 @interface GDCBus : NSObject {

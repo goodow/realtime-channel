@@ -68,15 +68,17 @@ static IOSCharArray * ComGoodowRealtimeChannelUtilIdGenerator_NUMBERS_;
 
 + (J2ObjcClassInfo *)__metadata {
   static J2ObjcMethodInfo methods[] = {
-    { "nextWithInt:", NULL, "LNSString", 0x1, NULL },
-    { "nextNumbersWithInt:", NULL, "LNSString", 0x1, NULL },
+    { "init", "IdGenerator", NULL, 0x1, NULL },
+    { "initWithJavaUtilRandom:", "IdGenerator", NULL, 0x1, NULL },
+    { "nextWithInt:", "next", "Ljava.lang.String;", 0x1, NULL },
+    { "nextNumbersWithInt:", "nextNumbers", "Ljava.lang.String;", 0x1, NULL },
   };
   static J2ObjcFieldInfo fields[] = {
-    { "ALPHABET_", NULL, 0x18, "LIOSCharArray" },
-    { "NUMBERS_", NULL, 0x18, "LIOSCharArray" },
-    { "random_", NULL, 0x12, "LJavaUtilRandom" },
+    { "ALPHABET_", NULL, 0x18, "[C" },
+    { "NUMBERS_", NULL, 0x18, "[C" },
+    { "random_", NULL, 0x12, "Ljava.util.Random;" },
   };
-  static J2ObjcClassInfo _ComGoodowRealtimeChannelUtilIdGenerator = { "IdGenerator", "com.goodow.realtime.channel.util", NULL, 0x1, 2, methods, 3, fields, 0, NULL};
+  static J2ObjcClassInfo _ComGoodowRealtimeChannelUtilIdGenerator = { "IdGenerator", "com.goodow.realtime.channel.util", NULL, 0x1, 4, methods, 3, fields, 0, NULL};
   return &_ComGoodowRealtimeChannelUtilIdGenerator;
 }
 

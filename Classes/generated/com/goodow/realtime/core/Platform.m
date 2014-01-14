@@ -6,10 +6,10 @@
 //
 
 #include "IOSClass.h"
+#include "com/goodow/realtime/core/Handler.h"
 #include "com/goodow/realtime/core/Net.h"
 #include "com/goodow/realtime/core/Platform.h"
 #include "com/goodow/realtime/core/PlatformFactory.h"
-#include "com/goodow/realtime/core/VoidHandler.h"
 #include "java/lang/IllegalArgumentException.h"
 
 @implementation ComGoodowRealtimeCorePlatform
@@ -32,8 +32,8 @@ static id<ComGoodowRealtimeCorePlatformFactory> ComGoodowRealtimeCorePlatform_FA
   return [((id<ComGoodowRealtimeCorePlatformFactory>) nil_chk([ComGoodowRealtimeCorePlatform get])) net];
 }
 
-+ (void)scheduleDeferredWithComGoodowRealtimeCoreVoidHandler:(ComGoodowRealtimeCoreVoidHandler *)handler {
-  [((id<ComGoodowRealtimeCorePlatformFactory>) nil_chk([ComGoodowRealtimeCorePlatform get])) scheduleDeferredWithComGoodowRealtimeCoreVoidHandler:handler];
++ (void)scheduleDeferredWithComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)handler {
+  [((id<ComGoodowRealtimeCorePlatformFactory>) nil_chk([ComGoodowRealtimeCorePlatform get])) scheduleDeferredWithComGoodowRealtimeCoreHandler:handler];
 }
 
 + (void)setFactoryWithComGoodowRealtimeCorePlatformFactory:(id<ComGoodowRealtimeCorePlatformFactory>)factory {
@@ -41,8 +41,8 @@ static id<ComGoodowRealtimeCorePlatformFactory> ComGoodowRealtimeCorePlatform_FA
 }
 
 + (int)setPeriodicWithInt:(int)delayMs
-withComGoodowRealtimeCoreVoidHandler:(ComGoodowRealtimeCoreVoidHandler *)handler {
-  return [((id<ComGoodowRealtimeCorePlatformFactory>) nil_chk([ComGoodowRealtimeCorePlatform get])) setPeriodicWithInt:delayMs withComGoodowRealtimeCoreVoidHandler:handler];
+withComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)handler {
+  return [((id<ComGoodowRealtimeCorePlatformFactory>) nil_chk([ComGoodowRealtimeCorePlatform get])) setPeriodicWithInt:delayMs withComGoodowRealtimeCoreHandler:handler];
 }
 
 + (ComGoodowRealtimeCorePlatform_TypeEnum *)type {
@@ -60,16 +60,19 @@ withComGoodowRealtimeCoreVoidHandler:(ComGoodowRealtimeCoreVoidHandler *)handler
 
 + (J2ObjcClassInfo *)__metadata {
   static J2ObjcMethodInfo methods[] = {
-    { "cancelTimerWithInt:", NULL, "Z", 0x9, NULL },
-    { "net", NULL, "LComGoodowRealtimeCoreNet", 0x9, NULL },
-    { "type", NULL, "LComGoodowRealtimeCorePlatform_TypeEnum", 0x9, NULL },
-    { "get", NULL, "LComGoodowRealtimeCorePlatformFactory", 0xa, NULL },
-    { "init", NULL, NULL, 0x4, NULL },
+    { "cancelTimerWithInt:", "cancelTimer", "Z", 0x9, NULL },
+    { "net", NULL, "Lcom.goodow.realtime.core.Net;", 0x9, NULL },
+    { "scheduleDeferredWithComGoodowRealtimeCoreHandler:", "scheduleDeferred", "V", 0x9, NULL },
+    { "setFactoryWithComGoodowRealtimeCorePlatformFactory:", "setFactory", "V", 0x9, NULL },
+    { "setPeriodicWithInt:withComGoodowRealtimeCoreHandler:", "setPeriodic", "I", 0x9, NULL },
+    { "type", NULL, "Lcom.goodow.realtime.core.Platform$Type;", 0x9, NULL },
+    { "get", NULL, "Lcom.goodow.realtime.core.PlatformFactory;", 0xa, NULL },
+    { "init", "Platform", NULL, 0x4, NULL },
   };
   static J2ObjcFieldInfo fields[] = {
-    { "FACTORY_", NULL, 0xa, "LComGoodowRealtimeCorePlatformFactory" },
+    { "FACTORY_", NULL, 0xa, "Lcom.goodow.realtime.core.PlatformFactory;" },
   };
-  static J2ObjcClassInfo _ComGoodowRealtimeCorePlatform = { "Platform", "com.goodow.realtime.core", NULL, 0x1, 5, methods, 1, fields, 0, NULL};
+  static J2ObjcClassInfo _ComGoodowRealtimeCorePlatform = { "Platform", "com.goodow.realtime.core", NULL, 0x1, 8, methods, 1, fields, 0, NULL};
   return &_ComGoodowRealtimeCorePlatform;
 }
 
@@ -140,8 +143,11 @@ IOSObjectArray *ComGoodowRealtimeCorePlatform_TypeEnum_values;
 }
 
 + (J2ObjcClassInfo *)__metadata {
-  static const char *superclass_type_args[] = {"LComGoodowRealtimeCorePlatform_TypeEnum"};
-  static J2ObjcClassInfo _ComGoodowRealtimeCorePlatform_TypeEnum = { "Type", "com.goodow.realtime.core", "Platform", 0x4019, 0, NULL, 0, NULL, 1, superclass_type_args};
+  static J2ObjcMethodInfo methods[] = {
+    { "init", NULL, NULL, 0x1, NULL },
+  };
+  static const char *superclass_type_args[] = {"Lcom.goodow.realtime.core.Platform$Type;"};
+  static J2ObjcClassInfo _ComGoodowRealtimeCorePlatform_TypeEnum = { "Type", "com.goodow.realtime.core", "Platform", 0x4019, 1, methods, 0, NULL, 1, superclass_type_args};
   return &_ComGoodowRealtimeCorePlatform_TypeEnum;
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Goodow.com
+ * Copyright 2014 Goodow.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -13,7 +13,8 @@
  */
 package com.goodow.realtime.html;
 
-import com.goodow.realtime.html.BusOverlay.DefaultMessageOverlay;
+import com.goodow.realtime.html.BusOverlay.HandlerRegistrationOverlay;
+import com.goodow.realtime.html.BusOverlay.MessageOverlay;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.shared.GWT;
@@ -23,7 +24,8 @@ class ChannelEntryPoint implements EntryPoint {
   @Override
   public void onModuleLoad() {
     HtmlPlatform.register();
-    GWT.create(DefaultMessageOverlay.class);
+    GWT.create(HandlerRegistrationOverlay.class);
+    GWT.create(MessageOverlay.class);
     GWT.create(BusOverlay.class);
     // GWT.create(MessageHandlerOverlay.class);
     __jsniOnLoad__();

@@ -13,7 +13,7 @@
 #import "JreEmulation.h"
 #include "java/lang/RuntimeException.h"
 
-#define GDCReplyException_serialVersionUID -4441153344646081242
+#define GDCReplyException_serialVersionUID -4441153344646081242LL
 
 @interface GDCReplyException : JavaLangRuntimeException {
  @public
@@ -21,6 +21,7 @@
   int failureCode__;
 }
 
++ (long long int)serialVersionUID;
 - (id)initWithGDCReplyFailureEnum:(GDCReplyFailureEnum *)failureType;
 - (id)initWithGDCReplyFailureEnum:(GDCReplyFailureEnum *)failureType
                           withInt:(int)failureCode

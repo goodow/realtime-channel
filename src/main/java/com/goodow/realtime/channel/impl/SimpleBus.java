@@ -18,8 +18,8 @@ import com.goodow.realtime.channel.Message;
 import com.goodow.realtime.channel.State;
 import com.goodow.realtime.channel.util.IdGenerator;
 import com.goodow.realtime.core.Handler;
+import com.goodow.realtime.core.HandlerRegistration;
 import com.goodow.realtime.core.Platform;
-import com.goodow.realtime.core.VoidHandler;
 import com.goodow.realtime.json.Json;
 import com.goodow.realtime.json.JsonArray;
 import com.goodow.realtime.json.JsonObject;
@@ -67,20 +67,20 @@ public class SimpleBus implements Bus {
   }
 
   @Override
-  public Bus registerHandler(String address, Handler<? extends Message> handler) {
-    registerHandlerImpl(address, handler);
-    return this;
+  public HandlerRegistration registerHandler(final String address,
+      final Handler<? extends Message> handler) {
+    doRegisterHandler(address, handler);
+    return new HandlerRegistration() {
+      @Override
+      public void unregisterHandler() {
+        doUnregisterHandler(address, handler);
+      }
+    };
   }
 
   @Override
   public <T> Bus send(String address, Object msg, Handler<Message<T>> replyHandler) {
     sendOrPub(true, address, msg, replyHandler);
-    return this;
-  }
-
-  @Override
-  public Bus unregisterHandler(String address, Handler<? extends Message> handler) {
-    unregisterHandlerImpl(address, handler);
     return this;
   }
 
@@ -114,6 +114,36 @@ public class SimpleBus implements Bus {
     }
   }
 
+  protected boolean doRegisterHandler(String address, Handler<? extends Message> handler) {
+    checkNotNull("address", address);
+    checkNotNull("handler", handler);
+    JsonArray handlers = handlerMap.getArray(address);
+    if (handlers == null) {
+      handlerMap.set(address, Json.createArray().push(handler));
+      return true;
+    } else if (handlers.indexOf(handler) == -1) {
+      handlers.push(handler);
+    }
+    return false;
+  }
+
+  protected boolean doUnregisterHandler(String address, Handler<? extends Message> handler) {
+    assert address != null : "address shouldn't be null";
+    assert handler != null : "handler shouldn't be null";
+    JsonArray handlers = handlerMap.getArray(address);
+    if (handlers != null) {
+      int idx = handlers.indexOf(handler);
+      if (idx != -1) {
+        handlers.remove(idx);
+      }
+      if (handlers.length() == 0) {
+        handlerMap.remove(address);
+        return true;
+      }
+    }
+    return false;
+  }
+
   protected boolean isLocalFork(String address) {
     assert address != null : "address shouldn't be null";
     return forkLocal && address.startsWith(LOCAL);
@@ -128,23 +158,10 @@ public class SimpleBus implements Bus {
     ((Handler<T>) handler).handle(message);
   }
 
-  protected boolean registerHandlerImpl(String address, Handler<? extends Message> handler) {
-    checkNotNull("address", address);
-    checkNotNull("handler", handler);
-    JsonArray handlers = handlerMap.getArray(address);
-    if (handlers == null) {
-      handlerMap.set(address, Json.createArray().push(handler));
-      return true;
-    } else if (handlers.indexOf(handler) == -1) {
-      handlers.push(handler);
-    }
-    return false;
-  }
-
   protected void scheduleHandle(final Object message, final Object handler) {
-    Platform.scheduleDeferred(new VoidHandler() {
+    Platform.scheduleDeferred(new Handler<Void>() {
       @Override
-      protected void handle() {
+      public void handle(Void ignore) {
         nativeHandle(message, handler);
       }
     });
@@ -165,22 +182,5 @@ public class SimpleBus implements Bus {
       }
     }
     deliverMessage(address, new DefaultMessage(send, this, address, replyAddress, msg));
-  }
-
-  protected boolean unregisterHandlerImpl(String address, Handler<? extends Message> handler) {
-    checkNotNull("address", address);
-    checkNotNull("handler", handler);
-    JsonArray handlers = handlerMap.getArray(address);
-    if (handlers != null) {
-      int idx = handlers.indexOf(handler);
-      if (idx != -1) {
-        handlers.remove(idx);
-      }
-      if (handlers.length() == 0) {
-        handlerMap.remove(address);
-        return true;
-      }
-    }
-    return false;
   }
 }

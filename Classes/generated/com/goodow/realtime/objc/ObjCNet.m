@@ -23,9 +23,10 @@
 
 + (J2ObjcClassInfo *)__metadata {
   static J2ObjcMethodInfo methods[] = {
-    { "createWebSocketWithNSString:withGDJsonObject:", NULL, "LComGoodowRealtimeCoreWebSocket", 0x1, NULL },
+    { "createWebSocketWithNSString:withGDJsonObject:", "createWebSocket", "Lcom.goodow.realtime.core.WebSocket;", 0x1, NULL },
+    { "init", NULL, NULL, 0x0, NULL },
   };
-  static J2ObjcClassInfo _ComGoodowRealtimeObjcObjCNet = { "ObjCNet", "com.goodow.realtime.objc", NULL, 0x0, 1, methods, 0, NULL, 0, NULL};
+  static J2ObjcClassInfo _ComGoodowRealtimeObjcObjCNet = { "ObjCNet", "com.goodow.realtime.objc", NULL, 0x0, 2, methods, 0, NULL, 0, NULL};
   return &_ComGoodowRealtimeObjcObjCNet;
 }
 

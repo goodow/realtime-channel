@@ -88,10 +88,12 @@ IOSObjectArray *GDCReplyFailureEnum_values;
 
 + (J2ObjcClassInfo *)__metadata {
   static J2ObjcMethodInfo methods[] = {
-    { "fromIntWithInt:", NULL, "LGDCReplyFailureEnum", 0x9, NULL },
+    { "fromIntWithInt:", "fromInt", "Lcom.goodow.realtime.channel.ReplyFailure;", 0x9, NULL },
+    { "toInt", NULL, "I", 0x1, NULL },
+    { "init", NULL, NULL, 0x1, NULL },
   };
-  static const char *superclass_type_args[] = {"LGDCReplyFailureEnum"};
-  static J2ObjcClassInfo _GDCReplyFailureEnum = { "ReplyFailure", "com.goodow.realtime.channel", NULL, 0x4011, 1, methods, 0, NULL, 1, superclass_type_args};
+  static const char *superclass_type_args[] = {"Lcom.goodow.realtime.channel.ReplyFailure;"};
+  static J2ObjcClassInfo _GDCReplyFailureEnum = { "ReplyFailure", "com.goodow.realtime.channel", NULL, 0x4011, 3, methods, 0, NULL, 1, superclass_type_args};
   return &_GDCReplyFailureEnum;
 }
 

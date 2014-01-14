@@ -11,8 +11,20 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.goodow.realtime.channel;
+package com.goodow.realtime.core;
 
-public enum State {
-  CONNECTING, OPEN, CLOSING, CLOSED;
+import com.goodow.realtime.channel.Bus;
+
+/**
+ * Registration objects returned when an event handler is bound (e.g. via
+ * {@link Bus#registerHandler}), used to deregister.
+ */
+public interface HandlerRegistration {
+
+  /**
+   * Deregisters the handler associated with this registration object if the handler is still
+   * attached to the event bus. If the handler is no longer attached to the event bus, this is a
+   * no-op.
+   */
+  void unregisterHandler();
 }

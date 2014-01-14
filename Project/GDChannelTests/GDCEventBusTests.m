@@ -30,6 +30,7 @@
 - (void)testExample
 {
   id<GDCBus> bus = [GDCWebSocketBusClient create:@"ws://data.goodow.com:8080/eventbus/websocket" options:@{@"forkLocal":@YES}];
+  __block id<GDCHandlerRegistration> handlerRegistration;
   __block BOOL testComplete = NO;
   
   [bus registerHandler:[GDCBus LOCAL_ON_OPEN] handler:^(id<GDCMessage> message) {
@@ -43,7 +44,7 @@
     NSLog(@"%@", @"EventBus Error");
   }];
   
-  [bus registerHandler:@"objc.someaddress" handler:^(id<GDCMessage> message) {
+  handlerRegistration = [bus registerHandler:@"objc.someaddress" handler:^(id<GDCMessage> message) {
     NSMutableDictionary *body = [message body];
     XCTAssertTrue([@"send1" isEqualToString:[body objectForKey:@"text"]]);
     
@@ -52,6 +53,8 @@
       NSMutableDictionary *body = [message body];
       XCTAssertTrue([@"reply2" isEqualToString:[body objectForKey:@"text"]]);
       
+      [handlerRegistration unregisterHandler];
+      handlerRegistration = nil;
       [bus close];
     }];
   }];

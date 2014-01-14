@@ -15,7 +15,7 @@
 
 + (J2ObjcClassInfo *)__metadata {
   static J2ObjcMethodInfo methods[] = {
-    { "handleWithId:", NULL, "V", 0x401, NULL },
+    { "handleWithId:", "handle", "V", 0x401, NULL },
   };
   static J2ObjcClassInfo _ComGoodowRealtimeCoreHandler = { "Handler", "com.goodow.realtime.core", NULL, 0x201, 1, methods, 0, NULL, 0, NULL};
   return &_ComGoodowRealtimeCoreHandler;

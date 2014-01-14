@@ -65,8 +65,11 @@ IOSObjectArray *GDCStateEnum_values;
 }
 
 + (J2ObjcClassInfo *)__metadata {
-  static const char *superclass_type_args[] = {"LGDCStateEnum"};
-  static J2ObjcClassInfo _GDCStateEnum = { "State", "com.goodow.realtime.channel", NULL, 0x4011, 0, NULL, 0, NULL, 1, superclass_type_args};
+  static J2ObjcMethodInfo methods[] = {
+    { "init", NULL, NULL, 0x1, NULL },
+  };
+  static const char *superclass_type_args[] = {"Lcom.goodow.realtime.channel.State;"};
+  static J2ObjcClassInfo _GDCStateEnum = { "State", "com.goodow.realtime.channel", NULL, 0x4011, 1, methods, 0, NULL, 1, superclass_type_args};
   return &_GDCStateEnum;
 }
 

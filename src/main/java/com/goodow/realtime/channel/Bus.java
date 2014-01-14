@@ -14,12 +14,13 @@
 package com.goodow.realtime.channel;
 
 import com.goodow.realtime.core.Handler;
+import com.goodow.realtime.core.HandlerRegistration;
 
 public interface Bus {
   String LOCAL = "@";
-  String LOCAL_ON_OPEN = LOCAL + "bus.onOpen";
-  String LOCAL_ON_CLOSE = LOCAL + "bus.onClose";
-  String LOCAL_ON_ERROR = LOCAL + "bus.onError";
+  String LOCAL_ON_OPEN = LOCAL + "goodow.bus.onOpen";
+  String LOCAL_ON_CLOSE = LOCAL + "goodow.bus.onClose";
+  String LOCAL_ON_ERROR = LOCAL + "goodow.bus.onError";
 
   /**
    * Close the EventBus and release all resources.
@@ -41,9 +42,10 @@ public interface Bus {
    * 
    * @param address The address to register it at
    * @param handler The handler
+   * @return the handler registration, can be stored in order to unregister the handler later
    */
   @SuppressWarnings("rawtypes")
-  Bus registerHandler(String address, Handler<? extends Message> handler);
+  HandlerRegistration registerHandler(String address, Handler<? extends Message> handler);
 
   /**
    * Send a message
@@ -53,13 +55,4 @@ public interface Bus {
    * @param replyHandler Reply handler will be called when any reply from the recipient is received
    */
   <T> Bus send(String address, Object msg, Handler<Message<T>> replyHandler);
-
-  /**
-   * Unregisters a handler given the address and the handler
-   * 
-   * @param address The address the handler was registered at
-   * @param handler The handler
-   */
-  @SuppressWarnings("rawtypes")
-  Bus unregisterHandler(String address, Handler<? extends Message> handler);
 }

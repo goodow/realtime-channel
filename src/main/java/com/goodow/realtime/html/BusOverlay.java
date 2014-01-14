@@ -1,10 +1,23 @@
+/*
+ * Copyright 2014 Goodow.com
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.goodow.realtime.html;
 
 import com.goodow.realtime.channel.Bus;
 import com.goodow.realtime.channel.Message;
 import com.goodow.realtime.channel.State;
-import com.goodow.realtime.channel.impl.DefaultMessage;
 import com.goodow.realtime.core.Handler;
+import com.goodow.realtime.core.HandlerRegistration;
 import com.goodow.realtime.json.JsonObject;
 
 import org.timepedia.exporter.client.Export;
@@ -24,8 +37,13 @@ abstract class BusOverlay implements ExportOverlay<HtmlWebSocketBusClient> {
 
   @ExportPackage("good.channel")
   @Export
+  interface HandlerRegistrationOverlay extends ExportOverlay<HandlerRegistration> {
+    void unregisterHandler();
+  }
+  @ExportPackage("good.channel")
+  @Export
   @SuppressWarnings("rawtypes")
-  interface DefaultMessageOverlay extends ExportOverlay<DefaultMessage> {
+  interface MessageOverlay extends ExportOverlay<Message> {
     public abstract String address();
 
     public abstract Object body();
@@ -49,7 +67,7 @@ abstract class BusOverlay implements ExportOverlay<HtmlWebSocketBusClient> {
           (address, msg, replyHandler);
     };
     
-    _ = $wnd.good.channel.DefaultMessage.prototype;
+    _ = $wnd.good.channel.Message.prototype;
     _.reply = function(msg, replyHandler) {
       this.g.@com.goodow.realtime.channel.impl.DefaultMessage::reply(Ljava/lang/Object;Lcom/goodow/realtime/core/Handler;)
           (msg, replyHandler);
@@ -83,8 +101,5 @@ abstract class BusOverlay implements ExportOverlay<HtmlWebSocketBusClient> {
   // public abstract <T> Bus send(String address, Object msg, Handler<Message<T>> replyHandler);
 
   @SuppressWarnings("rawtypes")
-  public abstract Bus registerHandler(String address, Handler<? extends Message> handler);
-
-  @SuppressWarnings("rawtypes")
-  public abstract Bus unregisterHandler(String address, Handler<? extends Message> handler);
+  public abstract HandlerRegistration registerHandler(String address, Handler<? extends Message> handler);
 }

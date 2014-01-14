@@ -1,4 +1,4 @@
-For java and android: realtime-channel
+For java and android: realtime-android
 =========
 
 ## Adding realtime-android to your project

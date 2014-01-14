@@ -9,7 +9,7 @@
 #define _ComGoodowRealtimeCorePlatform_H_
 
 @class ComGoodowRealtimeCorePlatform_TypeEnum;
-@class ComGoodowRealtimeCoreVoidHandler;
+@protocol ComGoodowRealtimeCoreHandler;
 @protocol ComGoodowRealtimeCoreNet;
 @protocol ComGoodowRealtimeCorePlatformFactory;
 
@@ -23,10 +23,10 @@
 + (void)setFACTORY:(id<ComGoodowRealtimeCorePlatformFactory>)FACTORY;
 + (BOOL)cancelTimerWithInt:(int)id_;
 + (id<ComGoodowRealtimeCoreNet>)net;
-+ (void)scheduleDeferredWithComGoodowRealtimeCoreVoidHandler:(ComGoodowRealtimeCoreVoidHandler *)handler;
++ (void)scheduleDeferredWithComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)handler;
 + (void)setFactoryWithComGoodowRealtimeCorePlatformFactory:(id<ComGoodowRealtimeCorePlatformFactory>)factory;
 + (int)setPeriodicWithInt:(int)delayMs
-withComGoodowRealtimeCoreVoidHandler:(ComGoodowRealtimeCoreVoidHandler *)handler;
+withComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)handler;
 + (ComGoodowRealtimeCorePlatform_TypeEnum *)type;
 + (id<ComGoodowRealtimeCorePlatformFactory>)get;
 - (id)init;

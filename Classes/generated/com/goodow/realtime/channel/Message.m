@@ -16,11 +16,14 @@
 
 + (J2ObjcClassInfo *)__metadata {
   static J2ObjcMethodInfo methods[] = {
-    { "address", NULL, "LNSString", 0x401, NULL },
-    { "body", NULL, "TT", 0x401, NULL },
-    { "replyAddress", NULL, "LNSString", 0x401, NULL },
+    { "address", NULL, "Ljava.lang.String;", 0x401, NULL },
+    { "body", NULL, "TT;", 0x401, NULL },
+    { "fail:message:", "fail", "V", 0x401, NULL },
+    { "reply:", "reply", "V", 0x401, NULL },
+    { "reply:replyHandler:", "reply", "V", 0x401, NULL },
+    { "replyAddress", NULL, "Ljava.lang.String;", 0x401, NULL },
   };
-  static J2ObjcClassInfo _GDCMessage = { "Message", "com.goodow.realtime.channel", NULL, 0x201, 3, methods, 0, NULL, 0, NULL};
+  static J2ObjcClassInfo _GDCMessage = { "Message", "com.goodow.realtime.channel", NULL, 0x201, 6, methods, 0, NULL, 0, NULL};
   return &_GDCMessage;
 }
 

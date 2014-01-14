@@ -25,10 +25,11 @@
 
 + (J2ObjcClassInfo *)__metadata {
   static J2ObjcMethodInfo methods[] = {
-    { "handleWithJavaLangVoid:", NULL, "V", 0x11, NULL },
+    { "handleWithJavaLangVoid:", "handle", "V", 0x11, NULL },
     { "handle", NULL, "V", 0x404, NULL },
+    { "init", NULL, NULL, 0x1, NULL },
   };
-  static J2ObjcClassInfo _ComGoodowRealtimeCoreVoidHandler = { "VoidHandler", "com.goodow.realtime.core", NULL, 0x401, 2, methods, 0, NULL, 0, NULL};
+  static J2ObjcClassInfo _ComGoodowRealtimeCoreVoidHandler = { "VoidHandler", "com.goodow.realtime.core", NULL, 0x401, 3, methods, 0, NULL, 0, NULL};
   return &_ComGoodowRealtimeCoreVoidHandler;
 }
 

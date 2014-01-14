@@ -13,11 +13,13 @@
 #include "com/goodow/realtime/channel/impl/SimpleBus.h"
 #include "com/goodow/realtime/channel/util/IdGenerator.h"
 #include "com/goodow/realtime/core/Handler.h"
+#include "com/goodow/realtime/core/HandlerRegistration.h"
 #include "com/goodow/realtime/core/Platform.h"
 #include "com/goodow/realtime/json/Json.h"
 #include "com/goodow/realtime/json/JsonArray.h"
 #include "com/goodow/realtime/json/JsonObject.h"
 #include "java/lang/IllegalArgumentException.h"
+#include "java/lang/Void.h"
 
 @implementation ComGoodowRealtimeChannelImplSimpleBus
 
@@ -57,18 +59,13 @@
   return self;
 }
 
-- (id<GDCBus>)registerHandler:(NSString *)address handler:(id)handler {
-  [self registerHandlerImplWithNSString:address withComGoodowRealtimeCoreHandler:handler];
-  return self;
+- (id<ComGoodowRealtimeCoreHandlerRegistration>)registerHandler:(NSString *)address handler:(id)handler {
+  [self doRegisterHandlerWithNSString:address withComGoodowRealtimeCoreHandler:handler];
+  return [[ComGoodowRealtimeChannelImplSimpleBus_$1 alloc] initWithComGoodowRealtimeChannelImplSimpleBus:self withNSString:address withComGoodowRealtimeCoreHandler:handler];
 }
 
 - (id<GDCBus>)send:(NSString *)address message:(id)msg replyHandler:(id)replyHandler {
   [self sendOrPubWithBoolean:YES withNSString:address withId:msg withId:replyHandler];
-  return self;
-}
-
-- (id<GDCBus>)unregisterHandler:(NSString *)address handler:(id)handler {
-  [self unregisterHandlerImplWithNSString:address withComGoodowRealtimeCoreHandler:handler];
   return self;
 }
 
@@ -101,6 +98,39 @@
   }
 }
 
+- (BOOL)doRegisterHandlerWithNSString:(NSString *)address
+     withComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)handler {
+  [self checkNotNullWithNSString:@"address" withId:address];
+  [self checkNotNullWithNSString:@"handler" withId:handler];
+  id<GDJsonArray> handlers = [((id<GDJsonObject>) nil_chk(handlerMap_)) getArray:address];
+  if (handlers == nil) {
+    (void) [handlerMap_ set:address value:[((id<GDJsonArray>) nil_chk([GDJson createArray])) push:handler]];
+    return YES;
+  }
+  else if ([handlers indexOfObject:handler] == -1) {
+    (void) [handlers push:handler];
+  }
+  return NO;
+}
+
+- (BOOL)doUnregisterHandlerWithNSString:(NSString *)address
+       withComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)handler {
+  NSAssert(address != nil, @"address shouldn't be null");
+  NSAssert(handler != nil, @"handler shouldn't be null");
+  id<GDJsonArray> handlers = [((id<GDJsonObject>) nil_chk(handlerMap_)) getArray:address];
+  if (handlers != nil) {
+    int idx = [handlers indexOfObject:handler];
+    if (idx != -1) {
+      (void) [handlers remove:idx];
+    }
+    if ([handlers count] == 0) {
+      (void) [handlerMap_ remove:address];
+      return YES;
+    }
+  }
+  return NO;
+}
+
 - (BOOL)isLocalForkWithNSString:(NSString *)address {
   NSAssert(address != nil, @"address shouldn't be null");
   return forkLocal_ && [((NSString *) nil_chk(address)) hasPrefix:[GDCBus LOCAL]];
@@ -115,24 +145,9 @@
   [((id<ComGoodowRealtimeCoreHandler>) check_protocol_cast(handler, @protocol(ComGoodowRealtimeCoreHandler))) handleWithId:message];
 }
 
-- (BOOL)registerHandlerImplWithNSString:(NSString *)address
-       withComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)handler {
-  [self checkNotNullWithNSString:@"address" withId:address];
-  [self checkNotNullWithNSString:@"handler" withId:handler];
-  id<GDJsonArray> handlers = [((id<GDJsonObject>) nil_chk(handlerMap_)) getArray:address];
-  if (handlers == nil) {
-    (void) [handlerMap_ set:address value:[((id<GDJsonArray>) nil_chk([GDJson createArray])) push:handler]];
-    return YES;
-  }
-  else if ([handlers indexOfObject:handler] == -1) {
-    (void) [handlers push:handler];
-  }
-  return NO;
-}
-
 - (void)scheduleHandleWithId:(id)message
                       withId:(id)handler {
-  [ComGoodowRealtimeCorePlatform scheduleDeferredWithComGoodowRealtimeCoreVoidHandler:[[ComGoodowRealtimeChannelImplSimpleBus_$1 alloc] initWithComGoodowRealtimeChannelImplSimpleBus:self withId:message withId:handler]];
+  [ComGoodowRealtimeCorePlatform scheduleDeferredWithComGoodowRealtimeCoreHandler:[[ComGoodowRealtimeChannelImplSimpleBus_$2 alloc] initWithComGoodowRealtimeChannelImplSimpleBus:self withId:message withId:handler]];
 }
 
 - (void)sendOrPubWithBoolean:(BOOL)send
@@ -154,24 +169,6 @@
   [self deliverMessageWithNSString:address withGDCMessage:[[ComGoodowRealtimeChannelImplDefaultMessage alloc] initWithBoolean:send withGDCBus:self withNSString:address withNSString:replyAddress withId:msg]];
 }
 
-- (BOOL)unregisterHandlerImplWithNSString:(NSString *)address
-         withComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)handler {
-  [self checkNotNullWithNSString:@"address" withId:address];
-  [self checkNotNullWithNSString:@"handler" withId:handler];
-  id<GDJsonArray> handlers = [((id<GDJsonObject>) nil_chk(handlerMap_)) getArray:address];
-  if (handlers != nil) {
-    int idx = [handlers indexOfObject:handler];
-    if (idx != -1) {
-      (void) [handlers remove:idx];
-    }
-    if ([handlers count] == 0) {
-      (void) [handlerMap_ remove:address];
-      return YES;
-    }
-  }
-  return NO;
-}
-
 - (void)copyAllFieldsTo:(ComGoodowRealtimeChannelImplSimpleBus *)other {
   [super copyAllFieldsTo:other];
   other->forkLocal_ = forkLocal_;
@@ -183,33 +180,69 @@
 
 + (J2ObjcClassInfo *)__metadata {
   static J2ObjcMethodInfo methods[] = {
-    { "getReadyState", NULL, "LGDCStateEnum", 0x1, NULL },
-    { "checkNotNullWithNSString:withId:", NULL, "V", 0x4, NULL },
+    { "init", "SimpleBus", NULL, 0x1, NULL },
+    { "initWithGDJsonObject:", "SimpleBus", NULL, 0x1, NULL },
+    { "close", NULL, "V", 0x1, NULL },
+    { "getReadyState", NULL, "Lcom.goodow.realtime.channel.State;", 0x1, NULL },
+    { "publish:message:", "publish", "Lcom.goodow.realtime.channel.Bus;", 0x1, NULL },
+    { "registerHandler:handler:", "registerHandler", "Lcom.goodow.realtime.core.HandlerRegistration;", 0x1, NULL },
+    { "send:message:replyHandler:", "send", "Lcom.goodow.realtime.channel.Bus;", 0x1, NULL },
+    { "checkNotNullWithNSString:withId:", "checkNotNull", "V", 0x4, NULL },
     { "clearHandlers", NULL, "V", 0x4, NULL },
-    { "deliverMessageWithNSString:withGDCMessage:", NULL, "V", 0x4, NULL },
-    { "isLocalForkWithNSString:", NULL, "Z", 0x4, NULL },
-    { "makeUUID", NULL, "LNSString", 0x4, NULL },
-    { "nativeHandleWithId:withId:", NULL, "V", 0x4, NULL },
-    { "registerHandlerImplWithNSString:withComGoodowRealtimeCoreHandler:", NULL, "Z", 0x4, NULL },
-    { "scheduleHandleWithId:withId:", NULL, "V", 0x4, NULL },
-    { "sendOrPubWithBoolean:withNSString:withId:withId:", NULL, "V", 0x4, NULL },
-    { "unregisterHandlerImplWithNSString:withComGoodowRealtimeCoreHandler:", NULL, "Z", 0x4, NULL },
+    { "deliverMessageWithNSString:withGDCMessage:", "deliverMessage", "V", 0x4, NULL },
+    { "doRegisterHandlerWithNSString:withComGoodowRealtimeCoreHandler:", "doRegisterHandler", "Z", 0x4, NULL },
+    { "doUnregisterHandlerWithNSString:withComGoodowRealtimeCoreHandler:", "doUnregisterHandler", "Z", 0x4, NULL },
+    { "isLocalForkWithNSString:", "isLocalFork", "Z", 0x4, NULL },
+    { "makeUUID", NULL, "Ljava.lang.String;", 0x4, NULL },
+    { "nativeHandleWithId:withId:", "nativeHandle", "V", 0x4, NULL },
+    { "scheduleHandleWithId:withId:", "scheduleHandle", "V", 0x4, NULL },
+    { "sendOrPubWithBoolean:withNSString:withId:withId:", "sendOrPub", "V", 0x4, NULL },
   };
   static J2ObjcFieldInfo fields[] = {
-    { "handlerMap_", NULL, 0x14, "LGDJsonObject" },
-    { "replyHandlers_", NULL, 0x14, "LGDJsonObject" },
-    { "idGenerator_", NULL, 0x12, "LComGoodowRealtimeChannelUtilIdGenerator" },
+    { "handlerMap_", NULL, 0x14, "Lcom.goodow.realtime.json.JsonObject;" },
+    { "replyHandlers_", NULL, 0x14, "Lcom.goodow.realtime.json.JsonObject;" },
+    { "idGenerator_", NULL, 0x12, "Lcom.goodow.realtime.channel.util.IdGenerator;" },
     { "forkLocal_", NULL, 0x12, "Z" },
-    { "state_", NULL, 0x4, "LGDCStateEnum" },
+    { "state_", NULL, 0x4, "Lcom.goodow.realtime.channel.State;" },
   };
-  static J2ObjcClassInfo _ComGoodowRealtimeChannelImplSimpleBus = { "SimpleBus", "com.goodow.realtime.channel.impl", NULL, 0x1, 11, methods, 5, fields, 0, NULL};
+  static J2ObjcClassInfo _ComGoodowRealtimeChannelImplSimpleBus = { "SimpleBus", "com.goodow.realtime.channel.impl", NULL, 0x1, 17, methods, 5, fields, 0, NULL};
   return &_ComGoodowRealtimeChannelImplSimpleBus;
 }
 
 @end
 @implementation ComGoodowRealtimeChannelImplSimpleBus_$1
 
-- (void)handle {
+- (void)unregisterHandler {
+  [this$0_ doUnregisterHandlerWithNSString:val$address_ withComGoodowRealtimeCoreHandler:val$handler_];
+}
+
+- (id)initWithComGoodowRealtimeChannelImplSimpleBus:(ComGoodowRealtimeChannelImplSimpleBus *)outer$
+                                       withNSString:(NSString *)capture$0
+                   withComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)capture$1 {
+  this$0_ = outer$;
+  val$address_ = capture$0;
+  val$handler_ = capture$1;
+  return [super init];
+}
+
++ (J2ObjcClassInfo *)__metadata {
+  static J2ObjcMethodInfo methods[] = {
+    { "unregisterHandler", NULL, "V", 0x1, NULL },
+    { "initWithComGoodowRealtimeChannelImplSimpleBus:withNSString:withComGoodowRealtimeCoreHandler:", "init", NULL, 0x0, NULL },
+  };
+  static J2ObjcFieldInfo fields[] = {
+    { "this$0_", NULL, 0x1012, "Lcom.goodow.realtime.channel.impl.SimpleBus;" },
+    { "val$address_", NULL, 0x1012, "Ljava.lang.String;" },
+    { "val$handler_", NULL, 0x1012, "Lcom.goodow.realtime.core.Handler;" },
+  };
+  static J2ObjcClassInfo _ComGoodowRealtimeChannelImplSimpleBus_$1 = { "$1", "com.goodow.realtime.channel.impl", "SimpleBus", 0x8000, 2, methods, 3, fields, 0, NULL};
+  return &_ComGoodowRealtimeChannelImplSimpleBus_$1;
+}
+
+@end
+@implementation ComGoodowRealtimeChannelImplSimpleBus_$2
+
+- (void)handleWithId:(id)ignore {
   [this$0_ nativeHandleWithId:val$message_ withId:val$handler_];
 }
 
@@ -224,15 +257,16 @@
 
 + (J2ObjcClassInfo *)__metadata {
   static J2ObjcMethodInfo methods[] = {
-    { "handle", NULL, "V", 0x4, NULL },
+    { "handleWithJavaLangVoid:", "handle", "V", 0x1, NULL },
+    { "initWithComGoodowRealtimeChannelImplSimpleBus:withId:withId:", "init", NULL, 0x0, NULL },
   };
   static J2ObjcFieldInfo fields[] = {
-    { "this$0_", NULL, 0x1012, "LComGoodowRealtimeChannelImplSimpleBus" },
-    { "val$message_", NULL, 0x1012, "LNSObject" },
-    { "val$handler_", NULL, 0x1012, "LNSObject" },
+    { "this$0_", NULL, 0x1012, "Lcom.goodow.realtime.channel.impl.SimpleBus;" },
+    { "val$message_", NULL, 0x1012, "Ljava.lang.Object;" },
+    { "val$handler_", NULL, 0x1012, "Ljava.lang.Object;" },
   };
-  static J2ObjcClassInfo _ComGoodowRealtimeChannelImplSimpleBus_$1 = { "$1", "com.goodow.realtime.channel.impl", "SimpleBus", 0x8000, 1, methods, 3, fields, 0, NULL};
-  return &_ComGoodowRealtimeChannelImplSimpleBus_$1;
+  static J2ObjcClassInfo _ComGoodowRealtimeChannelImplSimpleBus_$2 = { "$2", "com.goodow.realtime.channel.impl", "SimpleBus", 0x8000, 2, methods, 3, fields, 0, NULL};
+  return &_ComGoodowRealtimeChannelImplSimpleBus_$2;
 }
 
 @end

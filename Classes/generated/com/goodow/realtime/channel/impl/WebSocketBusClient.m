@@ -14,6 +14,7 @@
 #include "com/goodow/realtime/channel/impl/SimpleBus.h"
 #include "com/goodow/realtime/channel/impl/WebSocketBusClient.h"
 #include "com/goodow/realtime/core/Handler.h"
+#include "com/goodow/realtime/core/HandlerRegistration.h"
 #include "com/goodow/realtime/core/Net.h"
 #include "com/goodow/realtime/core/Platform.h"
 #include "com/goodow/realtime/core/WebSocket.h"
@@ -21,6 +22,7 @@
 #include "com/goodow/realtime/json/JsonArray.h"
 #include "com/goodow/realtime/json/JsonObject.h"
 #include "java/lang/IllegalStateException.h"
+#include "java/lang/Void.h"
 #include "java/util/logging/Logger.h"
 
 @implementation ComGoodowRealtimeChannelImplWebSocketBusClient
@@ -71,21 +73,22 @@ static JavaUtilLoggingLogger * ComGoodowRealtimeChannelImplWebSocketBusClient_lo
   [((id<ComGoodowRealtimeCoreWebSocket>) nil_chk(webSocket_)) setListenWithComGoodowRealtimeCoreWebSocket_WebSocketHandler:webSocketHandler_];
 }
 
-- (id<GDCBus>)registerHandler:(NSString *)address handler:(id)handler {
-  BOOL first = [super registerHandlerImplWithNSString:address withComGoodowRealtimeCoreHandler:handler];
+- (id<ComGoodowRealtimeCoreHandlerRegistration>)registerHandler:(NSString *)address handler:(id)handler {
+  BOOL first = [super doRegisterHandlerWithNSString:address withComGoodowRealtimeCoreHandler:handler];
   if (first) {
     [self sendRegisterWithNSString:address];
   }
-  return self;
+  return [[ComGoodowRealtimeChannelImplWebSocketBusClient_$4 alloc] initWithComGoodowRealtimeChannelImplWebSocketBusClient:self withNSString:address withComGoodowRealtimeCoreHandler:handler];
 }
 
-- (id<GDCBus>)unregisterHandler:(NSString *)address handler:(id)handler {
-  BOOL last = [super unregisterHandlerImplWithNSString:address withComGoodowRealtimeCoreHandler:handler];
+- (BOOL)doUnregisterHandlerWithNSString:(NSString *)address
+       withComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)handler {
+  BOOL last = [super doUnregisterHandlerWithNSString:address withComGoodowRealtimeCoreHandler:handler];
   if (last && ![super isLocalForkWithNSString:address]) {
     id<GDJsonObject> msg = [((id<GDJsonObject>) nil_chk([((id<GDJsonObject>) nil_chk([GDJson createObject])) set:@"type" value:@"unregister"])) set:@"address" value:address];
     [self sendWithNSString:[((id<GDJsonObject>) nil_chk(msg)) toJsonString]];
   }
-  return self;
+  return last;
 }
 
 - (void)sendOrPubWithBoolean:(BOOL)send
@@ -155,19 +158,29 @@ static JavaUtilLoggingLogger * ComGoodowRealtimeChannelImplWebSocketBusClient_lo
 
 + (J2ObjcClassInfo *)__metadata {
   static J2ObjcMethodInfo methods[] = {
-    { "sendOrPubWithBoolean:withNSString:withId:withId:", NULL, "V", 0x4, NULL },
-    { "sendWithNSString:", NULL, "V", 0x2, NULL },
+    { "initWithNSString:withGDJsonObject:", "WebSocketBusClient", NULL, 0x1, NULL },
+    { "close", NULL, "V", 0x1, NULL },
+    { "login:password:replyHandler:", "login", "V", 0x1, NULL },
+    { "reconnect", NULL, "V", 0x1, NULL },
+    { "registerHandler:handler:", "registerHandler", "Lcom.goodow.realtime.core.HandlerRegistration;", 0x1, NULL },
+    { "doUnregisterHandlerWithNSString:withComGoodowRealtimeCoreHandler:", "doUnregisterHandler", "Z", 0x4, NULL },
+    { "sendOrPubWithBoolean:withNSString:withId:withId:", "sendOrPub", "V", 0x4, NULL },
+    { "sendWithNSString:", "send", "V", 0x2, NULL },
     { "sendPing", NULL, "V", 0x2, NULL },
-    { "sendRegisterWithNSString:", NULL, "V", 0x2, NULL },
+    { "sendRegisterWithNSString:", "sendRegister", "V", 0x2, NULL },
   };
   static J2ObjcFieldInfo fields[] = {
-    { "log_", NULL, 0x1a, "LJavaUtilLoggingLogger" },
-    { "url_", NULL, 0x12, "LNSString" },
-    { "options_", NULL, 0x12, "LGDJsonObject" },
+    { "log_", NULL, 0x1a, "Ljava.util.logging.Logger;" },
+    { "url_", NULL, 0x12, "Ljava.lang.String;" },
+    { "options_", NULL, 0x12, "Lcom.goodow.realtime.json.JsonObject;" },
     { "pingInterval_", NULL, 0x12, "I" },
-    { "webSocketHandler_", NULL, 0x12, "LComGoodowRealtimeCoreWebSocket_WebSocketHandler" },
+    { "webSocketHandler_", NULL, 0x12, "Lcom.goodow.realtime.core.WebSocket$WebSocketHandler;" },
+    { "webSocket_", NULL, 0x2, "Lcom.goodow.realtime.core.WebSocket;" },
+    { "sessionID_", NULL, 0x2, "Ljava.lang.String;" },
+    { "pingTimerID_", NULL, 0x2, "I" },
+    { "reconnect__", "reconnect", 0x2, "Z" },
   };
-  static J2ObjcClassInfo _ComGoodowRealtimeChannelImplWebSocketBusClient = { "WebSocketBusClient", "com.goodow.realtime.channel.impl", NULL, 0x1, 4, methods, 5, fields, 0, NULL};
+  static J2ObjcClassInfo _ComGoodowRealtimeChannelImplWebSocketBusClient = { "WebSocketBusClient", "com.goodow.realtime.channel.impl", NULL, 0x1, 10, methods, 9, fields, 0, NULL};
   return &_ComGoodowRealtimeChannelImplWebSocketBusClient;
 }
 
@@ -200,7 +213,7 @@ static JavaUtilLoggingLogger * ComGoodowRealtimeChannelImplWebSocketBusClient_lo
   this$0_->state_ = [GDCStateEnum OPEN];
   this$0_->reconnect__ = YES;
   [this$0_ sendPing];
-  this$0_->pingTimerID_ = [ComGoodowRealtimeCorePlatform setPeriodicWithInt:this$0_->pingInterval_ withComGoodowRealtimeCoreVoidHandler:[[ComGoodowRealtimeChannelImplWebSocketBusClient_$1_$1 alloc] initWithComGoodowRealtimeChannelImplWebSocketBusClient_$1:self]];
+  this$0_->pingTimerID_ = [ComGoodowRealtimeCorePlatform setPeriodicWithInt:this$0_->pingInterval_ withComGoodowRealtimeCoreHandler:[[ComGoodowRealtimeChannelImplWebSocketBusClient_$1_$1 alloc] initWithComGoodowRealtimeChannelImplWebSocketBusClient_$1:self]];
   IOSObjectArray *keys = [((id<GDJsonObject>) nil_chk(this$0_->handlerMap_)) keys];
   {
     IOSObjectArray *a__ = keys;
@@ -221,17 +234,24 @@ static JavaUtilLoggingLogger * ComGoodowRealtimeChannelImplWebSocketBusClient_lo
 }
 
 + (J2ObjcClassInfo *)__metadata {
-  static J2ObjcFieldInfo fields[] = {
-    { "this$0_", NULL, 0x1012, "LComGoodowRealtimeChannelImplWebSocketBusClient" },
+  static J2ObjcMethodInfo methods[] = {
+    { "onCloseWithGDJsonObject:", "onClose", "V", 0x1, NULL },
+    { "onErrorWithNSString:", "onError", "V", 0x1, NULL },
+    { "onMessageWithNSString:", "onMessage", "V", 0x1, NULL },
+    { "onOpen", NULL, "V", 0x1, NULL },
+    { "initWithComGoodowRealtimeChannelImplWebSocketBusClient:", "init", NULL, 0x0, NULL },
   };
-  static J2ObjcClassInfo _ComGoodowRealtimeChannelImplWebSocketBusClient_$1 = { "$1", "com.goodow.realtime.channel.impl", "WebSocketBusClient", 0x8000, 0, NULL, 1, fields, 0, NULL};
+  static J2ObjcFieldInfo fields[] = {
+    { "this$0_", NULL, 0x1012, "Lcom.goodow.realtime.channel.impl.WebSocketBusClient;" },
+  };
+  static J2ObjcClassInfo _ComGoodowRealtimeChannelImplWebSocketBusClient_$1 = { "$1", "com.goodow.realtime.channel.impl", "WebSocketBusClient", 0x8000, 5, methods, 1, fields, 0, NULL};
   return &_ComGoodowRealtimeChannelImplWebSocketBusClient_$1;
 }
 
 @end
 @implementation ComGoodowRealtimeChannelImplWebSocketBusClient_$1_$1
 
-- (void)handle {
+- (void)handleWithId:(id)ignore {
   [this$0_->this$0_ sendPing];
 }
 
@@ -242,12 +262,13 @@ static JavaUtilLoggingLogger * ComGoodowRealtimeChannelImplWebSocketBusClient_lo
 
 + (J2ObjcClassInfo *)__metadata {
   static J2ObjcMethodInfo methods[] = {
-    { "handle", NULL, "V", 0x4, NULL },
+    { "handleWithJavaLangVoid:", "handle", "V", 0x1, NULL },
+    { "initWithComGoodowRealtimeChannelImplWebSocketBusClient_$1:", "init", NULL, 0x0, NULL },
   };
   static J2ObjcFieldInfo fields[] = {
-    { "this$0_", NULL, 0x1012, "LComGoodowRealtimeChannelImplWebSocketBusClient_$1" },
+    { "this$0_", NULL, 0x1012, "Lcom.goodow.realtime.channel.impl.WebSocketBusClient$1;" },
   };
-  static J2ObjcClassInfo _ComGoodowRealtimeChannelImplWebSocketBusClient_$1_$1 = { "$1", "com.goodow.realtime.channel.impl", "WebSocketBusClient$$1", 0x8000, 1, methods, 1, fields, 0, NULL};
+  static J2ObjcClassInfo _ComGoodowRealtimeChannelImplWebSocketBusClient_$1_$1 = { "$1", "com.goodow.realtime.channel.impl", "WebSocketBusClient$$1", 0x8000, 2, methods, 1, fields, 0, NULL};
   return &_ComGoodowRealtimeChannelImplWebSocketBusClient_$1_$1;
 }
 
@@ -264,10 +285,14 @@ static JavaUtilLoggingLogger * ComGoodowRealtimeChannelImplWebSocketBusClient_lo
 }
 
 + (J2ObjcClassInfo *)__metadata {
-  static J2ObjcFieldInfo fields[] = {
-    { "this$0_", NULL, 0x1012, "LComGoodowRealtimeChannelImplWebSocketBusClient" },
+  static J2ObjcMethodInfo methods[] = {
+    { "handleWithGDCMessage:", "handle", "V", 0x1, NULL },
+    { "initWithComGoodowRealtimeChannelImplWebSocketBusClient:", "init", NULL, 0x0, NULL },
   };
-  static J2ObjcClassInfo _ComGoodowRealtimeChannelImplWebSocketBusClient_$2 = { "$2", "com.goodow.realtime.channel.impl", "WebSocketBusClient", 0x8000, 0, NULL, 1, fields, 0, NULL};
+  static J2ObjcFieldInfo fields[] = {
+    { "this$0_", NULL, 0x1012, "Lcom.goodow.realtime.channel.impl.WebSocketBusClient;" },
+  };
+  static J2ObjcClassInfo _ComGoodowRealtimeChannelImplWebSocketBusClient_$2 = { "$2", "com.goodow.realtime.channel.impl", "WebSocketBusClient", 0x8000, 2, methods, 1, fields, 0, NULL};
   return &_ComGoodowRealtimeChannelImplWebSocketBusClient_$2;
 }
 
@@ -292,12 +317,46 @@ static JavaUtilLoggingLogger * ComGoodowRealtimeChannelImplWebSocketBusClient_lo
 }
 
 + (J2ObjcClassInfo *)__metadata {
-  static J2ObjcFieldInfo fields[] = {
-    { "this$0_", NULL, 0x1012, "LComGoodowRealtimeChannelImplWebSocketBusClient" },
-    { "val$replyHandler_", NULL, 0x1012, "LComGoodowRealtimeCoreHandler" },
+  static J2ObjcMethodInfo methods[] = {
+    { "handleWithGDCMessage:", "handle", "V", 0x1, NULL },
+    { "initWithComGoodowRealtimeChannelImplWebSocketBusClient:withComGoodowRealtimeCoreHandler:", "init", NULL, 0x0, NULL },
   };
-  static J2ObjcClassInfo _ComGoodowRealtimeChannelImplWebSocketBusClient_$3 = { "$3", "com.goodow.realtime.channel.impl", "WebSocketBusClient", 0x8000, 0, NULL, 2, fields, 0, NULL};
+  static J2ObjcFieldInfo fields[] = {
+    { "this$0_", NULL, 0x1012, "Lcom.goodow.realtime.channel.impl.WebSocketBusClient;" },
+    { "val$replyHandler_", NULL, 0x1012, "Lcom.goodow.realtime.core.Handler;" },
+  };
+  static J2ObjcClassInfo _ComGoodowRealtimeChannelImplWebSocketBusClient_$3 = { "$3", "com.goodow.realtime.channel.impl", "WebSocketBusClient", 0x8000, 2, methods, 2, fields, 0, NULL};
   return &_ComGoodowRealtimeChannelImplWebSocketBusClient_$3;
+}
+
+@end
+@implementation ComGoodowRealtimeChannelImplWebSocketBusClient_$4
+
+- (void)unregisterHandler {
+  [this$0_ doUnregisterHandlerWithNSString:val$address_ withComGoodowRealtimeCoreHandler:val$handler_];
+}
+
+- (id)initWithComGoodowRealtimeChannelImplWebSocketBusClient:(ComGoodowRealtimeChannelImplWebSocketBusClient *)outer$
+                                                withNSString:(NSString *)capture$0
+                            withComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)capture$1 {
+  this$0_ = outer$;
+  val$address_ = capture$0;
+  val$handler_ = capture$1;
+  return [super init];
+}
+
++ (J2ObjcClassInfo *)__metadata {
+  static J2ObjcMethodInfo methods[] = {
+    { "unregisterHandler", NULL, "V", 0x1, NULL },
+    { "initWithComGoodowRealtimeChannelImplWebSocketBusClient:withNSString:withComGoodowRealtimeCoreHandler:", "init", NULL, 0x0, NULL },
+  };
+  static J2ObjcFieldInfo fields[] = {
+    { "this$0_", NULL, 0x1012, "Lcom.goodow.realtime.channel.impl.WebSocketBusClient;" },
+    { "val$address_", NULL, 0x1012, "Ljava.lang.String;" },
+    { "val$handler_", NULL, 0x1012, "Lcom.goodow.realtime.core.Handler;" },
+  };
+  static J2ObjcClassInfo _ComGoodowRealtimeChannelImplWebSocketBusClient_$4 = { "$4", "com.goodow.realtime.channel.impl", "WebSocketBusClient", 0x8000, 2, methods, 3, fields, 0, NULL};
+  return &_ComGoodowRealtimeChannelImplWebSocketBusClient_$4;
 }
 
 @end

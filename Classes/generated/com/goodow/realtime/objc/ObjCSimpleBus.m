@@ -6,6 +6,7 @@
 //
 
 #include "com/goodow/realtime/core/Handler.h"
+#include "com/goodow/realtime/objc/ObjCPlatform.h"
 #include "com/goodow/realtime/objc/ObjCSimpleBus.h"
 #import "GDChannel.h"
 
@@ -36,13 +37,22 @@
   return [super init];
 }
 
++ (void)initialize {
+  if (self == [ComGoodowRealtimeObjcObjCSimpleBus class]) {
+    {
+      [ComGoodowRealtimeObjcObjCPlatform register__];
+    }
+  }
+}
+
 + (J2ObjcClassInfo *)__metadata {
   static J2ObjcMethodInfo methods[] = {
-    { "handleWithId:withId:", NULL, "V", 0xc, NULL },
-    { "_nativeHandleWithId:withId:", NULL, "V", 0x10a, NULL },
-    { "nativeHandleWithId:withId:", NULL, "V", 0x4, NULL },
+    { "handleWithId:withId:", "handle", "V", 0x8, NULL },
+    { "_nativeHandleWithId:withId:", "_nativeHandle", "V", 0x10a, NULL },
+    { "nativeHandleWithId:withId:", "nativeHandle", "V", 0x4, NULL },
+    { "init", NULL, NULL, 0x0, NULL },
   };
-  static J2ObjcClassInfo _ComGoodowRealtimeObjcObjCSimpleBus = { "ObjCSimpleBus", "com.goodow.realtime.objc", NULL, 0x0, 3, methods, 0, NULL, 0, NULL};
+  static J2ObjcClassInfo _ComGoodowRealtimeObjcObjCSimpleBus = { "ObjCSimpleBus", "com.goodow.realtime.objc", NULL, 0x0, 4, methods, 0, NULL, 0, NULL};
   return &_ComGoodowRealtimeObjcObjCSimpleBus;
 }
 

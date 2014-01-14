@@ -17,7 +17,10 @@ import com.goodow.realtime.core.WebSocket;
 import com.goodow.realtime.json.JsonObject;
 
 /**
- * ObjCWebSocket implementation of {@link WebSocket}.
+ * ObjC stub implementation of {@link WebSocket}.
+ * 
+ * @see <a
+ *      href="https://github.com/goodow/realtime-channel/blob/master/Classes/override/com/goodow/realtime/objc/ObjCWebSocket.m">ObjCWebSocket.m</a>
  */
 final class ObjCWebSocket implements WebSocket {
   ObjCWebSocket(String url, JsonObject options) {

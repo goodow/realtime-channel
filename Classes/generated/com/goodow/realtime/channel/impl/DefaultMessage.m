@@ -72,19 +72,24 @@ withComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)replyHandler 
 
 + (J2ObjcClassInfo *)__metadata {
   static J2ObjcMethodInfo methods[] = {
-    { "address", NULL, "LNSString", 0x1, NULL },
-    { "body", NULL, "TU", 0x1, NULL },
-    { "replyAddress", NULL, "LNSString", 0x1, NULL },
-    { "sendReplyWithId:withComGoodowRealtimeCoreHandler:", NULL, "V", 0x2, NULL },
+    { "initWithBoolean:withGDCBus:withNSString:withNSString:withId:", "DefaultMessage", NULL, 0x1, NULL },
+    { "address", NULL, "Ljava.lang.String;", 0x1, NULL },
+    { "body", NULL, "TU;", 0x1, NULL },
+    { "fail:message:", "fail", "V", 0x1, NULL },
+    { "reply:", "reply", "V", 0x1, NULL },
+    { "reply:replyHandler:", "reply", "V", 0x1, NULL },
+    { "replyAddress", NULL, "Ljava.lang.String;", 0x1, NULL },
+    { "description", "toString", "Ljava.lang.String;", 0x1, NULL },
+    { "sendReplyWithId:withComGoodowRealtimeCoreHandler:", "sendReply", "V", 0x2, NULL },
   };
   static J2ObjcFieldInfo fields[] = {
-    { "body__", "body", 0x4, "TU" },
-    { "bus_", NULL, 0x4, "LGDCBus" },
-    { "address__", "address", 0x4, "LNSString" },
-    { "replyAddress__", "replyAddress", 0x4, "LNSString" },
+    { "body__", "body", 0x4, "TU;" },
+    { "bus_", NULL, 0x4, "Lcom.goodow.realtime.channel.Bus;" },
+    { "address__", "address", 0x4, "Ljava.lang.String;" },
+    { "replyAddress__", "replyAddress", 0x4, "Ljava.lang.String;" },
     { "send_", NULL, 0x4, "Z" },
   };
-  static J2ObjcClassInfo _ComGoodowRealtimeChannelImplDefaultMessage = { "DefaultMessage", "com.goodow.realtime.channel.impl", NULL, 0x1, 4, methods, 5, fields, 0, NULL};
+  static J2ObjcClassInfo _ComGoodowRealtimeChannelImplDefaultMessage = { "DefaultMessage", "com.goodow.realtime.channel.impl", NULL, 0x1, 9, methods, 5, fields, 0, NULL};
   return &_ComGoodowRealtimeChannelImplDefaultMessage;
 }
 

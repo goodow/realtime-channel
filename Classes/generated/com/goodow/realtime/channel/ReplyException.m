@@ -10,6 +10,10 @@
 
 @implementation GDCReplyException
 
++ (long long int)serialVersionUID {
+  return GDCReplyException_serialVersionUID;
+}
+
 - (id)initWithGDCReplyFailureEnum:(GDCReplyFailureEnum *)failureType {
   if (self = [super initWithNSString:(NSString *) check_class_cast(nil, [NSString class])]) {
     self->failureType__ = failureType;
@@ -53,13 +57,18 @@
 
 + (J2ObjcClassInfo *)__metadata {
   static J2ObjcMethodInfo methods[] = {
-    { "failureType", NULL, "LGDCReplyFailureEnum", 0x1, NULL },
+    { "initWithGDCReplyFailureEnum:", "ReplyException", NULL, 0x1, NULL },
+    { "initWithGDCReplyFailureEnum:withInt:withNSString:", "ReplyException", NULL, 0x1, NULL },
+    { "initWithGDCReplyFailureEnum:withNSString:", "ReplyException", NULL, 0x1, NULL },
+    { "failureCode", NULL, "I", 0x1, NULL },
+    { "failureType", NULL, "Lcom.goodow.realtime.channel.ReplyFailure;", 0x1, NULL },
   };
   static J2ObjcFieldInfo fields[] = {
-    { "failureType__", "failureType", 0x12, "LGDCReplyFailureEnum" },
+    { "serialVersionUID_", NULL, 0x1a, "J" },
+    { "failureType__", "failureType", 0x12, "Lcom.goodow.realtime.channel.ReplyFailure;" },
     { "failureCode__", "failureCode", 0x12, "I" },
   };
-  static J2ObjcClassInfo _GDCReplyException = { "ReplyException", "com.goodow.realtime.channel", NULL, 0x1, 1, methods, 2, fields, 0, NULL};
+  static J2ObjcClassInfo _GDCReplyException = { "ReplyException", "com.goodow.realtime.channel", NULL, 0x1, 5, methods, 3, fields, 0, NULL};
   return &_GDCReplyException;
 }
 

@@ -29,7 +29,7 @@ public interface PlatformFactory {
   /**
    * A deferred command is executed after the event loop returns.
    */
-  void scheduleDeferred(VoidHandler handler);
+  void scheduleDeferred(Handler<Void> handler);
 
   /**
    * Set a periodic timer to fire every {@code delayMs} milliseconds, at which point {@code handler}
@@ -37,7 +37,7 @@ public interface PlatformFactory {
    * 
    * @return the unique ID of the timer
    */
-  int setPeriodic(int delayMs, VoidHandler handler);
+  int setPeriodic(int delayMs, Handler<Void> handler);
 
   Platform.Type type();
 }

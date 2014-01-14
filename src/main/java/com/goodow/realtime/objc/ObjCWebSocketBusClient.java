@@ -18,7 +18,8 @@ import com.goodow.realtime.json.JsonObject;
 
 class ObjCWebSocketBusClient extends WebSocketBusClient {
   static {
-    ObjCPlatform.register();
+    // Force ObjC to load ObjCPlatform.register()
+    ObjCSimpleBus.class.getSimpleName();
   }
 
   static ObjCWebSocketBusClient create(String url, JsonObject options) {

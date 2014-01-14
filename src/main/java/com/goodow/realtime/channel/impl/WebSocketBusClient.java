@@ -13,12 +13,11 @@
  */
 package com.goodow.realtime.channel.impl;
 
-import com.goodow.realtime.channel.Bus;
 import com.goodow.realtime.channel.Message;
 import com.goodow.realtime.channel.State;
 import com.goodow.realtime.core.Handler;
+import com.goodow.realtime.core.HandlerRegistration;
 import com.goodow.realtime.core.Platform;
-import com.goodow.realtime.core.VoidHandler;
 import com.goodow.realtime.core.WebSocket;
 import com.goodow.realtime.json.Json;
 import com.goodow.realtime.json.JsonObject;
@@ -83,9 +82,9 @@ public class WebSocketBusClient extends SimpleBus {
         state = State.OPEN;
         reconnect = true;
         sendPing();
-        pingTimerID = Platform.setPeriodic(pingInterval, new VoidHandler() {
+        pingTimerID = Platform.setPeriodic(pingInterval, new Handler<Void>() {
           @Override
-          protected void handle() {
+          public void handle(Void ignore) {
             sendPing();
           }
         });
@@ -147,24 +146,31 @@ public class WebSocketBusClient extends SimpleBus {
   }
 
   @Override
-  public Bus registerHandler(String address, Handler<? extends Message> handler) {
-    boolean first = super.registerHandlerImpl(address, handler);
+  // J2ObjC prevent us to override doRegisterHandler
+  public HandlerRegistration registerHandler(final String address,
+      final Handler<? extends Message> handler) {
+    boolean first = super.doRegisterHandler(address, handler);
     if (first) {
       // First handler for this address so we should register the connection
       sendRegister(address);
     }
-    return this;
+    return new HandlerRegistration() {
+      @Override
+      public void unregisterHandler() {
+        doUnregisterHandler(address, handler);
+      }
+    };
   }
 
   @Override
-  public Bus unregisterHandler(String address, Handler<? extends Message> handler) {
-    boolean last = super.unregisterHandlerImpl(address, handler);
+  protected boolean doUnregisterHandler(String address, Handler<? extends Message> handler) {
+    boolean last = super.doUnregisterHandler(address, handler);
     if (last && !super.isLocalFork(address)) {
       // No more handlers so we should unregister the connection
       JsonObject msg = Json.createObject().set("type", "unregister").set("address", address);
       send(msg.toJsonString());
     }
-    return this;
+    return last;
   }
 
   @Override
