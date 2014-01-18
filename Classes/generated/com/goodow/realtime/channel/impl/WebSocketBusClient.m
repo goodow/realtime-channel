@@ -68,7 +68,6 @@ static JavaUtilLoggingLogger * ComGoodowRealtimeChannelImplWebSocketBusClient_lo
     [webSocket_ close];
   }
   state_ = [GDCStateEnum CONNECTING];
-  (void) [((id<GDJsonObject>) nil_chk(replyHandlers_)) clear];
   webSocket_ = [((id<ComGoodowRealtimeCoreNet>) nil_chk([ComGoodowRealtimeCorePlatform net])) createWebSocketWithNSString:url_ withGDJsonObject:options_];
   [((id<ComGoodowRealtimeCoreWebSocket>) nil_chk(webSocket_)) setListenWithComGoodowRealtimeCoreWebSocket_WebSocketHandler:webSocketHandler_];
 }

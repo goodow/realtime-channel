@@ -6,26 +6,11 @@ For java and android: realtime-android
 ### Maven
 
 ```xml
-<repositories>
-  <repository>
-    <id>sonatype-nexus-snapshots</id>
-    <name>Sonatype Nexus Snapshots</name>
-    <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-    <releases>
-      <enabled>false</enabled>
-    </releases>
-    <snapshots>
-      <enabled>true</enabled>
-    </snapshots>
-  </repository>
-</repositories>
-<dependencies>
-  <dependency>
-    <groupId>com.goodow.realtime</groupId>
-    <artifactId>realtime-android</artifactId>
-    <version>0.5.0-SNAPSHOT</version>
-  </dependency>
-</dependencies>
+<dependency>
+  <groupId>com.goodow.realtime</groupId>
+  <artifactId>realtime-android</artifactId>
+  <version>0.5.0</version>
+</dependency>
 ```
 
 ## Usage

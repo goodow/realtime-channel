@@ -140,7 +140,6 @@ public class WebSocketBusClient extends SimpleBus {
     }
 
     state = State.CONNECTING;
-    replyHandlers.clear();
     webSocket = Platform.net().createWebSocket(url, options);
     webSocket.setListen(webSocketHandler);
   }
