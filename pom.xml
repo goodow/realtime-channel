@@ -3,7 +3,7 @@
   <parent>
     <groupId>com.goodow.realtime</groupId>
     <artifactId>realtime-parent</artifactId>
-    <version>0.5.0</version>
+    <version>0.5.1-SNAPSHOT</version>
   </parent>
   <artifactId>realtime-channel</artifactId>
   <url>https://github.com/goodow/realtime-channel/</url>
