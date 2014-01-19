@@ -25,7 +25,11 @@
 }
 
 + (void)register__;
++ (void)nativeHandleWithId:(id)handler
+                    withId:(id)event;
 - (BOOL)cancelTimerWithInt:(int)id_;
+- (void)handleWithId:(id)handler
+              withId:(id)event;
 - (id<ComGoodowRealtimeCoreNet>)net;
 - (void)scheduleDeferredWithComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)handler;
 - (int)setPeriodicWithInt:(int)delayMs

@@ -28,6 +28,11 @@ static id<ComGoodowRealtimeCorePlatformFactory> ComGoodowRealtimeCorePlatform_FA
   return [((id<ComGoodowRealtimeCorePlatformFactory>) nil_chk([ComGoodowRealtimeCorePlatform get])) cancelTimerWithInt:id_];
 }
 
++ (void)handleWithId:(id)handler
+              withId:(id)event {
+  [((id<ComGoodowRealtimeCorePlatformFactory>) nil_chk([ComGoodowRealtimeCorePlatform get])) handleWithId:handler withId:event];
+}
+
 + (id<ComGoodowRealtimeCoreNet>)net {
   return [((id<ComGoodowRealtimeCorePlatformFactory>) nil_chk([ComGoodowRealtimeCorePlatform get])) net];
 }
@@ -61,6 +66,7 @@ withComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)handler {
 + (J2ObjcClassInfo *)__metadata {
   static J2ObjcMethodInfo methods[] = {
     { "cancelTimerWithInt:", "cancelTimer", "Z", 0x9, NULL },
+    { "handleWithId:withId:", "handle", "V", 0x9, NULL },
     { "net", NULL, "Lcom.goodow.realtime.core.Net;", 0x9, NULL },
     { "scheduleDeferredWithComGoodowRealtimeCoreHandler:", "scheduleDeferred", "V", 0x9, NULL },
     { "setFactoryWithComGoodowRealtimeCorePlatformFactory:", "setFactory", "V", 0x9, NULL },
@@ -72,7 +78,7 @@ withComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)handler {
   static J2ObjcFieldInfo fields[] = {
     { "FACTORY_", NULL, 0xa, "Lcom.goodow.realtime.core.PlatformFactory;" },
   };
-  static J2ObjcClassInfo _ComGoodowRealtimeCorePlatform = { "Platform", "com.goodow.realtime.core", NULL, 0x1, 8, methods, 1, fields, 0, NULL};
+  static J2ObjcClassInfo _ComGoodowRealtimeCorePlatform = { "Platform", "com.goodow.realtime.core", NULL, 0x1, 9, methods, 1, fields, 0, NULL};
   return &_ComGoodowRealtimeCorePlatform;
 }
 

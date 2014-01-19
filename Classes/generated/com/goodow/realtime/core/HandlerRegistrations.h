@@ -20,10 +20,25 @@
 
 - (void)addWithComGoodowRealtimeCoreHandlerRegistration:(id<ComGoodowRealtimeCoreHandlerRegistration>)registration;
 - (void)unregisterHandler;
+- (id<ComGoodowRealtimeCoreHandlerRegistration>)wrapWithComGoodowRealtimeCoreHandlerRegistration:(id<ComGoodowRealtimeCoreHandlerRegistration>)registration;
 - (id)init;
 - (void)copyAllFieldsTo:(ComGoodowRealtimeCoreHandlerRegistrations *)other;
 @end
 
 J2OBJC_FIELD_SETTER(ComGoodowRealtimeCoreHandlerRegistrations, registrations_, id<GDJsonArray>)
+
+@interface ComGoodowRealtimeCoreHandlerRegistrations_$1 : NSObject < ComGoodowRealtimeCoreHandlerRegistration > {
+ @public
+  ComGoodowRealtimeCoreHandlerRegistrations *this$0_;
+  id<ComGoodowRealtimeCoreHandlerRegistration> val$registration_;
+}
+
+- (void)unregisterHandler;
+- (id)initWithComGoodowRealtimeCoreHandlerRegistrations:(ComGoodowRealtimeCoreHandlerRegistrations *)outer$
+           withComGoodowRealtimeCoreHandlerRegistration:(id<ComGoodowRealtimeCoreHandlerRegistration>)capture$0;
+@end
+
+J2OBJC_FIELD_SETTER(ComGoodowRealtimeCoreHandlerRegistrations_$1, this$0_, ComGoodowRealtimeCoreHandlerRegistrations *)
+J2OBJC_FIELD_SETTER(ComGoodowRealtimeCoreHandlerRegistrations_$1, val$registration_, id<ComGoodowRealtimeCoreHandlerRegistration>)
 
 #endif // _ComGoodowRealtimeCoreHandlerRegistrations_H_

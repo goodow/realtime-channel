@@ -29,7 +29,7 @@
 
 - (void)testExample
 {
-  id<GDCBus> bus = [GDCWebSocketBusClient create:@"ws://data.goodow.com:8080/eventbus/websocket" options:@{@"forkLocal":@YES}];
+  id<GDCBus> bus = [[GDCWebSocketBusClient alloc] initWithUrl:@"ws://data.goodow.com:8080/eventbus/websocket" options:@{@"forkLocal":@YES}];
   __block id<GDCHandlerRegistration> handlerRegistration;
   __block BOOL testComplete = NO;
   

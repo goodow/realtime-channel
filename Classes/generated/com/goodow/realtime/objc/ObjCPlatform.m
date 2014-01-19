@@ -13,11 +13,22 @@
 #include "com/goodow/realtime/objc/ObjCNet.h"
 #include "com/goodow/realtime/objc/ObjCPlatform.h"
 #include "java/util/concurrent/atomic/AtomicInteger.h"
+#import "GDChannel.h"
 
 @implementation ComGoodowRealtimeObjcObjCPlatform
 
 + (void)register__ {
   [ComGoodowRealtimeCorePlatform setFactoryWithComGoodowRealtimeCorePlatformFactory:[[ComGoodowRealtimeObjcObjCPlatform alloc] init]];
+}
+
++ (void)load {
+  [ComGoodowRealtimeObjcObjCPlatform register__];
+}
+
++ (void)nativeHandleWithId:(id)handler
+                    withId:(id)event {
+  GDCBlock block = (GDCBlock)handler;
+  block(event);
 }
 
 - (BOOL)cancelTimerWithInt:(int)id_ {
@@ -27,6 +38,16 @@
     return YES;
   }
   return NO;
+}
+
+- (void)handleWithId:(id)handler
+              withId:(id)event {
+  if ([handler conformsToProtocol: @protocol(ComGoodowRealtimeCoreHandler)]) {
+    [((id<ComGoodowRealtimeCoreHandler>) check_protocol_cast(handler, @protocol(ComGoodowRealtimeCoreHandler))) handleWithId:event];
+  }
+  else {
+    [ComGoodowRealtimeObjcObjCPlatform nativeHandleWithId:handler withId:event];
+  }
 }
 
 - (id<ComGoodowRealtimeCoreNet>)net {
@@ -81,7 +102,9 @@ withComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)handler {
 + (J2ObjcClassInfo *)__metadata {
   static J2ObjcMethodInfo methods[] = {
     { "register__", "register", "V", 0x9, NULL },
+    { "nativeHandleWithId:withId:", "nativeHandle", "V", 0x10a, NULL },
     { "cancelTimerWithInt:", "cancelTimer", "Z", 0x1, NULL },
+    { "handleWithId:withId:", "handle", "V", 0x1, NULL },
     { "net", NULL, "Lcom.goodow.realtime.core.Net;", 0x1, NULL },
     { "scheduleDeferredWithComGoodowRealtimeCoreHandler:", "scheduleDeferred", "V", 0x101, NULL },
     { "setPeriodicWithInt:withComGoodowRealtimeCoreHandler:", "setPeriodic", "I", 0x1, NULL },
@@ -95,7 +118,7 @@ withComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)handler {
     { "timers_", NULL, 0x12, "Lcom.goodow.realtime.json.JsonObject;" },
     { "net__", "net", 0x12, "Lcom.goodow.realtime.core.Net;" },
   };
-  static J2ObjcClassInfo _ComGoodowRealtimeObjcObjCPlatform = { "ObjCPlatform", "com.goodow.realtime.objc", NULL, 0x0, 9, methods, 3, fields, 0, NULL};
+  static J2ObjcClassInfo _ComGoodowRealtimeObjcObjCPlatform = { "ObjCPlatform", "com.goodow.realtime.objc", NULL, 0x0, 11, methods, 3, fields, 0, NULL};
   return &_ComGoodowRealtimeObjcObjCPlatform;
 }
 

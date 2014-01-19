@@ -16,6 +16,7 @@ package com.goodow.realtime.html;
 import com.goodow.realtime.channel.Bus;
 import com.goodow.realtime.channel.Message;
 import com.goodow.realtime.channel.State;
+import com.goodow.realtime.channel.impl.WebSocketBusClient;
 import com.goodow.realtime.core.Handler;
 import com.goodow.realtime.core.HandlerRegistration;
 import com.goodow.realtime.json.JsonObject;
@@ -27,8 +28,8 @@ import org.timepedia.exporter.client.ExportOverlay;
 import org.timepedia.exporter.client.ExportPackage;
 
 @ExportPackage("good.channel")
-@Export("WebSocketBusClient")
-abstract class BusOverlay implements ExportOverlay<HtmlWebSocketBusClient> {
+@Export
+abstract class ChannelOverlay implements ExportOverlay<WebSocketBusClient> {
   // @ExportPackage("good.channel._ExportOverlay_")
   // @ExportClosure
   // public interface __HandlerOverlay__ extends ExportOverlay<Handler> {
@@ -63,7 +64,7 @@ abstract class BusOverlay implements ExportOverlay<HtmlWebSocketBusClient> {
   public static native void afterCreate() /*-{
     var _ = $wnd.good.channel.WebSocketBusClient.prototype;
     _.send = function(address, msg, replyHandler) {
-      this.g.@com.goodow.realtime.html.HtmlWebSocketBusClient::send(Ljava/lang/String;Ljava/lang/Object;Lcom/goodow/realtime/core/Handler;)
+      this.g.@com.goodow.realtime.channel.impl.WebSocketBusClient::send(Ljava/lang/String;Ljava/lang/Object;Lcom/goodow/realtime/core/Handler;)
           (address, msg, replyHandler);
     };
     
@@ -76,16 +77,16 @@ abstract class BusOverlay implements ExportOverlay<HtmlWebSocketBusClient> {
   // @formatter:off
 
   @ExportConstructor
-  public static HtmlWebSocketBusClient constructor(String url) {
-    return new HtmlWebSocketBusClient(url, null);
+  public static WebSocketBusClient constructor(String url) {
+    return new WebSocketBusClient(url, null);
   }
 
   @ExportConstructor
-  public static HtmlWebSocketBusClient constructor(String url, JsonObject options) {
-    return new HtmlWebSocketBusClient(url, options);
+  public static WebSocketBusClient constructor(String url, JsonObject options) {
+    return new WebSocketBusClient(url, options);
   }
 
-  private BusOverlay() {
+  private ChannelOverlay() {
   }
 
   public abstract void close();

@@ -33,6 +33,12 @@ class HtmlPlatform implements PlatformFactory {
     Platform.setFactory(new HtmlPlatform());
   }
 
+  // @formatter:off 
+  private static native <T> void nativeHandle(Object handler, T event) /*-{
+    handler(@org.timepedia.exporter.client.ExporterUtil::wrap(Ljava/lang/Object;)(event));
+  }-*/;
+  // @formatter:on
+
   private int timerId = 1;
   private final JsonObject timers = Json.createObject();
   private final HtmlNet net = new HtmlNet();
@@ -47,6 +53,16 @@ class HtmlPlatform implements PlatformFactory {
       return true;
     }
     return false;
+  }
+
+  @SuppressWarnings("unchecked")
+  @Override
+  public void handle(Object handler, Object event) {
+    if (handler instanceof Handler) {
+      ((Handler<Object>) handler).handle(event);
+    } else {
+      nativeHandle(handler, event);
+    }
   }
 
   @Override

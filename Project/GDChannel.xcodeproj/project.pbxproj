@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		0DE18D7D4F924BB7B4175E68 /* libPods.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 65BBEF82A04A46F89B08867D /* libPods.a */; };
+		8D3DBCCF188BB09200888C4A /* GDCWebSocketBusClient+OCNI.h in Headers */ = {isa = PBXBuildFile; fileRef = 8D3DBCCD188BB09200888C4A /* GDCWebSocketBusClient+OCNI.h */; };
+		8D3DBCD0188BB09200888C4A /* GDCWebSocketBusClient+OCNI.m in Sources */ = {isa = PBXBuildFile; fileRef = 8D3DBCCE188BB09200888C4A /* GDCWebSocketBusClient+OCNI.m */; };
 		8D82AA7D186139C100447D50 /* GDChannel.h in Headers */ = {isa = PBXBuildFile; fileRef = 8D82AA7C186139C100447D50 /* GDChannel.h */; };
 		8D82AA901861BE3A00447D50 /* GDCLocalEventBusTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 8D82AA8F1861BE3A00447D50 /* GDCLocalEventBusTests.m */; };
 		8D9420761861D6C400C6C33A /* GDCEventBusTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 8D9420751861D6C400C6C33A /* GDCEventBusTests.m */; };
@@ -21,6 +23,8 @@
 
 /* Begin PBXFileReference section */
 		65BBEF82A04A46F89B08867D /* libPods.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libPods.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		8D3DBCCD188BB09200888C4A /* GDCWebSocketBusClient+OCNI.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "GDCWebSocketBusClient+OCNI.h"; sourceTree = "<group>"; };
+		8D3DBCCE188BB09200888C4A /* GDCWebSocketBusClient+OCNI.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "GDCWebSocketBusClient+OCNI.m"; sourceTree = "<group>"; };
 		8D82AA7C186139C100447D50 /* GDChannel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GDChannel.h; sourceTree = "<group>"; };
 		8D82AA8F1861BE3A00447D50 /* GDCLocalEventBusTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GDCLocalEventBusTests.m; sourceTree = "<group>"; };
 		8D9420751861D6C400C6C33A /* GDCEventBusTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GDCEventBusTests.m; sourceTree = "<group>"; };
@@ -74,6 +78,8 @@
 			isa = PBXGroup;
 			children = (
 				8D82AA7C186139C100447D50 /* GDChannel.h */,
+				8D3DBCCD188BB09200888C4A /* GDCWebSocketBusClient+OCNI.h */,
+				8D3DBCCE188BB09200888C4A /* GDCWebSocketBusClient+OCNI.m */,
 			);
 			path = common;
 			sourceTree = "<group>";
@@ -185,6 +191,7 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8D3DBCCF188BB09200888C4A /* GDCWebSocketBusClient+OCNI.h in Headers */,
 				8D82AA7D186139C100447D50 /* GDChannel.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -337,6 +344,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				8D9420791863157400C6C33A /* ObjCWebSocket.m in Sources */,
+				8D3DBCD0188BB09200888C4A /* GDCWebSocketBusClient+OCNI.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

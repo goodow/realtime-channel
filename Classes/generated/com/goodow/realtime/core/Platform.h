@@ -22,6 +22,8 @@
 + (id<ComGoodowRealtimeCorePlatformFactory>)FACTORY;
 + (void)setFACTORY:(id<ComGoodowRealtimeCorePlatformFactory>)FACTORY;
 + (BOOL)cancelTimerWithInt:(int)id_;
++ (void)handleWithId:(id)handler
+              withId:(id)event;
 + (id<ComGoodowRealtimeCoreNet>)net;
 + (void)scheduleDeferredWithComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)handler;
 + (void)setFactoryWithComGoodowRealtimeCorePlatformFactory:(id<ComGoodowRealtimeCorePlatformFactory>)factory;

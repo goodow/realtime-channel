@@ -16,6 +16,8 @@
 
 @protocol ComGoodowRealtimeCorePlatformFactory < NSObject, JavaObject >
 - (BOOL)cancelTimerWithInt:(int)id_;
+- (void)handleWithId:(id)handler
+              withId:(id)event;
 - (id<ComGoodowRealtimeCoreNet>)net;
 - (void)scheduleDeferredWithComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)handler;
 - (int)setPeriodicWithInt:(int)delayMs

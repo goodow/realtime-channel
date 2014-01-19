@@ -10,7 +10,7 @@
 #include "com/goodow/realtime/channel/impl/DefaultMessage.h"
 #include "com/goodow/realtime/core/Handler.h"
 
-@implementation ComGoodowRealtimeChannelImplDefaultMessage
+@implementation GDCDefaultMessage
 
 - (id)initWithBoolean:(BOOL)send
            withGDCBus:(id<GDCBus>)bus
@@ -61,7 +61,7 @@ withComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)replyHandler 
   }
 }
 
-- (void)copyAllFieldsTo:(ComGoodowRealtimeChannelImplDefaultMessage *)other {
+- (void)copyAllFieldsTo:(GDCDefaultMessage *)other {
   [super copyAllFieldsTo:other];
   other->address__ = address__;
   other->body__ = body__;
@@ -89,8 +89,8 @@ withComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)replyHandler 
     { "replyAddress__", "replyAddress", 0x4, "Ljava.lang.String;" },
     { "send_", NULL, 0x4, "Z" },
   };
-  static J2ObjcClassInfo _ComGoodowRealtimeChannelImplDefaultMessage = { "DefaultMessage", "com.goodow.realtime.channel.impl", NULL, 0x1, 9, methods, 5, fields, 0, NULL};
-  return &_ComGoodowRealtimeChannelImplDefaultMessage;
+  static J2ObjcClassInfo _GDCDefaultMessage = { "DefaultMessage", "com.goodow.realtime.channel.impl", NULL, 0x1, 9, methods, 5, fields, 0, NULL};
+  return &_GDCDefaultMessage;
 }
 
 @end

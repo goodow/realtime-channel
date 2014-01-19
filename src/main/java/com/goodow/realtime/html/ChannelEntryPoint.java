@@ -13,8 +13,8 @@
  */
 package com.goodow.realtime.html;
 
-import com.goodow.realtime.html.BusOverlay.HandlerRegistrationOverlay;
-import com.goodow.realtime.html.BusOverlay.MessageOverlay;
+import com.goodow.realtime.html.ChannelOverlay.HandlerRegistrationOverlay;
+import com.goodow.realtime.html.ChannelOverlay.MessageOverlay;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.shared.GWT;
@@ -26,7 +26,7 @@ class ChannelEntryPoint implements EntryPoint {
     HtmlPlatform.register();
     GWT.create(HandlerRegistrationOverlay.class);
     GWT.create(MessageOverlay.class);
-    GWT.create(BusOverlay.class);
+    GWT.create(ChannelOverlay.class);
     // GWT.create(MessageHandlerOverlay.class);
     __jsniOnLoad__();
   }

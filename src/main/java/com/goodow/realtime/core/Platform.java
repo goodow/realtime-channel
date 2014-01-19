@@ -37,6 +37,10 @@ public class Platform {
     return get().cancelTimer(id);
   }
 
+  public static void handle(Object handler, Object event) {
+    get().handle(handler, event);
+  }
+
   public static Net net() {
     return get().net();
   }

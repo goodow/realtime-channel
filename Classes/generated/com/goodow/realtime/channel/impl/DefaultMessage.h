@@ -5,8 +5,8 @@
 //  Created by retechretech.
 //
 
-#ifndef _ComGoodowRealtimeChannelImplDefaultMessage_H_
-#define _ComGoodowRealtimeChannelImplDefaultMessage_H_
+#ifndef _GDCDefaultMessage_H_
+#define _GDCDefaultMessage_H_
 
 @protocol ComGoodowRealtimeCoreHandler;
 @protocol GDCBus;
@@ -14,7 +14,7 @@
 #import "JreEmulation.h"
 #include "com/goodow/realtime/channel/Message.h"
 
-@interface ComGoodowRealtimeChannelImplDefaultMessage : NSObject < GDCMessage > {
+@interface GDCDefaultMessage : NSObject < GDCMessage > {
  @public
   id body__;
   id<GDCBus> bus_;
@@ -37,12 +37,14 @@
 - (NSString *)description;
 - (void)sendReplyWithId:(id)msg
 withComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)replyHandler;
-- (void)copyAllFieldsTo:(ComGoodowRealtimeChannelImplDefaultMessage *)other;
+- (void)copyAllFieldsTo:(GDCDefaultMessage *)other;
 @end
 
-J2OBJC_FIELD_SETTER(ComGoodowRealtimeChannelImplDefaultMessage, body__, id)
-J2OBJC_FIELD_SETTER(ComGoodowRealtimeChannelImplDefaultMessage, bus_, id<GDCBus>)
-J2OBJC_FIELD_SETTER(ComGoodowRealtimeChannelImplDefaultMessage, address__, NSString *)
-J2OBJC_FIELD_SETTER(ComGoodowRealtimeChannelImplDefaultMessage, replyAddress__, NSString *)
+J2OBJC_FIELD_SETTER(GDCDefaultMessage, body__, id)
+J2OBJC_FIELD_SETTER(GDCDefaultMessage, bus_, id<GDCBus>)
+J2OBJC_FIELD_SETTER(GDCDefaultMessage, address__, NSString *)
+J2OBJC_FIELD_SETTER(GDCDefaultMessage, replyAddress__, NSString *)
 
-#endif // _ComGoodowRealtimeChannelImplDefaultMessage_H_
+typedef GDCDefaultMessage ComGoodowRealtimeChannelImplDefaultMessage;
+
+#endif // _GDCDefaultMessage_H_

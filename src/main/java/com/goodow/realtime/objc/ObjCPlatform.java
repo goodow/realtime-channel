@@ -23,6 +23,9 @@ import com.goodow.realtime.json.JsonObject;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
+/*-[
+ #import "GDChannel.h"
+ ]-*/
 class ObjCPlatform implements PlatformFactory {
   /**
    * Registers the Objective-C platform with a default configuration.
@@ -30,6 +33,19 @@ class ObjCPlatform implements PlatformFactory {
   public static void register() {
     Platform.setFactory(new ObjCPlatform());
   }
+
+  /*-[
+    + (void)load {
+      [ComGoodowRealtimeObjcObjCPlatform register__];
+    }
+  ]-*/;
+
+  // @formatter:off
+  private static native <T> void nativeHandle(Object handler, T event) /*-[
+    GDCBlock block = (GDCBlock)handler;
+    block(event);
+  ]-*/;
+  // @formatter:on
 
   private final AtomicInteger timerId = new AtomicInteger(1);
   private final JsonObject timers = Json.createObject();
@@ -44,6 +60,16 @@ class ObjCPlatform implements PlatformFactory {
       return true;
     }
     return false;
+  }
+
+  @SuppressWarnings("unchecked")
+  @Override
+  public void handle(Object handler, Object event) {
+    if (handler instanceof Handler) {
+      ((Handler<Object>) handler).handle(event);
+    } else {
+      nativeHandle(handler, event);
+    }
   }
 
   @Override
@@ -74,7 +100,7 @@ class ObjCPlatform implements PlatformFactory {
   private native void cancelTimer(Object timer) /*-[
     [(NSTimer *)timer invalidate];
   ]-*/;
-  
+
   private native Object setPeriodicNative(int delayMs, Handler<Void> handler) /*-[
     return
     [NSTimer scheduledTimerWithTimeInterval:delayMs/1000 

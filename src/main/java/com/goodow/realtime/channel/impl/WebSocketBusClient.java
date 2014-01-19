@@ -125,7 +125,7 @@ public class WebSocketBusClient extends SimpleBus {
           sessionID = body.getString("sessionID");
         }
         if (replyHandler != null) {
-          scheduleHandle(body.remove("sessionID"), replyHandler);
+          scheduleHandle(replyHandler, body.remove("sessionID"));
         }
       }
     });
@@ -173,7 +173,8 @@ public class WebSocketBusClient extends SimpleBus {
   }
 
   @Override
-  protected void sendOrPub(boolean send, String address, Object msg, Object replyHandler) {
+  protected <T> void sendOrPub(boolean send, String address, Object msg,
+      Handler<Message<T>> replyHandler) {
     checkNotNull("address", address);
     if (super.isLocalFork(address)) {
       super.sendOrPub(send, address, msg, replyHandler);

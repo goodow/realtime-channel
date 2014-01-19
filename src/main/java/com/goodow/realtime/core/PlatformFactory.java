@@ -24,6 +24,8 @@ public interface PlatformFactory {
    */
   boolean cancelTimer(int id);
 
+  void handle(Object handler, Object event);
+
   Net net();
 
   /**

@@ -24,6 +24,7 @@ public class HandlerRegistrations implements HandlerRegistration {
   private JsonArray registrations;
 
   public void add(HandlerRegistration registration) {
+    assert registration != null : "registration shouldn't be null";
     if (registrations == null) {
       registrations = Json.createArray();
     }
@@ -41,5 +42,19 @@ public class HandlerRegistrations implements HandlerRegistration {
       registrations.clear();
       registrations = null;
     }
+  }
+
+  public HandlerRegistration wrap(final HandlerRegistration registration) {
+    add(registration);
+    return new HandlerRegistration() {
+      @Override
+      public void unregisterHandler() {
+        int idx = registrations.indexOf(registration);
+        if (idx != -1) {
+          registrations.remove(idx);
+        }
+        registration.unregisterHandler();
+      }
+    };
   }
 }

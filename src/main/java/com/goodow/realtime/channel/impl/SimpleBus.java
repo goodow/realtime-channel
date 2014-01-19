@@ -26,6 +26,12 @@ import com.goodow.realtime.json.JsonObject;
 
 @SuppressWarnings("rawtypes")
 public class SimpleBus implements Bus {
+  protected static void checkNotNull(String paramName, Object param) {
+    if (param == null) {
+      throw new IllegalArgumentException("Parameter " + paramName + " must be specified");
+    }
+  }
+
   protected final JsonObject handlerMap; // LinkedHashMap<String, LinkedHashSet<Handler<Message>>>
   protected final JsonObject replyHandlers; // LinkedHashMap<String, Handler<Message>>
   private final IdGenerator idGenerator;
@@ -84,12 +90,6 @@ public class SimpleBus implements Bus {
     return this;
   }
 
-  protected void checkNotNull(String paramName, Object param) {
-    if (param == null) {
-      throw new IllegalArgumentException("Parameter " + paramName + " must be specified");
-    }
-  }
-
   protected void clearHandlers() {
     replyHandlers.clear();
     handlerMap.clear();
@@ -102,14 +102,14 @@ public class SimpleBus implements Bus {
       // handler itself, which would screw up our iteration
       // JsonArray copy = new ArrayList<Handler<Message>>(handlers);
       for (int i = 0, len = handlers.length(); i < len; i++) {
-        scheduleHandle(message, handlers.get(i));
+        scheduleHandle(handlers.get(i), message);
       }
     } else {
       // Might be a reply message
       Object handler = replyHandlers.get(address);
       if (handler != null) {
         replyHandlers.remove(address);
-        scheduleHandle(message, handler);
+        scheduleHandle(handler, message);
       }
     }
   }
@@ -153,22 +153,18 @@ public class SimpleBus implements Bus {
     return idGenerator.next(36);
   }
 
-  @SuppressWarnings("unchecked")
-  protected <T> void nativeHandle(T message, Object handler) {
-    ((Handler<T>) handler).handle(message);
-  }
-
-  protected void scheduleHandle(final Object message, final Object handler) {
+  protected void scheduleHandle(final Object handler, final Object message) {
     Platform.scheduleDeferred(new Handler<Void>() {
       @Override
       public void handle(Void ignore) {
-        nativeHandle(message, handler);
+        Platform.handle(handler, message);
       }
     });
   }
 
   @SuppressWarnings("unchecked")
-  protected void sendOrPub(boolean send, String address, Object msg, Object replyHandler) {
+  protected <T> void sendOrPub(boolean send, String address, Object msg,
+      Handler<Message<T>> replyHandler) {
     checkNotNull("address", address);
     String replyAddress = null;
     if (replyHandler != null) {

@@ -19,12 +19,13 @@
 + (J2ObjcClassInfo *)__metadata {
   static J2ObjcMethodInfo methods[] = {
     { "cancelTimerWithInt:", "cancelTimer", "Z", 0x401, NULL },
+    { "handleWithId:withId:", "handle", "V", 0x401, NULL },
     { "net", NULL, "Lcom.goodow.realtime.core.Net;", 0x401, NULL },
     { "scheduleDeferredWithComGoodowRealtimeCoreHandler:", "scheduleDeferred", "V", 0x401, NULL },
     { "setPeriodicWithInt:withComGoodowRealtimeCoreHandler:", "setPeriodic", "I", 0x401, NULL },
     { "type", NULL, "Lcom.goodow.realtime.core.Platform$Type;", 0x401, NULL },
   };
-  static J2ObjcClassInfo _ComGoodowRealtimeCorePlatformFactory = { "PlatformFactory", "com.goodow.realtime.core", NULL, 0x201, 5, methods, 0, NULL, 0, NULL};
+  static J2ObjcClassInfo _ComGoodowRealtimeCorePlatformFactory = { "PlatformFactory", "com.goodow.realtime.core", NULL, 0x201, 6, methods, 0, NULL, 0, NULL};
   return &_ComGoodowRealtimeCorePlatformFactory;
 }
 
