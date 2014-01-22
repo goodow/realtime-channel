@@ -17,7 +17,7 @@ import com.goodow.realtime.channel.Bus;
 import com.goodow.realtime.channel.Message;
 import com.goodow.realtime.core.Handler;
 
-public class DefaultMessage<U> implements Message<U> {
+class DefaultMessage<U> implements Message<U> {
 
   protected U body;
   protected Bus bus;

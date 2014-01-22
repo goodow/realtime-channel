@@ -11,6 +11,7 @@
 @class GDCStateEnum;
 @protocol ComGoodowRealtimeCoreHandler;
 @protocol ComGoodowRealtimeCoreHandlerRegistration;
+@protocol GDCBusHook;
 
 #import "JreEmulation.h"
 
@@ -20,6 +21,7 @@
 - (id<GDCBus>)publish:(NSString *)address message:(id)msg;
 - (id<ComGoodowRealtimeCoreHandlerRegistration>)registerHandler:(NSString *)address handler:(id)handler;
 - (id<GDCBus>)send:(NSString *)address message:(id)msg replyHandler:(id)replyHandler;
+- (id<GDCBus>)setHookWithGDCBusHook:(id<GDCBusHook>)hook;
 @end
 
 @interface GDCBus : NSObject {

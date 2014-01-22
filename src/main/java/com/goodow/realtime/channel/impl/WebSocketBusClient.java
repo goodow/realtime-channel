@@ -26,6 +26,11 @@ import java.util.logging.Logger;
 
 @SuppressWarnings("rawtypes")
 public class WebSocketBusClient extends SimpleBus {
+  protected static final String PING_INTERVAL = "vertxbus_ping_interval";
+  protected static final String BODY = "body";
+  protected static final String ADDRESS = "address";
+  protected static final String REPLY_ADDRESS = "replyAddress";
+  protected static final String TYPE = "type";
   private static final Logger log = Logger.getLogger(WebSocketBusClient.class.getName());
   private final String url;
   private final JsonObject options;
@@ -42,8 +47,8 @@ public class WebSocketBusClient extends SimpleBus {
     this.url = url;
     this.options = options;
     pingInterval =
-        options != null && options.has("vertxbus_ping_interval") ? (int) options
-            .getNumber("vertxbus_ping_interval") : 5 * 1000;
+        options != null && options.has(PING_INTERVAL) ? (int) options.getNumber(PING_INTERVAL)
+            : 5 * 1000;
 
     webSocketHandler = new WebSocket.WebSocketHandler() {
       @Override
@@ -51,8 +56,7 @@ public class WebSocketBusClient extends SimpleBus {
         state = State.CLOSED;
         assert pingTimerID > 0 : "pingTimerID should > 0";
         Platform.cancelTimer(pingTimerID);
-        deliverMessage(LOCAL_ON_CLOSE, new DefaultMessage<JsonObject>(false, null, LOCAL_ON_CLOSE,
-            null, reason));
+        doDeliverMessage(new DefaultMessage<JsonObject>(false, null, LOCAL_ON_CLOSE, null, reason));
         if (reconnect) {
           reconnect();
         }
@@ -61,19 +65,13 @@ public class WebSocketBusClient extends SimpleBus {
       @Override
       public void onError(String error) {
         reconnect = false;
-        deliverMessage(LOCAL_ON_ERROR, new DefaultMessage<JsonObject>(false, null, LOCAL_ON_ERROR,
-            null, Json.createObject().set("message", error)));
+        doDeliverMessage(new DefaultMessage<JsonObject>(false, null, LOCAL_ON_ERROR, null, Json
+            .createObject().set("message", error)));
       }
 
       @Override
       public void onMessage(String msg) {
-        JsonObject json = Json.parse(msg);
-        String address = json.getString("address");
-        @SuppressWarnings({"unchecked"})
-        DefaultMessage message =
-            new DefaultMessage(false, WebSocketBusClient.this, address, json
-                .getString("replyAddress"), json.get("body"));
-        deliverMessage(address, message);
+        WebSocketBusClient.this.onMessage(Json.<JsonObject> parse(msg));
       }
 
       @Override
@@ -88,14 +86,15 @@ public class WebSocketBusClient extends SimpleBus {
             sendPing();
           }
         });
-        String[] keys = handlerMap.keys();
-        for (String key : keys) {
-          assert handlerMap.getArray(key).length() > 0 : "Handlers registried on " + key
+        String[] addresses = handlerMap.keys();
+        for (String address : addresses) {
+          assert handlerMap.getArray(address).length() > 0 : "Handlers registried on " + address
               + " shouldn't be empty";
-          sendRegister(key);
+          if (!WebSocketBusClient.this.isLocalFork(address)) {
+            sendRegister(address);
+          }
         }
-        deliverMessage(LOCAL_ON_OPEN, new DefaultMessage<Void>(false, null, LOCAL_ON_OPEN, null,
-            null));
+        doDeliverMessage(new DefaultMessage<Void>(false, null, LOCAL_ON_OPEN, null, null));
       }
     };
 
@@ -117,7 +116,8 @@ public class WebSocketBusClient extends SimpleBus {
 
   public void login(String username, String password, final Handler<JsonObject> replyHandler) {
     JsonObject msg = Json.createObject().set("username", username).set("password", password);
-    sendOrPub(true, "vertx.basicauthmanager.login", msg, new Handler<Message<JsonObject>>() {
+    final String addr = "vertx.basicauthmanager.login";
+    doSendOrPub(true, addr, msg, new Handler<Message<JsonObject>>() {
       @Override
       public void handle(Message<JsonObject> msg) {
         JsonObject body = msg.body();
@@ -125,7 +125,7 @@ public class WebSocketBusClient extends SimpleBus {
           sessionID = body.getString("sessionID");
         }
         if (replyHandler != null) {
-          scheduleHandle(replyHandler, body.remove("sessionID"));
+          scheduleHandle(addr, replyHandler, body.remove("sessionID"));
         }
       }
     });
@@ -144,59 +144,64 @@ public class WebSocketBusClient extends SimpleBus {
     webSocket.setListen(webSocketHandler);
   }
 
+  // J2ObjC require us to override this method
   @Override
-  // J2ObjC prevent us to override doRegisterHandler
   public HandlerRegistration registerHandler(final String address,
       final Handler<? extends Message> handler) {
+    return super.registerHandler(address, handler);
+  }
+
+  @Override
+  protected boolean doRegisterHandler(String address, Handler<? extends Message> handler) {
     boolean first = super.doRegisterHandler(address, handler);
-    if (first) {
-      // First handler for this address so we should register the connection
+    if (first && !isLocalFork(address)) {
       sendRegister(address);
     }
-    return new HandlerRegistration() {
-      @Override
-      public void unregisterHandler() {
-        doUnregisterHandler(address, handler);
-      }
-    };
+    return first;
   }
 
   @Override
-  protected boolean doUnregisterHandler(String address, Handler<? extends Message> handler) {
-    boolean last = super.doUnregisterHandler(address, handler);
-    if (last && !super.isLocalFork(address)) {
-      // No more handlers so we should unregister the connection
-      JsonObject msg = Json.createObject().set("type", "unregister").set("address", address);
-      send(msg.toJsonString());
-    }
-    return last;
-  }
-
-  @Override
-  protected <T> void sendOrPub(boolean send, String address, Object msg,
+  protected <T> void doSendOrPub(boolean send, String address, Object msg,
       Handler<Message<T>> replyHandler) {
-    checkNotNull("address", address);
-    if (super.isLocalFork(address)) {
-      super.sendOrPub(send, address, msg, replyHandler);
+    checkNotNull(ADDRESS, address);
+    if (isLocalFork(address)) {
+      super.doSendOrPub(send, address, msg, replyHandler);
       return;
     }
     if (state != State.OPEN) {
       throw new IllegalStateException("INVALID_STATE_ERR");
     }
-    JsonObject envelope = Json.createObject().set("type", send ? "send" : "publish");
-    envelope.set("address", address).set("body", msg);
+    JsonObject envelope = Json.createObject().set(TYPE, send ? "send" : "publish");
+    envelope.set(ADDRESS, address).set(BODY, msg);
     if (sessionID != null) {
       envelope.set("sessionID", sessionID);
     }
     if (replyHandler != null) {
       String replyAddress = makeUUID();
-      envelope.set("replyAddress", replyAddress);
+      envelope.set(REPLY_ADDRESS, replyAddress);
       replyHandlers.set(replyAddress, replyHandler);
     }
     send(envelope.toJsonString());
   }
 
-  private void send(String msg) {
+  @Override
+  protected boolean doUnregisterHandler(String address, Handler<? extends Message> handler) {
+    boolean last = super.doUnregisterHandler(address, handler);
+    if (last && !isLocalFork(address)) {
+      sendUnregister(address);
+    }
+    return last;
+  }
+
+  protected void onMessage(JsonObject msg) {
+    @SuppressWarnings({"unchecked"})
+    DefaultMessage message =
+        new DefaultMessage(false, this, msg.getString(ADDRESS), msg.getString(REPLY_ADDRESS), msg
+            .get(BODY));
+    internalHandleDeliverMessage(message);
+  }
+
+  protected void send(String msg) {
     if (state == State.OPEN) {
       webSocket.send(msg);
     } else {
@@ -204,16 +209,24 @@ public class WebSocketBusClient extends SimpleBus {
     }
   }
 
-  private void sendPing() {
-    send(Json.createObject().set("type", "ping").toJsonString());
+  protected void sendPing() {
+    send(Json.createObject().set(TYPE, "ping").toJsonString());
   }
 
-  private void sendRegister(String address) {
+  /*
+   * First handler for this address so we should register the connection
+   */
+  protected void sendRegister(String address) {
     assert address != null : "address shouldn't be null";
-    if (super.isLocalFork(address)) {
-      return;
-    }
-    JsonObject msg = Json.createObject().set("type", "register").set("address", address);
+    JsonObject msg = Json.createObject().set(TYPE, "register").set(ADDRESS, address);
+    send(msg.toJsonString());
+  }
+
+  /*
+   * No more handlers so we should unregister the connection
+   */
+  protected void sendUnregister(String address) {
+    JsonObject msg = Json.createObject().set(TYPE, "unregister").set(ADDRESS, address);
     send(msg.toJsonString());
   }
 }

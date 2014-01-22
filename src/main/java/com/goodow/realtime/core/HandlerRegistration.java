@@ -21,6 +21,12 @@ import com.goodow.realtime.channel.Bus;
  */
 public interface HandlerRegistration {
 
+  HandlerRegistration EMPTY = new HandlerRegistration() {
+    @Override
+    public void unregisterHandler() {
+    }
+  };
+
   /**
    * Deregisters the handler associated with this registration object if the handler is still
    * attached to the event bus. If the handler is no longer attached to the event bus, this is a

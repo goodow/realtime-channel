@@ -14,4 +14,16 @@
 - (void)unregisterHandler;
 @end
 
+@interface ComGoodowRealtimeCoreHandlerRegistration : NSObject {
+}
++ (id<ComGoodowRealtimeCoreHandlerRegistration>)EMPTY;
+@end
+
+@interface ComGoodowRealtimeCoreHandlerRegistration_$1 : NSObject < ComGoodowRealtimeCoreHandlerRegistration > {
+}
+
+- (void)unregisterHandler;
+- (id)init;
+@end
+
 #endif // _ComGoodowRealtimeCoreHandlerRegistration_H_

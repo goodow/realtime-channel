@@ -14,6 +14,7 @@
 package com.goodow.realtime.channel.impl;
 
 import com.goodow.realtime.channel.Bus;
+import com.goodow.realtime.channel.BusHook;
 import com.goodow.realtime.channel.Message;
 import com.goodow.realtime.channel.State;
 import com.goodow.realtime.channel.util.IdGenerator;
@@ -24,8 +25,13 @@ import com.goodow.realtime.json.Json;
 import com.goodow.realtime.json.JsonArray;
 import com.goodow.realtime.json.JsonObject;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 @SuppressWarnings("rawtypes")
 public class SimpleBus implements Bus {
+  private static final Logger log = Logger.getLogger(SimpleBus.class.getName());
+
   protected static void checkNotNull(String paramName, Object param) {
     if (param == null) {
       throw new IllegalArgumentException("Parameter " + paramName + " must be specified");
@@ -37,6 +43,7 @@ public class SimpleBus implements Bus {
   private final IdGenerator idGenerator;
   private final boolean forkLocal;
   protected State state = State.CONNECTING;
+  private BusHook hook;
 
   public SimpleBus() {
     this(null);
@@ -55,8 +62,7 @@ public class SimpleBus implements Bus {
   @Override
   public void close() {
     state = State.CLOSING;
-    deliverMessage(LOCAL_ON_CLOSE,
-        new DefaultMessage<Void>(false, null, LOCAL_ON_CLOSE, null, null));
+    doDeliverMessage(new DefaultMessage<Void>(false, null, LOCAL_ON_CLOSE, null, null));
     state = State.CLOSED;
     clearHandlers();
   }
@@ -67,26 +73,37 @@ public class SimpleBus implements Bus {
   }
 
   @Override
-  public Bus publish(String address, Object msg) {
-    sendOrPub(false, address, msg, null);
+  public SimpleBus publish(String address, Object msg) {
+    internalHandleSendOrPub(false, address, msg, null);
     return this;
   }
 
   @Override
   public HandlerRegistration registerHandler(final String address,
       final Handler<? extends Message> handler) {
-    doRegisterHandler(address, handler);
-    return new HandlerRegistration() {
-      @Override
-      public void unregisterHandler() {
-        doUnregisterHandler(address, handler);
-      }
-    };
+    if (hook == null || hook.handlePreRegister(address, handler)) {
+      doRegisterHandler(address, handler);
+      return new HandlerRegistration() {
+        @Override
+        public void unregisterHandler() {
+          if (hook == null || hook.handleUnregister(address)) {
+            doUnregisterHandler(address, handler);
+          }
+        }
+      };
+    }
+    return HandlerRegistration.EMPTY;
   }
 
   @Override
-  public <T> Bus send(String address, Object msg, Handler<Message<T>> replyHandler) {
-    sendOrPub(true, address, msg, replyHandler);
+  public <T> SimpleBus send(String address, Object msg, Handler<Message<T>> replyHandler) {
+    internalHandleSendOrPub(true, address, msg, replyHandler);
+    return this;
+  }
+
+  @Override
+  public SimpleBus setHook(BusHook hook) {
+    this.hook = hook;
     return this;
   }
 
@@ -95,21 +112,19 @@ public class SimpleBus implements Bus {
     handlerMap.clear();
   }
 
-  protected void deliverMessage(String address, Message message) {
+  protected void doDeliverMessage(Message message) {
+    String address = message.address();
     JsonArray handlers = handlerMap.getArray(address);
     if (handlers != null) {
-      // We make a copy since the handler might get unregistered from within the
-      // handler itself, which would screw up our iteration
-      // JsonArray copy = new ArrayList<Handler<Message>>(handlers);
       for (int i = 0, len = handlers.length(); i < len; i++) {
-        scheduleHandle(handlers.get(i), message);
+        scheduleHandle(address, handlers.get(i), message);
       }
     } else {
       // Might be a reply message
       Object handler = replyHandlers.get(address);
       if (handler != null) {
         replyHandlers.remove(address);
-        scheduleHandle(handler, message);
+        scheduleHandle(address, handler, message);
       }
     }
   }
@@ -125,6 +140,23 @@ public class SimpleBus implements Bus {
       handlers.push(handler);
     }
     return false;
+  }
+
+  @SuppressWarnings("unchecked")
+  protected <T> void doSendOrPub(boolean send, String address, Object msg,
+      Handler<Message<T>> replyHandler) {
+    checkNotNull("address", address);
+    String replyAddress = null;
+    if (replyHandler != null) {
+      replyAddress = makeUUID();
+    }
+    boolean isLocal = isLocalFork(address);
+    DefaultMessage message =
+        new DefaultMessage(send, this, isLocal ? address.substring(LOCAL.length()) : address,
+            isLocal && replyHandler != null ? (LOCAL + replyAddress) : replyAddress, msg);
+    if (internalHandleDeliverMessage(message) && replyHandler != null) {
+      replyHandlers.set(replyAddress, replyHandler);
+    }
   }
 
   protected boolean doUnregisterHandler(String address, Handler<? extends Message> handler) {
@@ -144,6 +176,14 @@ public class SimpleBus implements Bus {
     return false;
   }
 
+  protected boolean internalHandleDeliverMessage(Message message) {
+    if (hook == null || hook.handleReceiveMessage(message)) {
+      doDeliverMessage(message);
+      return true;
+    }
+    return false;
+  }
+
   protected boolean isLocalFork(String address) {
     assert address != null : "address shouldn't be null";
     return forkLocal && address.startsWith(LOCAL);
@@ -153,30 +193,25 @@ public class SimpleBus implements Bus {
     return idGenerator.next(36);
   }
 
-  protected void scheduleHandle(final Object handler, final Object message) {
+  protected void scheduleHandle(final String address, final Object handler, final Object event) {
     Platform.scheduleDeferred(new Handler<Void>() {
       @Override
       public void handle(Void ignore) {
-        Platform.handle(handler, message);
+        try {
+          Platform.handle(handler, event);
+        } catch (Exception e) {
+          log.log(Level.WARNING, "Failed to handle on address: " + address, e);
+          doDeliverMessage(new DefaultMessage<JsonObject>(false, null, LOCAL_ON_ERROR, null, Json
+              .createObject().set("address", address).set("event", event).set("cause", e)));
+        }
       }
     });
   }
 
-  @SuppressWarnings("unchecked")
-  protected <T> void sendOrPub(boolean send, String address, Object msg,
+  private <T> void internalHandleSendOrPub(boolean send, String address, Object msg,
       Handler<Message<T>> replyHandler) {
-    checkNotNull("address", address);
-    String replyAddress = null;
-    if (replyHandler != null) {
-      replyAddress = makeUUID();
-      replyHandlers.set(replyAddress, replyHandler);
+    if (hook == null || hook.handleSendOrPub(send, address, msg, replyHandler)) {
+      doSendOrPub(send, address, msg, replyHandler);
     }
-    if (isLocalFork(address)) {
-      address = address.substring(LOCAL.length());
-      if (replyAddress != null) {
-        replyAddress = LOCAL + replyAddress;
-      }
-    }
-    deliverMessage(address, new DefaultMessage(send, this, address, replyAddress, msg));
   }
 }

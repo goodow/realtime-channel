@@ -23,7 +23,7 @@ public interface Bus {
   String LOCAL_ON_ERROR = LOCAL + "goodow.bus.onError";
 
   /**
-   * Close the EventBus and release all resources.
+   * Close the Bus and release all resources.
    */
   void close();
 
@@ -55,4 +55,11 @@ public interface Bus {
    * @param replyHandler Reply handler will be called when any reply from the recipient is received
    */
   <T> Bus send(String address, Object msg, Handler<Message<T>> replyHandler);
+
+  /**
+   * Set a BusHook on the Bus
+   * 
+   * @param hook The hook
+   */
+  Bus setHook(BusHook hook);
 }
