@@ -13,19 +13,12 @@
  */
 package com.goodow.realtime.objc;
 
-import com.goodow.realtime.core.Handler;
 import com.goodow.realtime.core.Net;
 import com.goodow.realtime.core.Platform;
 import com.goodow.realtime.core.Platform.Type;
 import com.goodow.realtime.core.PlatformFactory;
-import com.goodow.realtime.json.Json;
-import com.goodow.realtime.json.JsonObject;
+import com.goodow.realtime.core.Scheduler;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
-/*-[
- #import "GDChannel.h"
- ]-*/
 class ObjCPlatform implements PlatformFactory {
   /**
    * Registers the Objective-C platform with a default configuration.
@@ -40,37 +33,8 @@ class ObjCPlatform implements PlatformFactory {
     }
   ]-*/;
 
-  // @formatter:off
-  private static native <T> void nativeHandle(Object handler, T event) /*-[
-    GDCBlock block = (GDCBlock)handler;
-    block(event);
-  ]-*/;
-  // @formatter:on
-
-  private final AtomicInteger timerId = new AtomicInteger(1);
-  private final JsonObject timers = Json.createObject();
-
   private final Net net = new ObjCNet();
-
-  @Override
-  public boolean cancelTimer(int id) {
-    if (timers.has("" + id)) {
-      cancelTimer(timers.get("" + id));
-      timers.remove("" + id);
-      return true;
-    }
-    return false;
-  }
-
-  @SuppressWarnings("unchecked")
-  @Override
-  public void handle(Object handler, Object event) {
-    if (handler instanceof Handler) {
-      ((Handler<Object>) handler).handle(event);
-    } else {
-      nativeHandle(handler, event);
-    }
-  }
+  private final ObjCScheduler scheduler = new ObjCScheduler();
 
   @Override
   public Net net() {
@@ -78,36 +42,12 @@ class ObjCPlatform implements PlatformFactory {
   }
 
   @Override
-  // @formatter:off
-  public native void scheduleDeferred(Handler<Void> handler) /*-[
-    [[NSRunLoop mainRunLoop] performSelector:@selector(handleWithId:) target:handler argument:nil order:0 modes:@[NSDefaultRunLoopMode]];
-  ]-*/;
-  // @formatter:on
-
-  @Override
-  public int setPeriodic(int delayMs, Handler<Void> handler) {
-    final int id = timerId.getAndIncrement();
-    timers.set("" + id, setPeriodicNative(delayMs, handler));
-    return id;
+  public Scheduler scheduler() {
+    return scheduler;
   }
 
   @Override
   public Type type() {
     return Type.IOS;
   }
-
-  // @formatter:off
-  private native void cancelTimer(Object timer) /*-[
-    [(NSTimer *)timer invalidate];
-  ]-*/;
-
-  private native Object setPeriodicNative(int delayMs, Handler<Void> handler) /*-[
-    return
-    [NSTimer scheduledTimerWithTimeInterval:delayMs/1000 
-                                     target:handler
-                                   selector:@selector(handleWithId:)
-                                   userInfo:nil
-                                    repeats:YES];
-  ]-*/;
-  // @formatter:on
 }

@@ -14,12 +14,21 @@
 package com.goodow.realtime.core;
 
 /**
- * Generic platform interface. New platforms are defined as implementations of this interface.
+ * Represents a result that may not have occurred yet.
  */
-public interface PlatformFactory {
-  Net net();
+public interface AsyncResult<T> {
+  /**
+   * An exception describing failure. This will be null if the operation succeeded.
+   */
+  Throwable cause();
 
-  Scheduler scheduler();
+  /**
+   * Did it fail?
+   */
+  boolean failed();
 
-  Platform.Type type();
+  /**
+   * The result of the operation. This will be null if the operation failed.
+   */
+  T result();
 }

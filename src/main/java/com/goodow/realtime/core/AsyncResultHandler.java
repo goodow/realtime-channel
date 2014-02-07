@@ -14,12 +14,7 @@
 package com.goodow.realtime.core;
 
 /**
- * Generic platform interface. New platforms are defined as implementations of this interface.
+ * Handler for {@link AsyncResult}
  */
-public interface PlatformFactory {
-  Net net();
-
-  Scheduler scheduler();
-
-  Platform.Type type();
+public interface AsyncResultHandler<T> extends Handler<AsyncResult<T>> {
 }

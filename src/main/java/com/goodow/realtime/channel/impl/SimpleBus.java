@@ -30,6 +30,7 @@ import java.util.logging.Logger;
 
 @SuppressWarnings("rawtypes")
 public class SimpleBus implements Bus {
+  public static final String MODE_MIX = "forkLocal";
   private static final Logger log = Logger.getLogger(SimpleBus.class.getName());
 
   protected static void checkNotNull(String paramName, Object param) {
@@ -38,33 +39,37 @@ public class SimpleBus implements Bus {
     }
   }
 
+  private final JsonObject options;
   protected final JsonObject handlerMap; // LinkedHashMap<String, LinkedHashSet<Handler<Message>>>
   protected final JsonObject replyHandlers; // LinkedHashMap<String, Handler<Message>>
   private final IdGenerator idGenerator;
   private final boolean forkLocal;
   protected State state = State.CONNECTING;
-  private BusHook hook;
+  protected BusHook hook;
 
   public SimpleBus() {
     this(null);
   }
 
   public SimpleBus(JsonObject options) {
+    this.options = options;
     handlerMap = Json.createObject();
     replyHandlers = Json.createObject();
     idGenerator = new IdGenerator();
     state = State.OPEN;
 
-    forkLocal =
-        options != null && options.has("forkLocal") ? options.getBoolean("forkLocal") : false;
+    forkLocal = options != null && options.has(MODE_MIX) ? options.getBoolean(MODE_MIX) : false;
   }
 
   @Override
   public void close() {
-    state = State.CLOSING;
-    doDeliverMessage(new DefaultMessage<Void>(false, null, LOCAL_ON_CLOSE, null, null));
-    state = State.CLOSED;
-    clearHandlers();
+    if (hook == null || hook.handlePreClose()) {
+      doClose();
+    }
+  }
+
+  public JsonObject getOptions() {
+    return options == null ? null : options.copy();
   }
 
   @Override
@@ -104,6 +109,9 @@ public class SimpleBus implements Bus {
   @Override
   public SimpleBus setHook(BusHook hook) {
     this.hook = hook;
+    if (hook != null && state == State.OPEN) {
+      hook.handleOpened();
+    }
     return this;
   }
 
@@ -112,7 +120,17 @@ public class SimpleBus implements Bus {
     handlerMap.clear();
   }
 
-  protected void doDeliverMessage(Message message) {
+  protected void doClose() {
+    state = State.CLOSING;
+    doReceiveMessage(new DefaultMessage<Void>(false, null, LOCAL_ON_CLOSE, null, null));
+    state = State.CLOSED;
+    clearHandlers();
+    if (hook != null) {
+      hook.handlePostClose();
+    }
+  }
+
+  protected void doReceiveMessage(Message message) {
     String address = message.address();
     JsonArray handlers = handlerMap.getArray(address);
     if (handlers != null) {
@@ -154,7 +172,7 @@ public class SimpleBus implements Bus {
     DefaultMessage message =
         new DefaultMessage(send, this, isLocal ? address.substring(LOCAL.length()) : address,
             isLocal && replyHandler != null ? (LOCAL + replyAddress) : replyAddress, msg);
-    if (internalHandleDeliverMessage(message) && replyHandler != null) {
+    if (internalHandleReceiveMessage(message) && replyHandler != null) {
       replyHandlers.set(replyAddress, replyHandler);
     }
   }
@@ -176,9 +194,9 @@ public class SimpleBus implements Bus {
     return false;
   }
 
-  protected boolean internalHandleDeliverMessage(Message message) {
+  protected boolean internalHandleReceiveMessage(Message message) {
     if (hook == null || hook.handleReceiveMessage(message)) {
-      doDeliverMessage(message);
+      doReceiveMessage(message);
       return true;
     }
     return false;
@@ -194,14 +212,14 @@ public class SimpleBus implements Bus {
   }
 
   protected void scheduleHandle(final String address, final Object handler, final Object event) {
-    Platform.scheduleDeferred(new Handler<Void>() {
+    Platform.scheduler().scheduleDeferred(new Handler<Void>() {
       @Override
       public void handle(Void ignore) {
         try {
-          Platform.handle(handler, event);
-        } catch (Exception e) {
+          Platform.scheduler().handle(handler, event);
+        } catch (Throwable e) {
           log.log(Level.WARNING, "Failed to handle on address: " + address, e);
-          doDeliverMessage(new DefaultMessage<JsonObject>(false, null, LOCAL_ON_ERROR, null, Json
+          doReceiveMessage(new DefaultMessage<JsonObject>(false, null, LOCAL_ON_ERROR, null, Json
               .createObject().set("address", address).set("event", event).set("cause", e)));
         }
       }

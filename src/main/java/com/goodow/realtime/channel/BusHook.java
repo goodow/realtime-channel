@@ -19,8 +19,71 @@ import com.goodow.realtime.core.Handler;
  * A hook that you can use to receive various events on the Bus.
  */
 public interface BusHook {
+  public static abstract class BusHookProxy implements BusHook {
+    @Override
+    public void handleOpened() {
+      if (delegate() != null) {
+        delegate().handleOpened();
+      }
+    }
+
+    @Override
+    public void handlePostClose() {
+      if (delegate() != null) {
+        delegate().handlePostClose();
+      }
+    }
+
+    @Override
+    public boolean handlePreClose() {
+      return delegate() == null ? true : delegate().handlePreClose();
+    }
+
+    @SuppressWarnings("rawtypes")
+    @Override
+    public boolean handlePreRegister(String address, Handler<? extends Message> handler) {
+      return delegate() == null ? true : delegate().handlePreRegister(address, handler);
+    }
+
+    @Override
+    public boolean handleReceiveMessage(Message<?> message) {
+      return delegate() == null ? true : delegate().handleReceiveMessage(message);
+    }
+
+    @Override
+    public <T> boolean handleSendOrPub(boolean send, String address, Object msg,
+        Handler<Message<T>> replyHandler) {
+      return delegate() == null ? true : delegate().handleSendOrPub(send, address, msg,
+          replyHandler);
+    }
+
+    @Override
+    public boolean handleUnregister(String address) {
+      return delegate() == null ? true : delegate().handleUnregister(address);
+    }
+
+    protected abstract BusHook delegate();
+  }
+
   /**
-   * Called before registers a handler
+   * Called when the bus is opened
+   */
+  void handleOpened();
+
+  /**
+   * Called when the bus is closed
+   */
+  void handlePostClose();
+
+  /**
+   * Called before close the bus
+   * 
+   * @return true to close the bus, false to reject it
+   */
+  boolean handlePreClose();
+
+  /**
+   * Called before register a handler
    * 
    * @param address The address
    * @param handler The handler

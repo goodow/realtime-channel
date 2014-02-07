@@ -29,27 +29,12 @@ public class Platform {
 
   private static PlatformFactory FACTORY;
 
-  /**
-   * Cancel the timer with the specified {@code id}. Returns {@code} true if the timer was
-   * successfully cancelled, or {@code false} if the timer does not exist.
-   */
-  public static boolean cancelTimer(int id) {
-    return get().cancelTimer(id);
-  }
-
-  public static void handle(Object handler, Object event) {
-    get().handle(handler, event);
-  }
-
   public static Net net() {
     return get().net();
   }
 
-  /**
-   * A deferred command is executed after the event loop returns.
-   */
-  public static void scheduleDeferred(Handler<Void> handler) {
-    get().scheduleDeferred(handler);
+  public static Scheduler scheduler() {
+    return get().scheduler();
   }
 
   /**
@@ -58,20 +43,6 @@ public class Platform {
    */
   public static void setFactory(PlatformFactory factory) {
     FACTORY = factory;
-  }
-
-  /**
-   * Schedules a repeating handler that is scheduled with a constant periodicity. That is, the
-   * handler will be invoked every <code>delayMs</code> milliseconds, regardless of how long the
-   * previous invocation took to complete.
-   * 
-   * @param delayMs the period with which the handler is executed
-   * @param handler the handler to execute
-   * 
-   * @return the unique ID of the timer
-   */
-  public static int setPeriodic(int delayMs, Handler<Void> handler) {
-    return get().setPeriodic(delayMs, handler);
   }
 
   public static Platform.Type type() {

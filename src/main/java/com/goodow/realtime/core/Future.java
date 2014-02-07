@@ -13,13 +13,24 @@
  */
 package com.goodow.realtime.core;
 
-/**
- * Generic platform interface. New platforms are defined as implementations of this interface.
- */
-public interface PlatformFactory {
-  Net net();
+public interface Future<T> extends AsyncResult<T> {
+  /**
+   * Has it completed?
+   */
+  boolean complete();
 
-  Scheduler scheduler();
+  /**
+   * Set the failure. Any handler will be called, if there is one
+   */
+  Future<T> setFailure(Throwable throwable);
 
-  Platform.Type type();
+  /**
+   * Set a handler for the result. It will get called when it's complete
+   */
+  Future<T> setHandler(Handler<AsyncResult<T>> handler);
+
+  /**
+   * Set the result. Any handler will be called, if there is one
+   */
+  Future<T> setResult(T result);
 }

@@ -15,6 +15,7 @@ package com.goodow.realtime.channel.impl;
 
 import com.goodow.realtime.channel.Bus;
 import com.goodow.realtime.channel.BusHook;
+import com.goodow.realtime.channel.BusHook.BusHookProxy;
 import com.goodow.realtime.channel.Message;
 import com.goodow.realtime.channel.State;
 import com.goodow.realtime.core.Handler;
@@ -30,25 +31,26 @@ import java.util.logging.Logger;
  * stream of in-order, consecutive, no-dup messages.
  */
 public class ReliabeBusClient implements Bus {
+  public static final String SEQUENCE_NUMBER = "_seq";
   private static final Logger log = Logger.getLogger(ReliabeBusClient.class.getName());
   private final JsonObject pendings;
-  private final JsonObject currentRevisions;
-  private final JsonObject knownHeadRevisions;
-  private final SimpleBus wrapped;
+  private final JsonObject currentSequences;
+  private final JsonObject knownHeadSequences;
+  private final SimpleBus delegate;
   private BusHook hook;
 
-  public ReliabeBusClient(SimpleBus wrapped) {
-    this.wrapped = wrapped;
+  public ReliabeBusClient(SimpleBus delegate) {
+    this.delegate = delegate;
     pendings = Json.createObject();
-    currentRevisions = Json.createObject();
-    knownHeadRevisions = Json.createObject();
+    currentSequences = Json.createObject();
+    knownHeadSequences = Json.createObject();
 
-    wrapped.setHook(new BusHook() {
+    delegate.setHook(new BusHookProxy() {
       @SuppressWarnings("rawtypes")
       @Override
       public boolean handlePreRegister(String address, Handler<? extends Message> handler) {
         pendings.set(address, Json.createObject());
-        return hook == null ? true : hook.handlePreRegister(address, handler);
+        return super.handlePreRegister(address, handler);
       }
 
       @Override
@@ -56,49 +58,48 @@ public class ReliabeBusClient implements Bus {
         if (hook != null && !hook.handleReceiveMessage(message)) {
           return false;
         }
-        return onMessage(message);
-      }
-
-      @Override
-      public <T> boolean handleSendOrPub(boolean send, String address, Object msg,
-          Handler<Message<T>> replyHandler) {
-        return hook == null ? true : hook.handleSendOrPub(send, address, msg, replyHandler);
+        return onReceiveMessage(message);
       }
 
       @Override
       public boolean handleUnregister(String address) {
         pendings.remove(address);
-        currentRevisions.remove(address);
-        knownHeadRevisions.remove(address);
-        return hook == null ? true : hook.handleUnregister(address);
+        currentSequences.remove(address);
+        knownHeadSequences.remove(address);
+        return super.handleUnregister(address);
+      }
+
+      @Override
+      protected BusHook delegate() {
+        return hook;
       }
     });
   }
 
   @Override
   public void close() {
-    wrapped.close();
+    delegate.close();
   }
 
   @Override
   public State getReadyState() {
-    return wrapped.getReadyState();
+    return delegate.getReadyState();
   }
 
   @Override
   public Bus publish(String address, Object msg) {
-    return wrapped.publish(address, msg);
+    return delegate.publish(address, msg);
   }
 
   @SuppressWarnings("rawtypes")
   @Override
   public HandlerRegistration registerHandler(String address, Handler<? extends Message> handler) {
-    return wrapped.registerHandler(address, handler);
+    return delegate.registerHandler(address, handler);
   }
 
   @Override
   public <T> Bus send(String address, Object msg, Handler<Message<T>> replyHandler) {
-    return wrapped.send(address, msg, replyHandler);
+    return delegate.send(address, msg, replyHandler);
   }
 
   @Override
@@ -107,51 +108,52 @@ public class ReliabeBusClient implements Bus {
     return this;
   }
 
-  protected boolean onMessage(Message<?> message) {
+  protected boolean onReceiveMessage(Message<?> message) {
     String address = message.address();
     Object body = message.body();
-    if (!(body instanceof JsonObject) || !((JsonObject) body).has("_id")) {
+    if (!(body instanceof JsonObject) || !((JsonObject) body).has(SEQUENCE_NUMBER)) {
       return true;
     }
-    double number = ((JsonObject) body).getNumber("_id");
+    double sequence = ((JsonObject) body).getNumber(SEQUENCE_NUMBER);
     boolean isExist = pendings.has(address);
     if (!isExist) {
-      currentRevisions.set(address, number);
-      knownHeadRevisions.set(address, number);
+      currentSequences.set(address, sequence);
+      knownHeadSequences.set(address, sequence);
       return true;
     }
 
-    double currentRevision = currentRevisions.getNumber(address);
-    if (number <= currentRevision) {
-      log.log(Level.CONFIG, "Old dup at revision " + number + ", current is now ", currentRevision);
+    double currentSequence = currentSequences.getNumber(address);
+    if (sequence <= currentSequence) {
+      log.log(Level.CONFIG, "Old dup at sequence " + sequence + ", current is now ",
+          currentSequence);
       return false;
     }
     JsonObject pending = pendings.getObject(address);
-    JsonObject existing = pending.getObject("" + number);
+    JsonObject existing = pending.getObject("" + sequence);
     if (existing != null) {
-      // Should not have pending data at a revision we could have pushed out.
-      assert number > currentRevision + 1 : "should not have pending data";
+      // Should not have pending data at a sequence we could have pushed out.
+      assert sequence > currentSequence + 1 : "should not have pending data";
       log.log(Level.CONFIG, "Dup message: " + message);
       return false;
     }
 
-    double knownHeadRevision = Math.max(knownHeadRevisions.getNumber(address), number);
-    knownHeadRevisions.set(address, knownHeadRevision);
+    double knownHeadSequence = Math.max(knownHeadSequences.getNumber(address), sequence);
+    knownHeadSequences.set(address, knownHeadSequence);
 
-    if (number > currentRevision + 1) {
-      pending.set("" + number, message);
-      log.log(Level.CONFIG, "Missed message, currentRevision=" + currentRevision
-          + " message revision=" + number);
-      scheduleCatchup(address, currentRevision + 1);
+    if (sequence > currentSequence + 1) {
+      pending.set("" + sequence, message);
+      log.log(Level.CONFIG, "Missed message, current sequence=" + currentSequence
+          + " message sequence=" + sequence);
+      scheduleCatchup(address, currentSequence + 1);
       return false;
     }
 
-    assert number == currentRevision + 1 : "other cases should have been caught";
+    assert sequence == currentSequence + 1 : "other cases should have been caught";
     String next;
     while (true) {
-      wrapped.doDeliverMessage(message);
-      currentRevisions.set(address, ++currentRevision);
-      next = currentRevision + 1 + "";
+      delegate.doReceiveMessage(message);
+      currentSequences.set(address, ++currentSequence);
+      next = currentSequence + 1 + "";
       message = pending.get(next);
       if (message != null) {
         pending.remove(next);

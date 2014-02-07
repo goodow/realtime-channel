@@ -15,6 +15,7 @@ package com.goodow.realtime.channel.impl;
 
 import com.goodow.realtime.channel.Message;
 import com.goodow.realtime.channel.State;
+import com.goodow.realtime.channel.util.FuzzingBackOffGenerator;
 import com.goodow.realtime.core.Handler;
 import com.goodow.realtime.core.HandlerRegistration;
 import com.goodow.realtime.core.Platform;
@@ -31,9 +32,10 @@ public class WebSocketBusClient extends SimpleBus {
   protected static final String ADDRESS = "address";
   protected static final String REPLY_ADDRESS = "replyAddress";
   protected static final String TYPE = "type";
+
   private static final Logger log = Logger.getLogger(WebSocketBusClient.class.getName());
+  private final FuzzingBackOffGenerator backOffGenerator;
   private final String url;
-  private final JsonObject options;
   private final int pingInterval;
   private final WebSocket.WebSocketHandler webSocketHandler;
   private WebSocket webSocket;
@@ -44,8 +46,8 @@ public class WebSocketBusClient extends SimpleBus {
   public WebSocketBusClient(String url, JsonObject options) {
     super(options);
     state = State.CONNECTING;
+    backOffGenerator = new FuzzingBackOffGenerator(1 * 1000, 30 * 60 * 1000, 0.5);
     this.url = url;
-    this.options = options;
     pingInterval =
         options != null && options.has(PING_INTERVAL) ? (int) options.getNumber(PING_INTERVAL)
             : 5 * 1000;
@@ -55,32 +57,49 @@ public class WebSocketBusClient extends SimpleBus {
       public void onClose(JsonObject reason) {
         state = State.CLOSED;
         assert pingTimerID > 0 : "pingTimerID should > 0";
-        Platform.cancelTimer(pingTimerID);
-        doDeliverMessage(new DefaultMessage<JsonObject>(false, null, LOCAL_ON_CLOSE, null, reason));
+        Platform.scheduler().cancelTimer(pingTimerID);
+        doReceiveMessage(new DefaultMessage<JsonObject>(false, null, LOCAL_ON_CLOSE, null, reason));
+        if (hook != null) {
+          hook.handlePostClose();
+        }
         if (reconnect) {
-          reconnect();
+          Platform.scheduler().scheduleDelay(backOffGenerator.next().targetDelay,
+              new Handler<Void>() {
+                @Override
+                public void handle(Void event) {
+                  if (reconnect) {
+                    reconnect();
+                  }
+                }
+              });
         }
       }
 
       @Override
       public void onError(String error) {
         reconnect = false;
-        doDeliverMessage(new DefaultMessage<JsonObject>(false, null, LOCAL_ON_ERROR, null, Json
+        doReceiveMessage(new DefaultMessage<JsonObject>(false, null, LOCAL_ON_ERROR, null, Json
             .createObject().set("message", error)));
       }
 
       @Override
       public void onMessage(String msg) {
-        WebSocketBusClient.this.onMessage(Json.<JsonObject> parse(msg));
+        JsonObject json = Json.<JsonObject> parse(msg);
+        @SuppressWarnings({"unchecked"})
+        DefaultMessage message =
+            new DefaultMessage(false, WebSocketBusClient.this, json.getString(ADDRESS), json
+                .getString(REPLY_ADDRESS), json.get(BODY));
+        internalHandleReceiveMessage(message);
       }
 
       @Override
       public void onOpen() {
-        // Send the first ping then send a ping every 5 seconds
         state = State.OPEN;
         reconnect = true;
+        backOffGenerator.reset();
+        // Send the first ping then send a ping every 5 seconds
         sendPing();
-        pingTimerID = Platform.setPeriodic(pingInterval, new Handler<Void>() {
+        pingTimerID = Platform.scheduler().schedulePeriodic(pingInterval, new Handler<Void>() {
           @Override
           public void handle(Void ignore) {
             sendPing();
@@ -94,24 +113,14 @@ public class WebSocketBusClient extends SimpleBus {
             sendRegister(address);
           }
         }
-        doDeliverMessage(new DefaultMessage<Void>(false, null, LOCAL_ON_OPEN, null, null));
+        if (hook != null) {
+          hook.handleOpened();
+        }
+        doReceiveMessage(new DefaultMessage<Void>(false, null, LOCAL_ON_OPEN, null, null));
       }
     };
 
     reconnect();
-  }
-
-  @Override
-  public void close() {
-    state = State.CLOSING;
-    reconnect = false;
-    webSocket.close();
-    registerHandler(LOCAL_ON_CLOSE, new Handler<Message>() {
-      @Override
-      public void handle(Message event) {
-        clearHandlers();
-      }
-    });
   }
 
   public void login(String username, String password, final Handler<JsonObject> replyHandler) {
@@ -140,7 +149,7 @@ public class WebSocketBusClient extends SimpleBus {
     }
 
     state = State.CONNECTING;
-    webSocket = Platform.net().createWebSocket(url, options);
+    webSocket = Platform.net().createWebSocket(url, getOptions());
     webSocket.setListen(webSocketHandler);
   }
 
@@ -149,6 +158,19 @@ public class WebSocketBusClient extends SimpleBus {
   public HandlerRegistration registerHandler(final String address,
       final Handler<? extends Message> handler) {
     return super.registerHandler(address, handler);
+  }
+
+  @Override
+  protected void doClose() {
+    state = State.CLOSING;
+    reconnect = false;
+    webSocket.close();
+    registerHandler(LOCAL_ON_CLOSE, new Handler<Message>() {
+      @Override
+      public void handle(Message event) {
+        clearHandlers();
+      }
+    });
   }
 
   @Override
@@ -191,14 +213,6 @@ public class WebSocketBusClient extends SimpleBus {
       sendUnregister(address);
     }
     return last;
-  }
-
-  protected void onMessage(JsonObject msg) {
-    @SuppressWarnings({"unchecked"})
-    DefaultMessage message =
-        new DefaultMessage(false, this, msg.getString(ADDRESS), msg.getString(REPLY_ADDRESS), msg
-            .get(BODY));
-    internalHandleDeliverMessage(message);
   }
 
   protected void send(String msg) {

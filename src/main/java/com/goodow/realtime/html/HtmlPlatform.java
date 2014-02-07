@@ -13,17 +13,11 @@
  */
 package com.goodow.realtime.html;
 
-import com.goodow.realtime.core.Handler;
 import com.goodow.realtime.core.Net;
 import com.goodow.realtime.core.Platform;
 import com.goodow.realtime.core.Platform.Type;
 import com.goodow.realtime.core.PlatformFactory;
-import com.goodow.realtime.json.Json;
-import com.goodow.realtime.json.JsonObject;
-
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.RepeatingCommand;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.goodow.realtime.core.Scheduler;
 
 class HtmlPlatform implements PlatformFactory {
   /**
@@ -33,37 +27,8 @@ class HtmlPlatform implements PlatformFactory {
     Platform.setFactory(new HtmlPlatform());
   }
 
-  // @formatter:off 
-  private static native <T> void nativeHandle(Object handler, T event) /*-{
-    handler(@org.timepedia.exporter.client.ExporterUtil::wrap(Ljava/lang/Object;)(event));
-  }-*/;
-  // @formatter:on
-
-  private int timerId = 1;
-  private final JsonObject timers = Json.createObject();
   private final HtmlNet net = new HtmlNet();
-
-  protected HtmlPlatform() {
-  }
-
-  @Override
-  public boolean cancelTimer(int id) {
-    if (timers.has("" + id)) {
-      timers.remove("" + id);
-      return true;
-    }
-    return false;
-  }
-
-  @SuppressWarnings("unchecked")
-  @Override
-  public void handle(Object handler, Object event) {
-    if (handler instanceof Handler) {
-      ((Handler<Object>) handler).handle(event);
-    } else {
-      nativeHandle(handler, event);
-    }
-  }
+  private final HtmlScheduler scheduler = new HtmlScheduler();
 
   @Override
   public Net net() {
@@ -71,31 +36,8 @@ class HtmlPlatform implements PlatformFactory {
   }
 
   @Override
-  public void scheduleDeferred(final Handler<Void> handler) {
-    Scheduler.get().scheduleDeferred(new ScheduledCommand() {
-      @Override
-      public void execute() {
-        handler.handle(null);
-      }
-    });
-  }
-
-  @Override
-  public int setPeriodic(int delayMs, final Handler<Void> handler) {
-    final int id = timerId++;
-    RepeatingCommand cmd = new RepeatingCommand() {
-      @Override
-      public boolean execute() {
-        if (timers.has("" + id)) {
-          handler.handle(null);
-          return true;
-        }
-        return false;
-      }
-    };
-    timers.set("" + id, cmd);
-    Scheduler.get().scheduleFixedPeriod(cmd, delayMs);
-    return id;
+  public Scheduler scheduler() {
+    return scheduler;
   }
 
   @Override
