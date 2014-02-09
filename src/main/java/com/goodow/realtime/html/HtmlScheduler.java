@@ -28,7 +28,7 @@ class HtmlScheduler implements Scheduler {
   }-*/;
   // @formatter:on
 
-  private int timerId = 1;
+  private int timerId = 0;
   private final JsonObject timers = Json.createObject();
 
   @Override

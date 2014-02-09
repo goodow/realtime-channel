@@ -20,6 +20,7 @@ import com.goodow.realtime.channel.Message;
 import com.goodow.realtime.channel.State;
 import com.goodow.realtime.core.Handler;
 import com.goodow.realtime.core.HandlerRegistration;
+import com.goodow.realtime.core.Platform;
 import com.goodow.realtime.json.Json;
 import com.goodow.realtime.json.JsonObject;
 
@@ -32,18 +33,31 @@ import java.util.logging.Logger;
  */
 public class ReliabeBusClient implements Bus {
   public static final String SEQUENCE_NUMBER = "_seq";
+  public static final String ACKNOWLEDGE_DELAY_MILLIS = "acknowledgeDelayMillis";
   private static final Logger log = Logger.getLogger(ReliabeBusClient.class.getName());
+  /**
+   * Delay acknowledgment in case we receive operations in the meantime.
+   */
+  private final int acknowledgeDelayMillis;
+  private final SimpleBus delegate;
+  private BusHook hook;
   private final JsonObject pendings;
   private final JsonObject currentSequences;
   private final JsonObject knownHeadSequences;
-  private final SimpleBus delegate;
-  private BusHook hook;
+  private final JsonObject acknowledgeScheduled;
+  private final JsonObject acknowledgeNumbers;
 
   public ReliabeBusClient(SimpleBus delegate) {
     this.delegate = delegate;
+    JsonObject options = delegate.getOptions();
+    acknowledgeDelayMillis =
+        (options == null || !options.has(ACKNOWLEDGE_DELAY_MILLIS)) ? 3 * 1000 : (int) options
+            .getNumber(ACKNOWLEDGE_DELAY_MILLIS);
     pendings = Json.createObject();
     currentSequences = Json.createObject();
     knownHeadSequences = Json.createObject();
+    acknowledgeScheduled = Json.createObject();
+    acknowledgeNumbers = Json.createObject();
 
     delegate.setHook(new BusHookProxy() {
       @SuppressWarnings("rawtypes")
@@ -66,6 +80,8 @@ public class ReliabeBusClient implements Bus {
         pendings.remove(address);
         currentSequences.remove(address);
         knownHeadSequences.remove(address);
+        acknowledgeScheduled.remove(address);
+        acknowledgeNumbers.remove(address);
         return super.handleUnregister(address);
       }
 
@@ -78,6 +94,12 @@ public class ReliabeBusClient implements Bus {
 
   @Override
   public void close() {
+    pendings.clear();
+    currentSequences.clear();
+    knownHeadSequences.clear();
+    acknowledgeScheduled.clear();
+    acknowledgeNumbers.clear();
+
     delegate.close();
   }
 
@@ -108,6 +130,15 @@ public class ReliabeBusClient implements Bus {
     return this;
   }
 
+  public void synchronizeSequenceNumber(String address, double initialSequenceNumber) {
+    currentSequences.set(address, initialSequenceNumber);
+    knownHeadSequences.set(address, !knownHeadSequences.has(address) ? initialSequenceNumber : Math
+        .max(initialSequenceNumber, knownHeadSequences.getNumber(address)));
+    // Send the first acknowledgment immediately, to quickly catch up any initial missing messages,
+    // which might happen if the address is currently active.
+    delegate.send(address + ".ack", initialSequenceNumber + 1, null);
+  }
+
   protected boolean onReceiveMessage(Message<?> message) {
     String address = message.address();
     Object body = message.body();
@@ -115,8 +146,7 @@ public class ReliabeBusClient implements Bus {
       return true;
     }
     double sequence = ((JsonObject) body).getNumber(SEQUENCE_NUMBER);
-    boolean isExist = pendings.has(address);
-    if (!isExist) {
+    if (!currentSequences.has(address)) {
       currentSequences.set(address, sequence);
       knownHeadSequences.set(address, sequence);
       return true;
@@ -124,8 +154,8 @@ public class ReliabeBusClient implements Bus {
 
     double currentSequence = currentSequences.getNumber(address);
     if (sequence <= currentSequence) {
-      log.log(Level.CONFIG, "Old dup at sequence " + sequence + ", current is now ",
-          currentSequence);
+      log.log(Level.CONFIG, "Old dup at sequence " + sequence + ", current is now "
+          + currentSequence);
       return false;
     }
     JsonObject pending = pendings.getObject(address);
@@ -137,14 +167,13 @@ public class ReliabeBusClient implements Bus {
       return false;
     }
 
-    double knownHeadSequence = Math.max(knownHeadSequences.getNumber(address), sequence);
-    knownHeadSequences.set(address, knownHeadSequence);
+    knownHeadSequences.set(address, Math.max(knownHeadSequences.getNumber(address), sequence));
 
     if (sequence > currentSequence + 1) {
       pending.set("" + sequence, message);
       log.log(Level.CONFIG, "Missed message, current sequence=" + currentSequence
-          + " message sequence=" + sequence);
-      scheduleCatchup(address, currentSequence + 1);
+          + " incoming sequence=" + sequence);
+      scheduleAcknowledgment(address);
       return false;
     }
 
@@ -165,8 +194,32 @@ public class ReliabeBusClient implements Bus {
     return false;
   }
 
-  private void scheduleCatchup(String address, double d) {
-    // TODO Auto-generated method stub
-
+  /**
+   * Acknowledgment Number is the next sequence number that the receiver is expecting
+   */
+  private void scheduleAcknowledgment(final String address) {
+    if (!acknowledgeScheduled.has(address)) {
+      acknowledgeScheduled.set(address, true);
+      Platform.scheduler().scheduleDelay(acknowledgeDelayMillis, new Handler<Void>() {
+        @Override
+        public void handle(Void event) {
+          if (acknowledgeScheduled.has(address)) {
+            acknowledgeScheduled.remove(address);
+            // Check we're still out of date, and not already catching up.
+            double knownHeadSequence = knownHeadSequences.getNumber(address);
+            double currentSequence = currentSequences.getNumber(address);
+            if (knownHeadSequence > currentSequence
+                && (!acknowledgeNumbers.has(address) || knownHeadSequence > acknowledgeNumbers
+                    .getNumber(address))) {
+              acknowledgeNumbers.set(address, knownHeadSequence);
+              log.log(Level.CONFIG, "Catching up to " + knownHeadSequence);
+              delegate.send(address + ".ack", currentSequence + 1, null);
+            } else {
+              log.log(Level.FINE, "No need to catchup");
+            }
+          }
+        }
+      });
+    }
   }
 }

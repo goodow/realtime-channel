@@ -40,7 +40,7 @@ public class WebSocketBusClient extends SimpleBus {
   private final WebSocket.WebSocketHandler webSocketHandler;
   private WebSocket webSocket;
   private String sessionID;
-  private int pingTimerID = 0;
+  private int pingTimerID = -1;
   private boolean reconnect = true;
 
   public WebSocketBusClient(String url, JsonObject options) {
@@ -56,7 +56,6 @@ public class WebSocketBusClient extends SimpleBus {
       @Override
       public void onClose(JsonObject reason) {
         state = State.CLOSED;
-        assert pingTimerID > 0 : "pingTimerID should > 0";
         Platform.scheduler().cancelTimer(pingTimerID);
         doReceiveMessage(new DefaultMessage<JsonObject>(false, null, LOCAL_ON_CLOSE, null, reason));
         if (hook != null) {
@@ -77,7 +76,6 @@ public class WebSocketBusClient extends SimpleBus {
 
       @Override
       public void onError(String error) {
-        reconnect = false;
         doReceiveMessage(new DefaultMessage<JsonObject>(false, null, LOCAL_ON_ERROR, null, Json
             .createObject().set("message", error)));
       }

@@ -67,6 +67,9 @@ public class FuzzingBackOffGenerator {
   public BackOffParameters next() {
     int ret = Math.min(nextBackOffTime, maxBackOff);
     nextBackOffTime += backOffTime;
+    if (nextBackOffTime <= 0) {
+      nextBackOffTime = Integer.MAX_VALUE;
+    }
     backOffTime = ret;
 
     int randomizeTime = (int) (backOffTime * (1.0 + (Math.random() * randomizationFactor)));

@@ -44,7 +44,7 @@ class ObjCScheduler implements Scheduler {
   ]-*/;
   // @formatter:on
 
-  private final AtomicInteger timerId = new AtomicInteger(1);
+  private final AtomicInteger timerId = new AtomicInteger(0);
   private final JsonObject timers = Json.createObject();
 
   @Override

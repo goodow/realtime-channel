@@ -42,21 +42,6 @@ public interface WebSocket {
     void onOpen();
   }
 
-  WebSocket EMPTY = new WebSocket() {
-
-    @Override
-    public void close() {
-    }
-
-    @Override
-    public void send(String data) {
-    }
-
-    @Override
-    public void setListen(WebSocketHandler handler) {
-    }
-  };
-
   /**
    * Close the socket. The socket cannot be used again after calling close; the server must create a
    * new socket.
