@@ -9,19 +9,14 @@
 #define _ComGoodowRealtimeCorePlatformFactory_H_
 
 @class ComGoodowRealtimeCorePlatform_TypeEnum;
-@protocol ComGoodowRealtimeCoreHandler;
 @protocol ComGoodowRealtimeCoreNet;
+@protocol ComGoodowRealtimeCoreScheduler;
 
 #import "JreEmulation.h"
 
 @protocol ComGoodowRealtimeCorePlatformFactory < NSObject, JavaObject >
-- (BOOL)cancelTimerWithInt:(int)id_;
-- (void)handleWithId:(id)handler
-              withId:(id)event;
 - (id<ComGoodowRealtimeCoreNet>)net;
-- (void)scheduleDeferredWithComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)handler;
-- (int)setPeriodicWithInt:(int)delayMs
-withComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)handler;
+- (id<ComGoodowRealtimeCoreScheduler>)scheduler;
 - (ComGoodowRealtimeCorePlatform_TypeEnum *)type;
 @end
 

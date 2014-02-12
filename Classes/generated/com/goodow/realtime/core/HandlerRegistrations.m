@@ -22,9 +22,7 @@
 
 - (void)unregisterHandler {
   if (registrations_ != nil) {
-    for (int i = 0, len = [registrations_ count]; i < len; i++) {
-      [((id<ComGoodowRealtimeCoreHandlerRegistration>) nil_chk([registrations_ getWithInt:i])) unregisterHandler];
-    }
+    [registrations_ forEach:[[ComGoodowRealtimeCoreHandlerRegistrations_$1 alloc] init]];
     (void) [registrations_ clear];
     registrations_ = nil;
   }
@@ -32,7 +30,7 @@
 
 - (id<ComGoodowRealtimeCoreHandlerRegistration>)wrapWithComGoodowRealtimeCoreHandlerRegistration:(id<ComGoodowRealtimeCoreHandlerRegistration>)registration {
   [self addWithComGoodowRealtimeCoreHandlerRegistration:registration];
-  return [[ComGoodowRealtimeCoreHandlerRegistrations_$1 alloc] initWithComGoodowRealtimeCoreHandlerRegistrations:self withComGoodowRealtimeCoreHandlerRegistration:registration];
+  return [[ComGoodowRealtimeCoreHandlerRegistrations_$2 alloc] initWithComGoodowRealtimeCoreHandlerRegistrations:self withComGoodowRealtimeCoreHandlerRegistration:registration];
 }
 
 - (id)init {
@@ -61,8 +59,29 @@
 @end
 @implementation ComGoodowRealtimeCoreHandlerRegistrations_$1
 
+- (void)callWithInt:(int)index
+             withId:(id<ComGoodowRealtimeCoreHandlerRegistration>)value {
+  [((id<ComGoodowRealtimeCoreHandlerRegistration>) nil_chk(value)) unregisterHandler];
+}
+
+- (id)init {
+  return [super init];
+}
+
++ (J2ObjcClassInfo *)__metadata {
+  static J2ObjcMethodInfo methods[] = {
+    { "callWithInt:withComGoodowRealtimeCoreHandlerRegistration:", "call", "V", 0x1, NULL },
+    { "init", NULL, NULL, 0x0, NULL },
+  };
+  static J2ObjcClassInfo _ComGoodowRealtimeCoreHandlerRegistrations_$1 = { "$1", "com.goodow.realtime.core", "HandlerRegistrations", 0x8000, 2, methods, 0, NULL, 0, NULL};
+  return &_ComGoodowRealtimeCoreHandlerRegistrations_$1;
+}
+
+@end
+@implementation ComGoodowRealtimeCoreHandlerRegistrations_$2
+
 - (void)unregisterHandler {
-  int idx = [((id<GDJsonArray>) nil_chk(this$0_->registrations_)) indexOfObject:val$registration_];
+  int idx = [((id<GDJsonArray>) nil_chk(this$0_->registrations_)) indexOf:val$registration_];
   if (idx != -1) {
     (void) [this$0_->registrations_ remove:idx];
   }
@@ -85,8 +104,8 @@
     { "this$0_", NULL, 0x1012, "Lcom.goodow.realtime.core.HandlerRegistrations;" },
     { "val$registration_", NULL, 0x1012, "Lcom.goodow.realtime.core.HandlerRegistration;" },
   };
-  static J2ObjcClassInfo _ComGoodowRealtimeCoreHandlerRegistrations_$1 = { "$1", "com.goodow.realtime.core", "HandlerRegistrations", 0x8000, 2, methods, 2, fields, 0, NULL};
-  return &_ComGoodowRealtimeCoreHandlerRegistrations_$1;
+  static J2ObjcClassInfo _ComGoodowRealtimeCoreHandlerRegistrations_$2 = { "$2", "com.goodow.realtime.core", "HandlerRegistrations", 0x8000, 2, methods, 2, fields, 0, NULL};
+  return &_ComGoodowRealtimeCoreHandlerRegistrations_$2;
 }
 
 @end

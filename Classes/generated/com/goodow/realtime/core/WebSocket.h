@@ -8,16 +8,10 @@
 #ifndef _ComGoodowRealtimeCoreWebSocket_H_
 #define _ComGoodowRealtimeCoreWebSocket_H_
 
+@protocol ComGoodowRealtimeCoreWebSocket_WebSocketHandler;
 @protocol GDJsonObject;
 
 #import "JreEmulation.h"
-
-@protocol ComGoodowRealtimeCoreWebSocket_WebSocketHandler < NSObject, JavaObject >
-- (void)onCloseWithGDJsonObject:(id<GDJsonObject>)reason;
-- (void)onErrorWithNSString:(NSString *)error;
-- (void)onMessageWithNSString:(NSString *)message;
-- (void)onOpen;
-@end
 
 @protocol ComGoodowRealtimeCoreWebSocket < NSObject, JavaObject >
 - (void)close;
@@ -25,18 +19,11 @@
 - (void)setListenWithComGoodowRealtimeCoreWebSocket_WebSocketHandler:(id<ComGoodowRealtimeCoreWebSocket_WebSocketHandler>)handler;
 @end
 
-@interface ComGoodowRealtimeCoreWebSocket : NSObject {
-}
-+ (id<ComGoodowRealtimeCoreWebSocket>)EMPTY;
-@end
-
-@interface ComGoodowRealtimeCoreWebSocket_$1 : NSObject < ComGoodowRealtimeCoreWebSocket > {
-}
-
-- (void)close;
-- (void)sendWithNSString:(NSString *)data;
-- (void)setListenWithComGoodowRealtimeCoreWebSocket_WebSocketHandler:(id<ComGoodowRealtimeCoreWebSocket_WebSocketHandler>)handler;
-- (id)init;
+@protocol ComGoodowRealtimeCoreWebSocket_WebSocketHandler < NSObject, JavaObject >
+- (void)onCloseWithGDJsonObject:(id<GDJsonObject>)reason;
+- (void)onErrorWithNSString:(NSString *)error;
+- (void)onMessageWithNSString:(NSString *)message;
+- (void)onOpen;
 @end
 
 #endif // _ComGoodowRealtimeCoreWebSocket_H_

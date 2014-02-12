@@ -6,10 +6,10 @@
 //
 
 #include "IOSClass.h"
-#include "com/goodow/realtime/core/Handler.h"
 #include "com/goodow/realtime/core/Net.h"
 #include "com/goodow/realtime/core/Platform.h"
 #include "com/goodow/realtime/core/PlatformFactory.h"
+#include "com/goodow/realtime/core/Scheduler.h"
 #include "java/lang/IllegalArgumentException.h"
 
 @implementation ComGoodowRealtimeCorePlatform
@@ -24,30 +24,16 @@ static id<ComGoodowRealtimeCorePlatformFactory> ComGoodowRealtimeCorePlatform_FA
   ComGoodowRealtimeCorePlatform_FACTORY_ = FACTORY;
 }
 
-+ (BOOL)cancelTimerWithInt:(int)id_ {
-  return [((id<ComGoodowRealtimeCorePlatformFactory>) nil_chk([ComGoodowRealtimeCorePlatform get])) cancelTimerWithInt:id_];
-}
-
-+ (void)handleWithId:(id)handler
-              withId:(id)event {
-  [((id<ComGoodowRealtimeCorePlatformFactory>) nil_chk([ComGoodowRealtimeCorePlatform get])) handleWithId:handler withId:event];
-}
-
 + (id<ComGoodowRealtimeCoreNet>)net {
   return [((id<ComGoodowRealtimeCorePlatformFactory>) nil_chk([ComGoodowRealtimeCorePlatform get])) net];
 }
 
-+ (void)scheduleDeferredWithComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)handler {
-  [((id<ComGoodowRealtimeCorePlatformFactory>) nil_chk([ComGoodowRealtimeCorePlatform get])) scheduleDeferredWithComGoodowRealtimeCoreHandler:handler];
++ (id<ComGoodowRealtimeCoreScheduler>)scheduler {
+  return [((id<ComGoodowRealtimeCorePlatformFactory>) nil_chk([ComGoodowRealtimeCorePlatform get])) scheduler];
 }
 
 + (void)setFactoryWithComGoodowRealtimeCorePlatformFactory:(id<ComGoodowRealtimeCorePlatformFactory>)factory {
   ComGoodowRealtimeCorePlatform_FACTORY_ = factory;
-}
-
-+ (int)setPeriodicWithInt:(int)delayMs
-withComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)handler {
-  return [((id<ComGoodowRealtimeCorePlatformFactory>) nil_chk([ComGoodowRealtimeCorePlatform get])) setPeriodicWithInt:delayMs withComGoodowRealtimeCoreHandler:handler];
 }
 
 + (ComGoodowRealtimeCorePlatform_TypeEnum *)type {
@@ -65,12 +51,9 @@ withComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)handler {
 
 + (J2ObjcClassInfo *)__metadata {
   static J2ObjcMethodInfo methods[] = {
-    { "cancelTimerWithInt:", "cancelTimer", "Z", 0x9, NULL },
-    { "handleWithId:withId:", "handle", "V", 0x9, NULL },
     { "net", NULL, "Lcom.goodow.realtime.core.Net;", 0x9, NULL },
-    { "scheduleDeferredWithComGoodowRealtimeCoreHandler:", "scheduleDeferred", "V", 0x9, NULL },
+    { "scheduler", NULL, "Lcom.goodow.realtime.core.Scheduler;", 0x9, NULL },
     { "setFactoryWithComGoodowRealtimeCorePlatformFactory:", "setFactory", "V", 0x9, NULL },
-    { "setPeriodicWithInt:withComGoodowRealtimeCoreHandler:", "setPeriodic", "I", 0x9, NULL },
     { "type", NULL, "Lcom.goodow.realtime.core.Platform$Type;", 0x9, NULL },
     { "get", NULL, "Lcom.goodow.realtime.core.PlatformFactory;", 0xa, NULL },
     { "init", "Platform", NULL, 0x4, NULL },
@@ -78,7 +61,7 @@ withComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)handler {
   static J2ObjcFieldInfo fields[] = {
     { "FACTORY_", NULL, 0xa, "Lcom.goodow.realtime.core.PlatformFactory;" },
   };
-  static J2ObjcClassInfo _ComGoodowRealtimeCorePlatform = { "Platform", "com.goodow.realtime.core", NULL, 0x1, 9, methods, 1, fields, 0, NULL};
+  static J2ObjcClassInfo _ComGoodowRealtimeCorePlatform = { "Platform", "com.goodow.realtime.core", NULL, 0x1, 6, methods, 1, fields, 0, NULL};
   return &_ComGoodowRealtimeCorePlatform;
 }
 

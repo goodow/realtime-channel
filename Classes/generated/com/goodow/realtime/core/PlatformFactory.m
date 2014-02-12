@@ -5,10 +5,10 @@
 //  Created by retechretech.
 //
 
-#include "com/goodow/realtime/core/Handler.h"
 #include "com/goodow/realtime/core/Net.h"
 #include "com/goodow/realtime/core/Platform.h"
 #include "com/goodow/realtime/core/PlatformFactory.h"
+#include "com/goodow/realtime/core/Scheduler.h"
 
 
 @interface ComGoodowRealtimeCorePlatformFactory : NSObject
@@ -18,14 +18,11 @@
 
 + (J2ObjcClassInfo *)__metadata {
   static J2ObjcMethodInfo methods[] = {
-    { "cancelTimerWithInt:", "cancelTimer", "Z", 0x401, NULL },
-    { "handleWithId:withId:", "handle", "V", 0x401, NULL },
     { "net", NULL, "Lcom.goodow.realtime.core.Net;", 0x401, NULL },
-    { "scheduleDeferredWithComGoodowRealtimeCoreHandler:", "scheduleDeferred", "V", 0x401, NULL },
-    { "setPeriodicWithInt:withComGoodowRealtimeCoreHandler:", "setPeriodic", "I", 0x401, NULL },
+    { "scheduler", NULL, "Lcom.goodow.realtime.core.Scheduler;", 0x401, NULL },
     { "type", NULL, "Lcom.goodow.realtime.core.Platform$Type;", 0x401, NULL },
   };
-  static J2ObjcClassInfo _ComGoodowRealtimeCorePlatformFactory = { "PlatformFactory", "com.goodow.realtime.core", NULL, 0x201, 6, methods, 0, NULL, 0, NULL};
+  static J2ObjcClassInfo _ComGoodowRealtimeCorePlatformFactory = { "PlatformFactory", "com.goodow.realtime.core", NULL, 0x201, 3, methods, 0, NULL, 0, NULL};
   return &_ComGoodowRealtimeCorePlatformFactory;
 }
 

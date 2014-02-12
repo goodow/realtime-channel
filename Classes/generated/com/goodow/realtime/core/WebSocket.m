@@ -9,6 +9,23 @@
 #include "com/goodow/realtime/json/JsonObject.h"
 
 
+@interface ComGoodowRealtimeCoreWebSocket : NSObject
+@end
+
+@implementation ComGoodowRealtimeCoreWebSocket
+
++ (J2ObjcClassInfo *)__metadata {
+  static J2ObjcMethodInfo methods[] = {
+    { "close", NULL, "V", 0x401, NULL },
+    { "sendWithNSString:", "send", "V", 0x401, NULL },
+    { "setListenWithComGoodowRealtimeCoreWebSocket_WebSocketHandler:", "setListen", "V", 0x401, NULL },
+  };
+  static J2ObjcClassInfo _ComGoodowRealtimeCoreWebSocket = { "WebSocket", "com.goodow.realtime.core", NULL, 0x201, 3, methods, 0, NULL, 0, NULL};
+  return &_ComGoodowRealtimeCoreWebSocket;
+}
+
+@end
+
 @interface ComGoodowRealtimeCoreWebSocket_WebSocketHandler : NSObject
 @end
 
@@ -23,60 +40,6 @@
   };
   static J2ObjcClassInfo _ComGoodowRealtimeCoreWebSocket_WebSocketHandler = { "WebSocketHandler", "com.goodow.realtime.core", "WebSocket", 0x209, 4, methods, 0, NULL, 0, NULL};
   return &_ComGoodowRealtimeCoreWebSocket_WebSocketHandler;
-}
-
-@end
-
-@implementation ComGoodowRealtimeCoreWebSocket
-
-static id<ComGoodowRealtimeCoreWebSocket> ComGoodowRealtimeCoreWebSocket_EMPTY_;
-
-+ (id<ComGoodowRealtimeCoreWebSocket>)EMPTY {
-  return ComGoodowRealtimeCoreWebSocket_EMPTY_;
-}
-
-+ (void)initialize {
-  ComGoodowRealtimeCoreWebSocket_EMPTY_ = [[ComGoodowRealtimeCoreWebSocket_$1 alloc] init];
-}
-
-+ (J2ObjcClassInfo *)__metadata {
-  static J2ObjcMethodInfo methods[] = {
-    { "close", NULL, "V", 0x401, NULL },
-    { "sendWithNSString:", "send", "V", 0x401, NULL },
-    { "setListenWithComGoodowRealtimeCoreWebSocket_WebSocketHandler:", "setListen", "V", 0x401, NULL },
-  };
-  static J2ObjcFieldInfo fields[] = {
-    { "EMPTY_", NULL, 0x19, "Lcom.goodow.realtime.core.WebSocket;" },
-  };
-  static J2ObjcClassInfo _ComGoodowRealtimeCoreWebSocket = { "WebSocket", "com.goodow.realtime.core", NULL, 0x201, 3, methods, 1, fields, 0, NULL};
-  return &_ComGoodowRealtimeCoreWebSocket;
-}
-
-@end
-@implementation ComGoodowRealtimeCoreWebSocket_$1
-
-- (void)close {
-}
-
-- (void)sendWithNSString:(NSString *)data {
-}
-
-- (void)setListenWithComGoodowRealtimeCoreWebSocket_WebSocketHandler:(id<ComGoodowRealtimeCoreWebSocket_WebSocketHandler>)handler {
-}
-
-- (id)init {
-  return [super init];
-}
-
-+ (J2ObjcClassInfo *)__metadata {
-  static J2ObjcMethodInfo methods[] = {
-    { "close", NULL, "V", 0x1, NULL },
-    { "sendWithNSString:", "send", "V", 0x1, NULL },
-    { "setListenWithComGoodowRealtimeCoreWebSocket_WebSocketHandler:", "setListen", "V", 0x1, NULL },
-    { "init", NULL, NULL, 0x0, NULL },
-  };
-  static J2ObjcClassInfo _ComGoodowRealtimeCoreWebSocket_$1 = { "$1", "com.goodow.realtime.core", "WebSocket", 0x8000, 4, methods, 0, NULL, 0, NULL};
-  return &_ComGoodowRealtimeCoreWebSocket_$1;
 }
 
 @end

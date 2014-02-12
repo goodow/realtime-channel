@@ -89,7 +89,7 @@ withComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)replyHandler 
     { "replyAddress__", "replyAddress", 0x4, "Ljava.lang.String;" },
     { "send_", NULL, 0x4, "Z" },
   };
-  static J2ObjcClassInfo _GDCDefaultMessage = { "DefaultMessage", "com.goodow.realtime.channel.impl", NULL, 0x1, 9, methods, 5, fields, 0, NULL};
+  static J2ObjcClassInfo _GDCDefaultMessage = { "DefaultMessage", "com.goodow.realtime.channel.impl", NULL, 0x0, 9, methods, 5, fields, 0, NULL};
   return &_GDCDefaultMessage;
 }
 

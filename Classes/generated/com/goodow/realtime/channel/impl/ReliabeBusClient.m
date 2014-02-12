@@ -6,108 +6,97 @@
 //
 
 #include "IOSClass.h"
-#include "com/goodow/realtime/channel/Bus.h"
 #include "com/goodow/realtime/channel/BusHook.h"
 #include "com/goodow/realtime/channel/Message.h"
-#include "com/goodow/realtime/channel/State.h"
 #include "com/goodow/realtime/channel/impl/ReliabeBusClient.h"
 #include "com/goodow/realtime/channel/impl/SimpleBus.h"
 #include "com/goodow/realtime/core/Handler.h"
-#include "com/goodow/realtime/core/HandlerRegistration.h"
+#include "com/goodow/realtime/core/Platform.h"
+#include "com/goodow/realtime/core/Scheduler.h"
 #include "com/goodow/realtime/json/Json.h"
 #include "com/goodow/realtime/json/JsonObject.h"
 #include "java/lang/Double.h"
 #include "java/lang/Math.h"
+#include "java/lang/Void.h"
 #include "java/util/logging/Level.h"
 #include "java/util/logging/Logger.h"
 
 @implementation GDCReliabeBusClient
 
+static NSString * GDCReliabeBusClient_SEQUENCE_NUMBER_ = @"_seq";
+static NSString * GDCReliabeBusClient_ACKNOWLEDGE_DELAY_MILLIS_ = @"acknowledgeDelayMillis";
 static JavaUtilLoggingLogger * GDCReliabeBusClient_log_;
+
++ (NSString *)SEQUENCE_NUMBER {
+  return GDCReliabeBusClient_SEQUENCE_NUMBER_;
+}
+
++ (NSString *)ACKNOWLEDGE_DELAY_MILLIS {
+  return GDCReliabeBusClient_ACKNOWLEDGE_DELAY_MILLIS_;
+}
 
 + (JavaUtilLoggingLogger *)log {
   return GDCReliabeBusClient_log_;
 }
 
-- (id)initWithGDCSimpleBus:(GDCSimpleBus *)wrapped {
-  if (self = [super init]) {
-    self->wrapped_ = wrapped;
+- (id)initWithGDCSimpleBus:(GDCSimpleBus *)delegate {
+  if (self = [super initWithGDCSimpleBus:delegate]) {
+    id<GDJsonObject> options = [((GDCSimpleBus *) nil_chk(delegate)) getOptions];
+    acknowledgeDelayMillis_ = (options == nil || ![options has:GDCReliabeBusClient_ACKNOWLEDGE_DELAY_MILLIS_]) ? 3 * 1000 : (int) [options getNumber:GDCReliabeBusClient_ACKNOWLEDGE_DELAY_MILLIS_];
     pendings_ = [GDJson createObject];
-    currentRevisions_ = [GDJson createObject];
-    knownHeadRevisions_ = [GDJson createObject];
-    (void) [((GDCSimpleBus *) nil_chk(wrapped)) setHookWithGDCBusHook:[[GDCReliabeBusClient_$1 alloc] initWithGDCReliabeBusClient:self]];
+    currentSequences_ = [GDJson createObject];
+    knownHeadSequences_ = [GDJson createObject];
+    acknowledgeScheduled_ = [GDJson createObject];
+    acknowledgeNumbers_ = [GDJson createObject];
+    (void) [delegate setHookWithGDCBusHook:[[GDCReliabeBusClient_$1 alloc] initWithGDCReliabeBusClient:self]];
   }
   return self;
 }
 
-- (void)close {
-  [((GDCSimpleBus *) nil_chk(wrapped_)) close];
+- (void)synchronizeSequenceNumberWithNSString:(NSString *)address
+                                   withDouble:(double)initialSequenceNumber {
+  (void) [((id<GDJsonObject>) nil_chk(currentSequences_)) set:address number:initialSequenceNumber];
+  (void) [knownHeadSequences_ set:address number:![((id<GDJsonObject>) nil_chk(knownHeadSequences_)) has:address] ? initialSequenceNumber : [JavaLangMath maxWithDouble:initialSequenceNumber withDouble:[knownHeadSequences_ getNumber:address]]];
+  (void) [((GDCSimpleBus *) nil_chk(delegate_)) send:[NSString stringWithFormat:@"%@.ack", address] message:[JavaLangDouble valueOfWithDouble:initialSequenceNumber + 1] replyHandler:nil];
 }
 
-- (GDCStateEnum *)getReadyState {
-  return [((GDCSimpleBus *) nil_chk(wrapped_)) getReadyState];
-}
-
-- (id<GDCBus>)publishWithNSString:(NSString *)address
-                           withId:(id)msg {
-  return [((GDCSimpleBus *) nil_chk(wrapped_)) publish:address message:msg];
-}
-
-- (id<ComGoodowRealtimeCoreHandlerRegistration>)registerHandlerWithNSString:(NSString *)address
-                                           withComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)handler {
-  return [((GDCSimpleBus *) nil_chk(wrapped_)) registerHandler:address handler:handler];
-}
-
-- (id<GDCBus>)sendWithNSString:(NSString *)address
-                        withId:(id)msg
-withComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)replyHandler {
-  return [((GDCSimpleBus *) nil_chk(wrapped_)) send:address message:msg replyHandler:replyHandler];
-}
-
-- (GDCReliabeBusClient *)setHookWithGDCBusHook:(id<GDCBusHook>)hook {
-  self->hook_ = hook;
-  return self;
-}
-
-- (BOOL)onMessageWithGDCMessage:(id<GDCMessage>)message {
+- (BOOL)onReceiveMessageWithGDCMessage:(id<GDCMessage>)message {
   NSString *address = [((id<GDCMessage>) nil_chk(message)) address];
   id body = [message body];
-  if (!([body conformsToProtocol: @protocol(GDJsonObject)]) || ![((id<GDJsonObject>) check_protocol_cast(body, @protocol(GDJsonObject))) has:@"_id"]) {
+  if (!([body conformsToProtocol: @protocol(GDJsonObject)]) || ![((id<GDJsonObject>) nil_chk(((id<GDJsonObject>) check_protocol_cast(body, @protocol(GDJsonObject))))) has:GDCReliabeBusClient_SEQUENCE_NUMBER_]) {
     return YES;
   }
-  double number = [((id<GDJsonObject>) check_protocol_cast(body, @protocol(GDJsonObject))) getNumber:@"_id"];
-  BOOL isExist = [((id<GDJsonObject>) nil_chk(pendings_)) has:address];
-  if (!isExist) {
-    (void) [((id<GDJsonObject>) nil_chk(currentRevisions_)) set:address number:number];
-    (void) [((id<GDJsonObject>) nil_chk(knownHeadRevisions_)) set:address number:number];
+  double sequence = [((id<GDJsonObject>) nil_chk(((id<GDJsonObject>) check_protocol_cast(body, @protocol(GDJsonObject))))) getNumber:GDCReliabeBusClient_SEQUENCE_NUMBER_];
+  if (![((id<GDJsonObject>) nil_chk(currentSequences_)) has:address]) {
+    (void) [currentSequences_ set:address number:sequence];
+    (void) [((id<GDJsonObject>) nil_chk(knownHeadSequences_)) set:address number:sequence];
     return YES;
   }
-  double currentRevision = [((id<GDJsonObject>) nil_chk(currentRevisions_)) getNumber:address];
-  if (number <= currentRevision) {
-    [((JavaUtilLoggingLogger *) nil_chk(GDCReliabeBusClient_log_)) logWithJavaUtilLoggingLevel:[JavaUtilLoggingLevel CONFIG] withNSString:[NSString stringWithFormat:@"Old dup at revision %f, current is now ", number] withId:[JavaLangDouble valueOfWithDouble:currentRevision]];
+  double currentSequence = [currentSequences_ getNumber:address];
+  if (sequence <= currentSequence) {
+    [((JavaUtilLoggingLogger *) nil_chk(GDCReliabeBusClient_log_)) logWithJavaUtilLoggingLevel:[JavaUtilLoggingLevel CONFIG] withNSString:[NSString stringWithFormat:@"Old dup at sequence %f, current is now %f", sequence, currentSequence]];
     return NO;
   }
-  id<GDJsonObject> pending = [pendings_ getObject:address];
-  id<GDJsonObject> existing = [((id<GDJsonObject>) nil_chk(pending)) getObject:[NSString stringWithFormat:@"%f", number]];
+  id<GDJsonObject> pending = [((id<GDJsonObject>) nil_chk(pendings_)) getObject:address];
+  id<GDJsonObject> existing = [((id<GDJsonObject>) nil_chk(pending)) getObject:[NSString stringWithFormat:@"%f", sequence]];
   if (existing != nil) {
-    NSAssert(number > currentRevision + 1, @"should not have pending data");
+    NSAssert(sequence > currentSequence + 1, @"should not have pending data");
     [((JavaUtilLoggingLogger *) nil_chk(GDCReliabeBusClient_log_)) logWithJavaUtilLoggingLevel:[JavaUtilLoggingLevel CONFIG] withNSString:[NSString stringWithFormat:@"Dup message: %@", message]];
     return NO;
   }
-  double knownHeadRevision = [JavaLangMath maxWithDouble:[((id<GDJsonObject>) nil_chk(knownHeadRevisions_)) getNumber:address] withDouble:number];
-  (void) [knownHeadRevisions_ set:address number:knownHeadRevision];
-  if (number > currentRevision + 1) {
-    (void) [pending set:[NSString stringWithFormat:@"%f", number] value:message];
-    [((JavaUtilLoggingLogger *) nil_chk(GDCReliabeBusClient_log_)) logWithJavaUtilLoggingLevel:[JavaUtilLoggingLevel CONFIG] withNSString:[NSString stringWithFormat:@"Missed message, currentRevision=%f message revision=%f", currentRevision, number]];
-    [self scheduleCatchupWithNSString:address withDouble:currentRevision + 1];
+  (void) [knownHeadSequences_ set:address number:[JavaLangMath maxWithDouble:[((id<GDJsonObject>) nil_chk(knownHeadSequences_)) getNumber:address] withDouble:sequence]];
+  if (sequence > currentSequence + 1) {
+    (void) [pending set:[NSString stringWithFormat:@"%f", sequence] value:message];
+    [((JavaUtilLoggingLogger *) nil_chk(GDCReliabeBusClient_log_)) logWithJavaUtilLoggingLevel:[JavaUtilLoggingLevel CONFIG] withNSString:[NSString stringWithFormat:@"Missed message, current sequence=%f incoming sequence=%f", currentSequence, sequence]];
+    [self scheduleAcknowledgmentWithNSString:address];
     return NO;
   }
-  NSAssert(number == currentRevision + 1, @"other cases should have been caught");
+  NSAssert(sequence == currentSequence + 1, @"other cases should have been caught");
   NSString *next;
   while (YES) {
-    [((GDCSimpleBus *) nil_chk(wrapped_)) doDeliverMessageWithGDCMessage:message];
-    (void) [currentRevisions_ set:address number:++currentRevision];
-    next = [NSString stringWithFormat:@"%f", currentRevision + 1];
+    [((GDCSimpleBus *) nil_chk(delegate_)) doReceiveMessageWithGDCMessage:message];
+    (void) [currentSequences_ set:address number:++currentSequence];
+    next = [NSString stringWithFormat:@"%f", currentSequence + 1];
     message = [pending getWithNSString:next];
     if (message != nil) {
       (void) [pending remove:next];
@@ -116,12 +105,15 @@ withComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)replyHandler 
       break;
     }
   }
-  NSAssert(![pending has:next], @"/Users/retechretech/dev/workspace/realtime/realtime-channel/src/main/java/com/goodow/realtime/channel/impl/ReliabeBusClient.java:162 condition failed: assert !pending.has(next);");
+  NSAssert(![pending has:next], @"/Users/retechretech/dev/workspace/realtime/realtime-channel/src/main/java/com/goodow/realtime/channel/impl/ReliabeBusClient.java:160 condition failed: assert !pending.has(next);");
   return NO;
 }
 
-- (void)scheduleCatchupWithNSString:(NSString *)address
-                         withDouble:(double)d {
+- (void)scheduleAcknowledgmentWithNSString:(NSString *)address {
+  if (![((id<GDJsonObject>) nil_chk(acknowledgeScheduled_)) has:address]) {
+    (void) [acknowledgeScheduled_ set:address boolean:YES];
+    [((id<ComGoodowRealtimeCoreScheduler>) nil_chk([ComGoodowRealtimeCorePlatform scheduler])) scheduleDelayWithInt:acknowledgeDelayMillis_ withComGoodowRealtimeCoreHandler:[[GDCReliabeBusClient_$2 alloc] initWithGDCReliabeBusClient:self withNSString:address]];
+  }
 }
 
 + (void)initialize {
@@ -132,65 +124,71 @@ withComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)replyHandler 
 
 - (void)copyAllFieldsTo:(GDCReliabeBusClient *)other {
   [super copyAllFieldsTo:other];
-  other->currentRevisions_ = currentRevisions_;
-  other->hook_ = hook_;
-  other->knownHeadRevisions_ = knownHeadRevisions_;
+  other->acknowledgeDelayMillis_ = acknowledgeDelayMillis_;
+  other->acknowledgeNumbers_ = acknowledgeNumbers_;
+  other->acknowledgeScheduled_ = acknowledgeScheduled_;
+  other->currentSequences_ = currentSequences_;
+  other->knownHeadSequences_ = knownHeadSequences_;
   other->pendings_ = pendings_;
-  other->wrapped_ = wrapped_;
 }
 
 + (J2ObjcClassInfo *)__metadata {
   static J2ObjcMethodInfo methods[] = {
     { "initWithGDCSimpleBus:", "ReliabeBusClient", NULL, 0x1, NULL },
-    { "close", NULL, "V", 0x1, NULL },
-    { "getReadyState", NULL, "Lcom.goodow.realtime.channel.State;", 0x1, NULL },
-    { "publishWithNSString:withId:", "publish", "Lcom.goodow.realtime.channel.Bus;", 0x1, NULL },
-    { "registerHandlerWithNSString:withComGoodowRealtimeCoreHandler:", "registerHandler", "Lcom.goodow.realtime.core.HandlerRegistration;", 0x1, NULL },
-    { "sendWithNSString:withId:withComGoodowRealtimeCoreHandler:", "send", "Lcom.goodow.realtime.channel.Bus;", 0x1, NULL },
-    { "setHookWithGDCBusHook:", "setHook", "Lcom.goodow.realtime.channel.impl.ReliabeBusClient;", 0x1, NULL },
-    { "onMessageWithGDCMessage:", "onMessage", "Z", 0x4, NULL },
-    { "scheduleCatchupWithNSString:withDouble:", "scheduleCatchup", "V", 0x2, NULL },
+    { "synchronizeSequenceNumberWithNSString:withDouble:", "synchronizeSequenceNumber", "V", 0x1, NULL },
+    { "onReceiveMessageWithGDCMessage:", "onReceiveMessage", "Z", 0x4, NULL },
+    { "scheduleAcknowledgmentWithNSString:", "scheduleAcknowledgment", "V", 0x2, NULL },
   };
   static J2ObjcFieldInfo fields[] = {
+    { "SEQUENCE_NUMBER_", NULL, 0x19, "Ljava.lang.String;" },
+    { "ACKNOWLEDGE_DELAY_MILLIS_", NULL, 0x19, "Ljava.lang.String;" },
     { "log_", NULL, 0x1a, "Ljava.util.logging.Logger;" },
+    { "acknowledgeDelayMillis_", NULL, 0x12, "I" },
     { "pendings_", NULL, 0x12, "Lcom.goodow.realtime.json.JsonObject;" },
-    { "currentRevisions_", NULL, 0x12, "Lcom.goodow.realtime.json.JsonObject;" },
-    { "knownHeadRevisions_", NULL, 0x12, "Lcom.goodow.realtime.json.JsonObject;" },
-    { "wrapped_", NULL, 0x12, "Lcom.goodow.realtime.channel.impl.SimpleBus;" },
-    { "hook_", NULL, 0x2, "Lcom.goodow.realtime.channel.BusHook;" },
+    { "currentSequences_", NULL, 0x12, "Lcom.goodow.realtime.json.JsonObject;" },
+    { "knownHeadSequences_", NULL, 0x12, "Lcom.goodow.realtime.json.JsonObject;" },
+    { "acknowledgeScheduled_", NULL, 0x12, "Lcom.goodow.realtime.json.JsonObject;" },
+    { "acknowledgeNumbers_", NULL, 0x12, "Lcom.goodow.realtime.json.JsonObject;" },
   };
-  static J2ObjcClassInfo _GDCReliabeBusClient = { "ReliabeBusClient", "com.goodow.realtime.channel.impl", NULL, 0x1, 9, methods, 6, fields, 0, NULL};
+  static J2ObjcClassInfo _GDCReliabeBusClient = { "ReliabeBusClient", "com.goodow.realtime.channel.impl", NULL, 0x1, 4, methods, 9, fields, 0, NULL};
   return &_GDCReliabeBusClient;
 }
 
 @end
 @implementation GDCReliabeBusClient_$1
 
+- (void)handlePostClose {
+  (void) [((id<GDJsonObject>) nil_chk(this$0_->pendings_)) clear];
+  (void) [((id<GDJsonObject>) nil_chk(this$0_->currentSequences_)) clear];
+  (void) [((id<GDJsonObject>) nil_chk(this$0_->knownHeadSequences_)) clear];
+  (void) [((id<GDJsonObject>) nil_chk(this$0_->acknowledgeScheduled_)) clear];
+  (void) [((id<GDJsonObject>) nil_chk(this$0_->acknowledgeNumbers_)) clear];
+}
+
 - (BOOL)handlePreRegisterWithNSString:(NSString *)address
      withComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)handler {
   (void) [((id<GDJsonObject>) nil_chk(this$0_->pendings_)) set:address value:[GDJson createObject]];
-  return this$0_->hook_ == nil ? YES : [this$0_->hook_ handlePreRegisterWithNSString:address withComGoodowRealtimeCoreHandler:handler];
+  return [super handlePreRegisterWithNSString:address withComGoodowRealtimeCoreHandler:handler];
 }
 
 - (BOOL)handleReceiveMessageWithGDCMessage:(id<GDCMessage>)message {
   if (this$0_->hook_ != nil && ![this$0_->hook_ handleReceiveMessageWithGDCMessage:message]) {
     return NO;
   }
-  return [this$0_ onMessageWithGDCMessage:message];
-}
-
-- (BOOL)handleSendOrPubWithBoolean:(BOOL)send
-                      withNSString:(NSString *)address
-                            withId:(id)msg
-  withComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)replyHandler {
-  return this$0_->hook_ == nil ? YES : [this$0_->hook_ handleSendOrPubWithBoolean:send withNSString:address withId:msg withComGoodowRealtimeCoreHandler:replyHandler];
+  return [this$0_ onReceiveMessageWithGDCMessage:message];
 }
 
 - (BOOL)handleUnregisterWithNSString:(NSString *)address {
   (void) [((id<GDJsonObject>) nil_chk(this$0_->pendings_)) remove:address];
-  (void) [((id<GDJsonObject>) nil_chk(this$0_->currentRevisions_)) remove:address];
-  (void) [((id<GDJsonObject>) nil_chk(this$0_->knownHeadRevisions_)) remove:address];
-  return this$0_->hook_ == nil ? YES : [this$0_->hook_ handleUnregisterWithNSString:address];
+  (void) [((id<GDJsonObject>) nil_chk(this$0_->currentSequences_)) remove:address];
+  (void) [((id<GDJsonObject>) nil_chk(this$0_->knownHeadSequences_)) remove:address];
+  (void) [((id<GDJsonObject>) nil_chk(this$0_->acknowledgeScheduled_)) remove:address];
+  (void) [((id<GDJsonObject>) nil_chk(this$0_->acknowledgeNumbers_)) remove:address];
+  return [super handleUnregisterWithNSString:address];
+}
+
+- (id<GDCBusHook>)delegate {
+  return this$0_->hook_;
 }
 
 - (id)initWithGDCReliabeBusClient:(GDCReliabeBusClient *)outer$ {
@@ -200,17 +198,57 @@ withComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)replyHandler 
 
 + (J2ObjcClassInfo *)__metadata {
   static J2ObjcMethodInfo methods[] = {
+    { "handlePostClose", NULL, "V", 0x1, NULL },
     { "handlePreRegisterWithNSString:withComGoodowRealtimeCoreHandler:", "handlePreRegister", "Z", 0x1, NULL },
     { "handleReceiveMessageWithGDCMessage:", "handleReceiveMessage", "Z", 0x1, NULL },
-    { "handleSendOrPubWithBoolean:withNSString:withId:withComGoodowRealtimeCoreHandler:", "handleSendOrPub", "Z", 0x1, NULL },
     { "handleUnregisterWithNSString:", "handleUnregister", "Z", 0x1, NULL },
+    { "delegate", NULL, "Lcom.goodow.realtime.channel.BusHook;", 0x4, NULL },
     { "initWithGDCReliabeBusClient:", "init", NULL, 0x0, NULL },
   };
   static J2ObjcFieldInfo fields[] = {
     { "this$0_", NULL, 0x1012, "Lcom.goodow.realtime.channel.impl.ReliabeBusClient;" },
   };
-  static J2ObjcClassInfo _GDCReliabeBusClient_$1 = { "$1", "com.goodow.realtime.channel.impl", "ReliabeBusClient", 0x8000, 5, methods, 1, fields, 0, NULL};
+  static J2ObjcClassInfo _GDCReliabeBusClient_$1 = { "$1", "com.goodow.realtime.channel.impl", "ReliabeBusClient", 0x8000, 6, methods, 1, fields, 0, NULL};
   return &_GDCReliabeBusClient_$1;
+}
+
+@end
+@implementation GDCReliabeBusClient_$2
+
+- (void)handleWithId:(id)event {
+  if ([((id<GDJsonObject>) nil_chk(this$0_->acknowledgeScheduled_)) has:val$address_]) {
+    (void) [this$0_->acknowledgeScheduled_ remove:val$address_];
+    double knownHeadSequence = [((id<GDJsonObject>) nil_chk(this$0_->knownHeadSequences_)) getNumber:val$address_];
+    double currentSequence = [((id<GDJsonObject>) nil_chk(this$0_->currentSequences_)) getNumber:val$address_];
+    if (knownHeadSequence > currentSequence && (![((id<GDJsonObject>) nil_chk(this$0_->acknowledgeNumbers_)) has:val$address_] || knownHeadSequence > [this$0_->acknowledgeNumbers_ getNumber:val$address_])) {
+      (void) [((id<GDJsonObject>) nil_chk(this$0_->acknowledgeNumbers_)) set:val$address_ number:knownHeadSequence];
+      [((JavaUtilLoggingLogger *) nil_chk([GDCReliabeBusClient log])) logWithJavaUtilLoggingLevel:[JavaUtilLoggingLevel CONFIG] withNSString:[NSString stringWithFormat:@"Catching up to %f", knownHeadSequence]];
+      (void) [((GDCSimpleBus *) nil_chk(this$0_->delegate_)) send:[NSString stringWithFormat:@"%@.ack", val$address_] message:[JavaLangDouble valueOfWithDouble:currentSequence + 1] replyHandler:nil];
+    }
+    else {
+      [((JavaUtilLoggingLogger *) nil_chk([GDCReliabeBusClient log])) logWithJavaUtilLoggingLevel:[JavaUtilLoggingLevel FINE] withNSString:@"No need to catchup"];
+    }
+  }
+}
+
+- (id)initWithGDCReliabeBusClient:(GDCReliabeBusClient *)outer$
+                     withNSString:(NSString *)capture$0 {
+  this$0_ = outer$;
+  val$address_ = capture$0;
+  return [super init];
+}
+
++ (J2ObjcClassInfo *)__metadata {
+  static J2ObjcMethodInfo methods[] = {
+    { "handleWithJavaLangVoid:", "handle", "V", 0x1, NULL },
+    { "initWithGDCReliabeBusClient:withNSString:", "init", NULL, 0x0, NULL },
+  };
+  static J2ObjcFieldInfo fields[] = {
+    { "this$0_", NULL, 0x1012, "Lcom.goodow.realtime.channel.impl.ReliabeBusClient;" },
+    { "val$address_", NULL, 0x1012, "Ljava.lang.String;" },
+  };
+  static J2ObjcClassInfo _GDCReliabeBusClient_$2 = { "$2", "com.goodow.realtime.channel.impl", "ReliabeBusClient", 0x8000, 2, methods, 2, fields, 0, NULL};
+  return &_GDCReliabeBusClient_$2;
 }
 
 @end

@@ -9,41 +9,28 @@
 #define _ComGoodowRealtimeObjcObjCPlatform_H_
 
 @class ComGoodowRealtimeCorePlatform_TypeEnum;
-@class JavaUtilConcurrentAtomicAtomicInteger;
-@protocol ComGoodowRealtimeCoreHandler;
+@class ComGoodowRealtimeObjcObjCScheduler;
 @protocol ComGoodowRealtimeCoreNet;
-@protocol GDJsonObject;
+@protocol ComGoodowRealtimeCoreScheduler;
 
 #import "JreEmulation.h"
 #include "com/goodow/realtime/core/PlatformFactory.h"
 
 @interface ComGoodowRealtimeObjcObjCPlatform : NSObject < ComGoodowRealtimeCorePlatformFactory > {
  @public
-  JavaUtilConcurrentAtomicAtomicInteger *timerId_;
-  id<GDJsonObject> timers_;
   id<ComGoodowRealtimeCoreNet> net__;
+  ComGoodowRealtimeObjcObjCScheduler *scheduler__;
 }
 
 + (void)register__;
-+ (void)nativeHandleWithId:(id)handler
-                    withId:(id)event;
-- (BOOL)cancelTimerWithInt:(int)id_;
-- (void)handleWithId:(id)handler
-              withId:(id)event;
 - (id<ComGoodowRealtimeCoreNet>)net;
-- (void)scheduleDeferredWithComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)handler;
-- (int)setPeriodicWithInt:(int)delayMs
-withComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)handler;
+- (id<ComGoodowRealtimeCoreScheduler>)scheduler;
 - (ComGoodowRealtimeCorePlatform_TypeEnum *)type;
-- (void)cancelTimerWithId:(id)timer;
-- (id)setPeriodicNativeWithInt:(int)delayMs
-withComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)handler;
 - (id)init;
 - (void)copyAllFieldsTo:(ComGoodowRealtimeObjcObjCPlatform *)other;
 @end
 
-J2OBJC_FIELD_SETTER(ComGoodowRealtimeObjcObjCPlatform, timerId_, JavaUtilConcurrentAtomicAtomicInteger *)
-J2OBJC_FIELD_SETTER(ComGoodowRealtimeObjcObjCPlatform, timers_, id<GDJsonObject>)
 J2OBJC_FIELD_SETTER(ComGoodowRealtimeObjcObjCPlatform, net__, id<ComGoodowRealtimeCoreNet>)
+J2OBJC_FIELD_SETTER(ComGoodowRealtimeObjcObjCPlatform, scheduler__, ComGoodowRealtimeObjcObjCScheduler *)
 
 #endif // _ComGoodowRealtimeObjcObjCPlatform_H_

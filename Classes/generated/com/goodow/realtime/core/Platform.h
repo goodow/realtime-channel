@@ -9,9 +9,9 @@
 #define _ComGoodowRealtimeCorePlatform_H_
 
 @class ComGoodowRealtimeCorePlatform_TypeEnum;
-@protocol ComGoodowRealtimeCoreHandler;
 @protocol ComGoodowRealtimeCoreNet;
 @protocol ComGoodowRealtimeCorePlatformFactory;
+@protocol ComGoodowRealtimeCoreScheduler;
 
 #import "JreEmulation.h"
 #include "java/lang/Enum.h"
@@ -21,14 +21,9 @@
 
 + (id<ComGoodowRealtimeCorePlatformFactory>)FACTORY;
 + (void)setFACTORY:(id<ComGoodowRealtimeCorePlatformFactory>)FACTORY;
-+ (BOOL)cancelTimerWithInt:(int)id_;
-+ (void)handleWithId:(id)handler
-              withId:(id)event;
 + (id<ComGoodowRealtimeCoreNet>)net;
-+ (void)scheduleDeferredWithComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)handler;
++ (id<ComGoodowRealtimeCoreScheduler>)scheduler;
 + (void)setFactoryWithComGoodowRealtimeCorePlatformFactory:(id<ComGoodowRealtimeCorePlatformFactory>)factory;
-+ (int)setPeriodicWithInt:(int)delayMs
-withComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)handler;
 + (ComGoodowRealtimeCorePlatform_TypeEnum *)type;
 + (id<ComGoodowRealtimeCorePlatformFactory>)get;
 - (id)init;

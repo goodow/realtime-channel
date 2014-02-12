@@ -17,13 +17,81 @@
 
 + (J2ObjcClassInfo *)__metadata {
   static J2ObjcMethodInfo methods[] = {
+    { "handleOpened", NULL, "V", 0x401, NULL },
+    { "handlePostClose", NULL, "V", 0x401, NULL },
+    { "handlePreClose", NULL, "Z", 0x401, NULL },
     { "handlePreRegisterWithNSString:withComGoodowRealtimeCoreHandler:", "handlePreRegister", "Z", 0x401, NULL },
     { "handleReceiveMessageWithGDCMessage:", "handleReceiveMessage", "Z", 0x401, NULL },
     { "handleSendOrPubWithBoolean:withNSString:withId:withComGoodowRealtimeCoreHandler:", "handleSendOrPub", "Z", 0x401, NULL },
     { "handleUnregisterWithNSString:", "handleUnregister", "Z", 0x401, NULL },
   };
-  static J2ObjcClassInfo _GDCBusHook = { "BusHook", "com.goodow.realtime.channel", NULL, 0x201, 4, methods, 0, NULL, 0, NULL};
+  static J2ObjcClassInfo _GDCBusHook = { "BusHook", "com.goodow.realtime.channel", NULL, 0x201, 7, methods, 0, NULL, 0, NULL};
   return &_GDCBusHook;
+}
+
+@end
+@implementation GDCBusHook_BusHookProxy
+
+- (void)handleOpened {
+  if ([self delegate] != nil) {
+    [((id<GDCBusHook>) nil_chk([self delegate])) handleOpened];
+  }
+}
+
+- (void)handlePostClose {
+  if ([self delegate] != nil) {
+    [((id<GDCBusHook>) nil_chk([self delegate])) handlePostClose];
+  }
+}
+
+- (BOOL)handlePreClose {
+  return [self delegate] == nil ? YES : [((id<GDCBusHook>) nil_chk([self delegate])) handlePreClose];
+}
+
+- (BOOL)handlePreRegisterWithNSString:(NSString *)address
+     withComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)handler {
+  return [self delegate] == nil ? YES : [((id<GDCBusHook>) nil_chk([self delegate])) handlePreRegisterWithNSString:address withComGoodowRealtimeCoreHandler:handler];
+}
+
+- (BOOL)handleReceiveMessageWithGDCMessage:(id<GDCMessage>)message {
+  return [self delegate] == nil ? YES : [((id<GDCBusHook>) nil_chk([self delegate])) handleReceiveMessageWithGDCMessage:message];
+}
+
+- (BOOL)handleSendOrPubWithBoolean:(BOOL)send
+                      withNSString:(NSString *)address
+                            withId:(id)msg
+  withComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)replyHandler {
+  return [self delegate] == nil ? YES : [((id<GDCBusHook>) nil_chk([self delegate])) handleSendOrPubWithBoolean:send withNSString:address withId:msg withComGoodowRealtimeCoreHandler:replyHandler];
+}
+
+- (BOOL)handleUnregisterWithNSString:(NSString *)address {
+  return [self delegate] == nil ? YES : [((id<GDCBusHook>) nil_chk([self delegate])) handleUnregisterWithNSString:address];
+}
+
+- (id<GDCBusHook>)delegate {
+  // can't call an abstract method
+  [self doesNotRecognizeSelector:_cmd];
+  return 0;
+}
+
+- (id)init {
+  return [super init];
+}
+
++ (J2ObjcClassInfo *)__metadata {
+  static J2ObjcMethodInfo methods[] = {
+    { "handleOpened", NULL, "V", 0x1, NULL },
+    { "handlePostClose", NULL, "V", 0x1, NULL },
+    { "handlePreClose", NULL, "Z", 0x1, NULL },
+    { "handlePreRegisterWithNSString:withComGoodowRealtimeCoreHandler:", "handlePreRegister", "Z", 0x1, NULL },
+    { "handleReceiveMessageWithGDCMessage:", "handleReceiveMessage", "Z", 0x1, NULL },
+    { "handleSendOrPubWithBoolean:withNSString:withId:withComGoodowRealtimeCoreHandler:", "handleSendOrPub", "Z", 0x1, NULL },
+    { "handleUnregisterWithNSString:", "handleUnregister", "Z", 0x1, NULL },
+    { "delegate", NULL, "Lcom.goodow.realtime.channel.BusHook;", 0x404, NULL },
+    { "init", NULL, NULL, 0x1, NULL },
+  };
+  static J2ObjcClassInfo _GDCBusHook_BusHookProxy = { "BusHookProxy", "com.goodow.realtime.channel", "BusHook", 0x409, 9, methods, 0, NULL, 0, NULL};
+  return &_GDCBusHook_BusHookProxy;
 }
 
 @end

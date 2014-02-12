@@ -9,68 +9,74 @@
 #define _GDCReliabeBusClient_H_
 
 @class GDCSimpleBus;
-@class GDCStateEnum;
+@class JavaLangVoid;
 @class JavaUtilLoggingLogger;
-@protocol ComGoodowRealtimeCoreHandler;
-@protocol ComGoodowRealtimeCoreHandlerRegistration;
+@protocol GDCBusHook;
 @protocol GDCMessage;
 @protocol GDJsonObject;
 
 #import "JreEmulation.h"
-#include "com/goodow/realtime/channel/Bus.h"
 #include "com/goodow/realtime/channel/BusHook.h"
+#include "com/goodow/realtime/channel/impl/SimpleBus.h"
+#include "com/goodow/realtime/core/Handler.h"
 
-@interface GDCReliabeBusClient : NSObject < GDCBus > {
+@interface GDCReliabeBusClient : GDCSimpleBus_BusProxy {
  @public
+  int acknowledgeDelayMillis_;
   id<GDJsonObject> pendings_;
-  id<GDJsonObject> currentRevisions_;
-  id<GDJsonObject> knownHeadRevisions_;
-  GDCSimpleBus *wrapped_;
-  id<GDCBusHook> hook_;
+  id<GDJsonObject> currentSequences_;
+  id<GDJsonObject> knownHeadSequences_;
+  id<GDJsonObject> acknowledgeScheduled_;
+  id<GDJsonObject> acknowledgeNumbers_;
 }
 
++ (NSString *)SEQUENCE_NUMBER;
++ (NSString *)ACKNOWLEDGE_DELAY_MILLIS;
 + (JavaUtilLoggingLogger *)log;
-- (id)initWithGDCSimpleBus:(GDCSimpleBus *)wrapped;
-- (void)close;
-- (GDCStateEnum *)getReadyState;
-- (id<GDCBus>)publishWithNSString:(NSString *)address
-                           withId:(id)msg;
-- (id<ComGoodowRealtimeCoreHandlerRegistration>)registerHandlerWithNSString:(NSString *)address
-                                           withComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)handler;
-- (id<GDCBus>)sendWithNSString:(NSString *)address
-                        withId:(id)msg
-withComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)replyHandler;
-- (GDCReliabeBusClient *)setHookWithGDCBusHook:(id<GDCBusHook>)hook;
-- (BOOL)onMessageWithGDCMessage:(id<GDCMessage>)message;
-- (void)scheduleCatchupWithNSString:(NSString *)address
-                         withDouble:(double)d;
+- (id)initWithGDCSimpleBus:(GDCSimpleBus *)delegate;
+- (void)synchronizeSequenceNumberWithNSString:(NSString *)address
+                                   withDouble:(double)initialSequenceNumber;
+- (BOOL)onReceiveMessageWithGDCMessage:(id<GDCMessage>)message;
+- (void)scheduleAcknowledgmentWithNSString:(NSString *)address;
 - (void)copyAllFieldsTo:(GDCReliabeBusClient *)other;
 @end
 
 J2OBJC_FIELD_SETTER(GDCReliabeBusClient, pendings_, id<GDJsonObject>)
-J2OBJC_FIELD_SETTER(GDCReliabeBusClient, currentRevisions_, id<GDJsonObject>)
-J2OBJC_FIELD_SETTER(GDCReliabeBusClient, knownHeadRevisions_, id<GDJsonObject>)
-J2OBJC_FIELD_SETTER(GDCReliabeBusClient, wrapped_, GDCSimpleBus *)
-J2OBJC_FIELD_SETTER(GDCReliabeBusClient, hook_, id<GDCBusHook>)
+J2OBJC_FIELD_SETTER(GDCReliabeBusClient, currentSequences_, id<GDJsonObject>)
+J2OBJC_FIELD_SETTER(GDCReliabeBusClient, knownHeadSequences_, id<GDJsonObject>)
+J2OBJC_FIELD_SETTER(GDCReliabeBusClient, acknowledgeScheduled_, id<GDJsonObject>)
+J2OBJC_FIELD_SETTER(GDCReliabeBusClient, acknowledgeNumbers_, id<GDJsonObject>)
 
 typedef GDCReliabeBusClient ComGoodowRealtimeChannelImplReliabeBusClient;
 
-@interface GDCReliabeBusClient_$1 : NSObject < GDCBusHook > {
+@interface GDCReliabeBusClient_$1 : GDCBusHook_BusHookProxy {
  @public
   GDCReliabeBusClient *this$0_;
 }
 
+- (void)handlePostClose;
 - (BOOL)handlePreRegisterWithNSString:(NSString *)address
      withComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)handler;
 - (BOOL)handleReceiveMessageWithGDCMessage:(id<GDCMessage>)message;
-- (BOOL)handleSendOrPubWithBoolean:(BOOL)send
-                      withNSString:(NSString *)address
-                            withId:(id)msg
-  withComGoodowRealtimeCoreHandler:(id<ComGoodowRealtimeCoreHandler>)replyHandler;
 - (BOOL)handleUnregisterWithNSString:(NSString *)address;
+- (id<GDCBusHook>)delegate;
 - (id)initWithGDCReliabeBusClient:(GDCReliabeBusClient *)outer$;
 @end
 
 J2OBJC_FIELD_SETTER(GDCReliabeBusClient_$1, this$0_, GDCReliabeBusClient *)
+
+@interface GDCReliabeBusClient_$2 : NSObject < ComGoodowRealtimeCoreHandler > {
+ @public
+  GDCReliabeBusClient *this$0_;
+  NSString *val$address_;
+}
+
+- (void)handleWithId:(id)event;
+- (id)initWithGDCReliabeBusClient:(GDCReliabeBusClient *)outer$
+                     withNSString:(NSString *)capture$0;
+@end
+
+J2OBJC_FIELD_SETTER(GDCReliabeBusClient_$2, this$0_, GDCReliabeBusClient *)
+J2OBJC_FIELD_SETTER(GDCReliabeBusClient_$2, val$address_, NSString *)
 
 #endif // _GDCReliabeBusClient_H_
