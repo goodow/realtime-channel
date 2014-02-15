@@ -36,7 +36,7 @@ For iOS and mac osx: GDChannel
 
 [CocoaPods](http://cocoapods.org) is the recommended way to add GDChannel to your project.
 
-1. Add a pod entry for GDChannel to your Podfile `pod 'GDChannel', '~> 0.5.0'`
+1. Add a pod entry for GDChannel to your Podfile `pod 'GDChannel', '~> 0.5'`
 2. Install the pod(s) by running `pod install`.
 3. Include GDChannel wherever you need it with `#import "GDChannel.h"`.
 

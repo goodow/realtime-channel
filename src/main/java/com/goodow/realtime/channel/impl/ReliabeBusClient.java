@@ -13,13 +13,11 @@
  */
 package com.goodow.realtime.channel.impl;
 
-import com.goodow.realtime.channel.Bus;
 import com.goodow.realtime.channel.BusHook;
 import com.goodow.realtime.channel.BusHook.BusHookProxy;
 import com.goodow.realtime.channel.Message;
-import com.goodow.realtime.channel.State;
+import com.goodow.realtime.channel.impl.SimpleBus.BusProxy;
 import com.goodow.realtime.core.Handler;
-import com.goodow.realtime.core.HandlerRegistration;
 import com.goodow.realtime.core.Platform;
 import com.goodow.realtime.json.Json;
 import com.goodow.realtime.json.JsonObject;
@@ -31,7 +29,7 @@ import java.util.logging.Logger;
  * Converts a stream of possibly-missing, possibly-unordered, possibly-duplicated messages into a
  * stream of in-order, consecutive, no-dup messages.
  */
-public class ReliabeBusClient implements Bus {
+public class ReliabeBusClient extends BusProxy {
   public static final String SEQUENCE_NUMBER = "_seq";
   public static final String ACKNOWLEDGE_DELAY_MILLIS = "acknowledgeDelayMillis";
   private static final Logger log = Logger.getLogger(ReliabeBusClient.class.getName());
@@ -39,8 +37,6 @@ public class ReliabeBusClient implements Bus {
    * Delay acknowledgment in case we receive operations in the meantime.
    */
   private final int acknowledgeDelayMillis;
-  private final SimpleBus delegate;
-  private BusHook hook;
   private final JsonObject pendings;
   private final JsonObject currentSequences;
   private final JsonObject knownHeadSequences;
@@ -48,7 +44,7 @@ public class ReliabeBusClient implements Bus {
   private final JsonObject acknowledgeNumbers;
 
   public ReliabeBusClient(SimpleBus delegate) {
-    this.delegate = delegate;
+    super(delegate);
     JsonObject options = delegate.getOptions();
     acknowledgeDelayMillis =
         (options == null || !options.has(ACKNOWLEDGE_DELAY_MILLIS)) ? 3 * 1000 : (int) options
@@ -60,6 +56,15 @@ public class ReliabeBusClient implements Bus {
     acknowledgeNumbers = Json.createObject();
 
     delegate.setHook(new BusHookProxy() {
+      @Override
+      public void handlePostClose() {
+        pendings.clear();
+        currentSequences.clear();
+        knownHeadSequences.clear();
+        acknowledgeScheduled.clear();
+        acknowledgeNumbers.clear();
+      }
+
       @SuppressWarnings("rawtypes")
       @Override
       public boolean handlePreRegister(String address, Handler<? extends Message> handler) {
@@ -90,44 +95,6 @@ public class ReliabeBusClient implements Bus {
         return hook;
       }
     });
-  }
-
-  @Override
-  public void close() {
-    pendings.clear();
-    currentSequences.clear();
-    knownHeadSequences.clear();
-    acknowledgeScheduled.clear();
-    acknowledgeNumbers.clear();
-
-    delegate.close();
-  }
-
-  @Override
-  public State getReadyState() {
-    return delegate.getReadyState();
-  }
-
-  @Override
-  public Bus publish(String address, Object msg) {
-    return delegate.publish(address, msg);
-  }
-
-  @SuppressWarnings("rawtypes")
-  @Override
-  public HandlerRegistration registerHandler(String address, Handler<? extends Message> handler) {
-    return delegate.registerHandler(address, handler);
-  }
-
-  @Override
-  public <T> Bus send(String address, Object msg, Handler<Message<T>> replyHandler) {
-    return delegate.send(address, msg, replyHandler);
-  }
-
-  @Override
-  public ReliabeBusClient setHook(BusHook hook) {
-    this.hook = hook;
-    return this;
   }
 
   public void synchronizeSequenceNumber(String address, double initialSequenceNumber) {

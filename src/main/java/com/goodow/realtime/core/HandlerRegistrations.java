@@ -34,9 +34,12 @@ public class HandlerRegistrations implements HandlerRegistration {
   @Override
   public void unregisterHandler() {
     if (registrations != null) {
-      for (int i = 0, len = registrations.length(); i < len; i++) {
-        registrations.<HandlerRegistration> get(i).unregisterHandler();
-      }
+      registrations.forEach(new JsonArray.Iterator<HandlerRegistration>() {
+        @Override
+        public void call(int index, HandlerRegistration value) {
+          value.unregisterHandler();
+        }
+      });
       // make sure we remove the handlers to avoid potential leaks
       // if someone fails to null out their reference to us
       registrations.clear();

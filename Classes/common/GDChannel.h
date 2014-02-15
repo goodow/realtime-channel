@@ -32,6 +32,7 @@ typedef void (^GDCMessageBlock)(id<GDCMessage> message);
 #import "com/goodow/realtime/channel/State.h"
 #import "com/goodow/realtime/channel/impl/SimpleBus.h"
 #import "com/goodow/realtime/channel/impl/WebSocketBusClient.h"
+#import "com/goodow/realtime/channel/impl/ReconnectBusClient.h"
 #import "com/goodow/realtime/core/HandlerRegistration.h"
 #import "com/goodow/realtime/objc/ObjCPlatform.h"
 #import "GDCWebSocketBusClient+OCNI.h"

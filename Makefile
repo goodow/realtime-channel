@@ -11,7 +11,7 @@ OVERRIDE_GEN_DIR = Classes/override
 MAIN_OBJECTS = $(MAIN_SOURCES:%.java=$(BUILD_DIR)/main/%.o)
 SUPPORT_LIB = $(BUILD_DIR)/libGDChannel.a
 
-TEMP_PATH = $(M2_REPO)/com/goodow/realtime/realtime-json/0.5.0-SNAPSHOT/realtime-json-0.5.0-SNAPSHOT.jar
+TEMP_PATH = $(M2_REPO)/com/goodow/realtime/realtime-json/0.5.5-SNAPSHOT/realtime-json-0.5.5-SNAPSHOT.jar
 CLASSPATH = $(shell echo $(TEMP_PATH) | sed 's/ //g')
 
 default: clean translate

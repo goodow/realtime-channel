@@ -15,9 +15,7 @@ package com.goodow.realtime.channel.impl;
 
 import com.goodow.realtime.channel.Message;
 import com.goodow.realtime.channel.State;
-import com.goodow.realtime.channel.util.FuzzingBackOffGenerator;
 import com.goodow.realtime.core.Handler;
-import com.goodow.realtime.core.HandlerRegistration;
 import com.goodow.realtime.core.Platform;
 import com.goodow.realtime.core.WebSocket;
 import com.goodow.realtime.json.Json;
@@ -27,30 +25,22 @@ import java.util.logging.Logger;
 
 @SuppressWarnings("rawtypes")
 public class WebSocketBusClient extends SimpleBus {
-  protected static final String PING_INTERVAL = "vertxbus_ping_interval";
+  public static final String PING_INTERVAL = "vertxbus_ping_interval";
   protected static final String BODY = "body";
   protected static final String ADDRESS = "address";
   protected static final String REPLY_ADDRESS = "replyAddress";
   protected static final String TYPE = "type";
 
   private static final Logger log = Logger.getLogger(WebSocketBusClient.class.getName());
-  private final FuzzingBackOffGenerator backOffGenerator;
-  private final String url;
-  private final int pingInterval;
+  protected WebSocket webSocket;
+  protected String url;
   private final WebSocket.WebSocketHandler webSocketHandler;
-  private WebSocket webSocket;
+  private int pingInterval;
   private String sessionID;
   private int pingTimerID = -1;
-  private boolean reconnect = true;
 
   public WebSocketBusClient(String url, JsonObject options) {
-    super(options);
     state = State.CONNECTING;
-    backOffGenerator = new FuzzingBackOffGenerator(1 * 1000, 30 * 60 * 1000, 0.5);
-    this.url = url;
-    pingInterval =
-        options != null && options.has(PING_INTERVAL) ? (int) options.getNumber(PING_INTERVAL)
-            : 5 * 1000;
 
     webSocketHandler = new WebSocket.WebSocketHandler() {
       @Override
@@ -60,17 +50,6 @@ public class WebSocketBusClient extends SimpleBus {
         doReceiveMessage(new DefaultMessage<JsonObject>(false, null, LOCAL_ON_CLOSE, null, reason));
         if (hook != null) {
           hook.handlePostClose();
-        }
-        if (reconnect) {
-          Platform.scheduler().scheduleDelay(backOffGenerator.next().targetDelay,
-              new Handler<Void>() {
-                @Override
-                public void handle(Void event) {
-                  if (reconnect) {
-                    reconnect();
-                  }
-                }
-              });
         }
       }
 
@@ -93,8 +72,6 @@ public class WebSocketBusClient extends SimpleBus {
       @Override
       public void onOpen() {
         state = State.OPEN;
-        reconnect = true;
-        backOffGenerator.reset();
         // Send the first ping then send a ping every 5 seconds
         sendPing();
         pingTimerID = Platform.scheduler().schedulePeriodic(pingInterval, new Handler<Void>() {
@@ -103,14 +80,6 @@ public class WebSocketBusClient extends SimpleBus {
             sendPing();
           }
         });
-        String[] addresses = handlerMap.keys();
-        for (String address : addresses) {
-          assert handlerMap.getArray(address).length() > 0 : "Handlers registried on " + address
-              + " shouldn't be empty";
-          if (!WebSocketBusClient.this.isLocalFork(address)) {
-            sendRegister(address);
-          }
-        }
         if (hook != null) {
           hook.handleOpened();
         }
@@ -118,7 +87,19 @@ public class WebSocketBusClient extends SimpleBus {
       }
     };
 
-    reconnect();
+    connect(url, options);
+  }
+
+  public void connect(String url, JsonObject options) {
+    this.url = url;
+    setOptions(options);
+    pingInterval =
+        options == null || !options.has(PING_INTERVAL) ? 5 * 1000 : (int) options
+            .getNumber(PING_INTERVAL);
+
+    state = State.CONNECTING;
+    webSocket = Platform.net().createWebSocket(url, options);
+    webSocket.setListen(webSocketHandler);
   }
 
   public void login(String username, String password, final Handler<JsonObject> replyHandler) {
@@ -138,30 +119,9 @@ public class WebSocketBusClient extends SimpleBus {
     });
   }
 
-  public void reconnect() {
-    if (state == State.OPEN) {
-      return;
-    }
-    if (webSocket != null) {
-      webSocket.close();
-    }
-
-    state = State.CONNECTING;
-    webSocket = Platform.net().createWebSocket(url, getOptions());
-    webSocket.setListen(webSocketHandler);
-  }
-
-  // J2ObjC require us to override this method
-  @Override
-  public HandlerRegistration registerHandler(final String address,
-      final Handler<? extends Message> handler) {
-    return super.registerHandler(address, handler);
-  }
-
   @Override
   protected void doClose() {
     state = State.CLOSING;
-    reconnect = false;
     webSocket.close();
     registerHandler(LOCAL_ON_CLOSE, new Handler<Message>() {
       @Override

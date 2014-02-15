@@ -30,6 +30,46 @@ import java.util.logging.Logger;
 
 @SuppressWarnings("rawtypes")
 public class SimpleBus implements Bus {
+  public static abstract class BusProxy implements Bus {
+    protected final SimpleBus delegate;
+    protected BusHook hook;
+
+    public BusProxy(SimpleBus delegate) {
+      this.delegate = delegate;
+    }
+
+    @Override
+    public void close() {
+      delegate.close();
+    }
+
+    @Override
+    public State getReadyState() {
+      return delegate.getReadyState();
+    }
+
+    @Override
+    public SimpleBus publish(String address, Object msg) {
+      return delegate.publish(address, msg);
+    }
+
+    @Override
+    public HandlerRegistration registerHandler(String address, Handler<? extends Message> handler) {
+      return delegate.registerHandler(address, handler);
+    }
+
+    @Override
+    public <T> SimpleBus send(String address, Object msg, Handler<Message<T>> replyHandler) {
+      return delegate.send(address, msg, replyHandler);
+    }
+
+    @Override
+    public Bus setHook(BusHook hook) {
+      this.hook = hook;
+      return this;
+    }
+  }
+
   public static final String MODE_MIX = "forkLocal";
   private static final Logger log = Logger.getLogger(SimpleBus.class.getName());
 
@@ -39,11 +79,11 @@ public class SimpleBus implements Bus {
     }
   }
 
-  private final JsonObject options;
   protected final JsonObject handlerMap; // LinkedHashMap<String, LinkedHashSet<Handler<Message>>>
   protected final JsonObject replyHandlers; // LinkedHashMap<String, Handler<Message>>
   private final IdGenerator idGenerator;
-  private final boolean forkLocal;
+  private JsonObject options;
+  private boolean forkLocal;
   protected State state = State.CONNECTING;
   protected BusHook hook;
 
@@ -52,13 +92,12 @@ public class SimpleBus implements Bus {
   }
 
   public SimpleBus(JsonObject options) {
-    this.options = options;
     handlerMap = Json.createObject();
     replyHandlers = Json.createObject();
     idGenerator = new IdGenerator();
     state = State.OPEN;
 
-    forkLocal = options != null && options.has(MODE_MIX) ? options.getBoolean(MODE_MIX) : false;
+    setOptions(options);
   }
 
   @Override
@@ -109,10 +148,12 @@ public class SimpleBus implements Bus {
   @Override
   public SimpleBus setHook(BusHook hook) {
     this.hook = hook;
-    if (hook != null && state == State.OPEN) {
-      hook.handleOpened();
-    }
     return this;
+  }
+
+  public void setOptions(JsonObject options) {
+    this.options = options;
+    forkLocal = options == null || !options.has(MODE_MIX) ? false : options.getBoolean(MODE_MIX);
   }
 
   protected void clearHandlers() {
@@ -130,13 +171,16 @@ public class SimpleBus implements Bus {
     }
   }
 
-  protected void doReceiveMessage(Message message) {
-    String address = message.address();
+  protected void doReceiveMessage(final Message message) {
+    final String address = message.address();
     JsonArray handlers = handlerMap.getArray(address);
     if (handlers != null) {
-      for (int i = 0, len = handlers.length(); i < len; i++) {
-        scheduleHandle(address, handlers.get(i), message);
-      }
+      handlers.forEach(new JsonArray.Iterator<Object>() {
+        @Override
+        public void call(int index, Object value) {
+          scheduleHandle(address, value, message);
+        }
+      });
     } else {
       // Might be a reply message
       Object handler = replyHandlers.get(address);

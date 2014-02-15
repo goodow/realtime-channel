@@ -28,7 +28,7 @@ class HtmlScheduler implements Scheduler {
   }-*/;
   // @formatter:on
 
-  private int timerId = 0;
+  private int timerId = -1;
   private final JsonObject timers = Json.createObject();
 
   @Override
@@ -63,7 +63,7 @@ class HtmlScheduler implements Scheduler {
 
   @Override
   public int scheduleDelay(int delayMs, final Handler<Void> handler) {
-    final String key = "" + timerId++;
+    final String key = "" + (++timerId);
     RepeatingCommand cmd = new RepeatingCommand() {
       @Override
       public boolean execute() {
@@ -81,7 +81,7 @@ class HtmlScheduler implements Scheduler {
 
   @Override
   public int schedulePeriodic(int delayMs, final Handler<Void> handler) {
-    final String key = "" + timerId++;
+    final String key = "" + (++timerId);
     RepeatingCommand cmd = new RepeatingCommand() {
       @Override
       public boolean execute() {

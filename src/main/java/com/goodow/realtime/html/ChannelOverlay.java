@@ -16,7 +16,7 @@ package com.goodow.realtime.html;
 import com.goodow.realtime.channel.Bus;
 import com.goodow.realtime.channel.Message;
 import com.goodow.realtime.channel.State;
-import com.goodow.realtime.channel.impl.WebSocketBusClient;
+import com.goodow.realtime.channel.impl.ReconnectBusClient;
 import com.goodow.realtime.core.Handler;
 import com.goodow.realtime.core.HandlerRegistration;
 import com.goodow.realtime.json.JsonObject;
@@ -28,8 +28,8 @@ import org.timepedia.exporter.client.ExportOverlay;
 import org.timepedia.exporter.client.ExportPackage;
 
 @ExportPackage("good.channel")
-@Export
-abstract class ChannelOverlay implements ExportOverlay<WebSocketBusClient> {
+@Export("WebSocketBusClient")
+abstract class ChannelOverlay implements ExportOverlay<ReconnectBusClient> {
   // @ExportPackage("good.channel._ExportOverlay_")
   // @ExportClosure
   // public interface __HandlerOverlay__ extends ExportOverlay<Handler> {
@@ -64,26 +64,26 @@ abstract class ChannelOverlay implements ExportOverlay<WebSocketBusClient> {
   public static native void afterCreate() /*-{
     var _ = $wnd.good.channel.WebSocketBusClient.prototype;
     _.send = function(address, msg, replyHandler) {
-      this.g.@com.goodow.realtime.channel.impl.WebSocketBusClient::send(Ljava/lang/String;Ljava/lang/Object;Lcom/goodow/realtime/core/Handler;)
+      this.g.@com.goodow.realtime.channel.Bus::send(Ljava/lang/String;Ljava/lang/Object;Lcom/goodow/realtime/core/Handler;)
           (address, msg, replyHandler);
     };
     
     _ = $wnd.good.channel.Message.prototype;
     _.reply = function(msg, replyHandler) {
-      this.g.@com.goodow.realtime.channel.impl.DefaultMessage::reply(Ljava/lang/Object;Lcom/goodow/realtime/core/Handler;)
+      this.g.@com.goodow.realtime.channel.Message::reply(Ljava/lang/Object;Lcom/goodow/realtime/core/Handler;)
           (msg, replyHandler);
     };
   }-*/;
   // @formatter:off
 
   @ExportConstructor
-  public static WebSocketBusClient constructor(String url) {
-    return new WebSocketBusClient(url, null);
+  public static ReconnectBusClient constructor(String url) {
+    return new ReconnectBusClient(url, null);
   }
 
   @ExportConstructor
-  public static WebSocketBusClient constructor(String url, JsonObject options) {
-    return new WebSocketBusClient(url, options);
+  public static ReconnectBusClient constructor(String url, JsonObject options) {
+    return new ReconnectBusClient(url, options);
   }
 
   private ChannelOverlay() {
