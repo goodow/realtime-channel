@@ -125,18 +125,13 @@ public class SimpleBus implements Bus {
   @Override
   public HandlerRegistration registerHandler(final String address,
       final Handler<? extends Message> handler) {
-    if (hook == null || hook.handlePreRegister(address, handler)) {
-      doRegisterHandler(address, handler);
-      return new HandlerRegistration() {
-        @Override
-        public void unregisterHandler() {
-          if (hook == null || hook.handleUnregister(address)) {
-            doUnregisterHandler(address, handler);
-          }
-        }
-      };
-    }
-    return HandlerRegistration.EMPTY;
+    doRegisterHandler(address, handler);
+    return new HandlerRegistration() {
+      @Override
+      public void unregisterHandler() {
+        doUnregisterHandler(address, handler);
+      }
+    };
   }
 
   @Override

@@ -24,7 +24,7 @@ import com.goodow.realtime.json.Json;
 import com.goodow.realtime.json.JsonArray;
 import com.goodow.realtime.json.JsonObject;
 
-public class ReconnectBusClient extends WebSocketBusClient {
+public class ReconnectBus extends WebSocketBus {
   private class QueuedMessage<T> {
     final boolean send;
     final String address;
@@ -45,7 +45,7 @@ public class ReconnectBusClient extends WebSocketBusClient {
   private boolean reconnect;
   private final JsonArray queuedMessages = Json.createArray(); // ArrayList<QueuedMessage>()
 
-  public ReconnectBusClient(String url, JsonObject options) {
+  public ReconnectBus(String url, JsonObject options) {
     super(url, options);
     backOffGenerator = new FuzzingBackOffGenerator(1 * 1000, 30 * 60 * 1000, 0.5);
 
@@ -59,7 +59,7 @@ public class ReconnectBusClient extends WebSocketBusClient {
         for (String address : addresses) {
           assert handlerMap.getArray(address).length() > 0 : "Handlers registried on " + address
               + " shouldn't be empty";
-          if (!ReconnectBusClient.this.isLocalFork(address)) {
+          if (!ReconnectBus.this.isLocalFork(address)) {
             sendRegister(address);
           }
         }
@@ -97,8 +97,11 @@ public class ReconnectBusClient extends WebSocketBusClient {
       public <T> boolean handleSendOrPub(boolean send, String address, Object msg,
           Handler<Message<T>> replyHandler) {
         boolean allow = super.handleSendOrPub(send, address, msg, replyHandler);
-        if (!allow || state == State.OPEN || ReconnectBusClient.this.isLocalFork(address)) {
+        if (!allow || state == State.OPEN || ReconnectBus.this.isLocalFork(address)) {
           return allow;
+        }
+        if (reconnect) {
+          reconnect();
         }
         queuedMessages.push(new QueuedMessage<T>(send, address, msg, replyHandler));
         return false;

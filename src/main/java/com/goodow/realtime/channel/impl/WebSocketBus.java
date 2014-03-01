@@ -24,14 +24,14 @@ import com.goodow.realtime.json.JsonObject;
 import java.util.logging.Logger;
 
 @SuppressWarnings("rawtypes")
-public class WebSocketBusClient extends SimpleBus {
+public class WebSocketBus extends SimpleBus {
   public static final String PING_INTERVAL = "vertxbus_ping_interval";
   protected static final String BODY = "body";
   protected static final String ADDRESS = "address";
   protected static final String REPLY_ADDRESS = "replyAddress";
   protected static final String TYPE = "type";
 
-  private static final Logger log = Logger.getLogger(WebSocketBusClient.class.getName());
+  private static final Logger log = Logger.getLogger(WebSocketBus.class.getName());
   protected WebSocket webSocket;
   protected String url;
   private final WebSocket.WebSocketHandler webSocketHandler;
@@ -39,7 +39,7 @@ public class WebSocketBusClient extends SimpleBus {
   private String sessionID;
   private int pingTimerID = -1;
 
-  public WebSocketBusClient(String url, JsonObject options) {
+  public WebSocketBus(String url, JsonObject options) {
     state = State.CONNECTING;
 
     webSocketHandler = new WebSocket.WebSocketHandler() {
@@ -64,7 +64,7 @@ public class WebSocketBusClient extends SimpleBus {
         JsonObject json = Json.<JsonObject> parse(msg);
         @SuppressWarnings({"unchecked"})
         DefaultMessage message =
-            new DefaultMessage(false, WebSocketBusClient.this, json.getString(ADDRESS), json
+            new DefaultMessage(false, WebSocketBus.this, json.getString(ADDRESS), json
                 .getString(REPLY_ADDRESS), json.get(BODY));
         internalHandleReceiveMessage(message);
       }
@@ -134,7 +134,8 @@ public class WebSocketBusClient extends SimpleBus {
   @Override
   protected boolean doRegisterHandler(String address, Handler<? extends Message> handler) {
     boolean first = super.doRegisterHandler(address, handler);
-    if (first && !isLocalFork(address)) {
+    if (first && !isLocalFork(address)
+        && (hook == null || hook.handlePreRegister(address, handler))) {
       sendRegister(address);
     }
     return first;
@@ -167,7 +168,7 @@ public class WebSocketBusClient extends SimpleBus {
   @Override
   protected boolean doUnregisterHandler(String address, Handler<? extends Message> handler) {
     boolean last = super.doUnregisterHandler(address, handler);
-    if (last && !isLocalFork(address)) {
+    if (last && !isLocalFork(address) && (hook == null || hook.handleUnregister(address))) {
       sendUnregister(address);
     }
     return last;

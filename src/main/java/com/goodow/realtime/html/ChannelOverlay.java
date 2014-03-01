@@ -16,7 +16,7 @@ package com.goodow.realtime.html;
 import com.goodow.realtime.channel.Bus;
 import com.goodow.realtime.channel.Message;
 import com.goodow.realtime.channel.State;
-import com.goodow.realtime.channel.impl.ReconnectBusClient;
+import com.goodow.realtime.channel.impl.ReconnectBus;
 import com.goodow.realtime.core.Handler;
 import com.goodow.realtime.core.HandlerRegistration;
 import com.goodow.realtime.json.JsonObject;
@@ -28,8 +28,8 @@ import org.timepedia.exporter.client.ExportOverlay;
 import org.timepedia.exporter.client.ExportPackage;
 
 @ExportPackage("good.channel")
-@Export("WebSocketBusClient")
-abstract class ChannelOverlay implements ExportOverlay<ReconnectBusClient> {
+@Export("WebSocketBus")
+abstract class ChannelOverlay implements ExportOverlay<ReconnectBus> {
   // @ExportPackage("good.channel._ExportOverlay_")
   // @ExportClosure
   // public interface __HandlerOverlay__ extends ExportOverlay<Handler> {
@@ -62,7 +62,7 @@ abstract class ChannelOverlay implements ExportOverlay<ReconnectBusClient> {
   @ExportAfterCreateMethod
   // @formatter:off
   public static native void afterCreate() /*-{
-    var _ = $wnd.good.channel.WebSocketBusClient.prototype;
+    var _ = $wnd.good.channel.WebSocketBus.prototype;
     _.send = function(address, msg, replyHandler) {
       this.g.@com.goodow.realtime.channel.Bus::send(Ljava/lang/String;Ljava/lang/Object;Lcom/goodow/realtime/core/Handler;)
           (address, msg, replyHandler);
@@ -77,13 +77,13 @@ abstract class ChannelOverlay implements ExportOverlay<ReconnectBusClient> {
   // @formatter:off
 
   @ExportConstructor
-  public static ReconnectBusClient constructor(String url) {
-    return new ReconnectBusClient(url, null);
+  public static ReconnectBus constructor(String url) {
+    return new ReconnectBus(url, null);
   }
 
   @ExportConstructor
-  public static ReconnectBusClient constructor(String url, JsonObject options) {
-    return new ReconnectBusClient(url, options);
+  public static ReconnectBus constructor(String url, JsonObject options) {
+    return new ReconnectBus(url, options);
   }
 
   private ChannelOverlay() {

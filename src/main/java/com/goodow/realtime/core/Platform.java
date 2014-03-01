@@ -24,7 +24,7 @@ package com.goodow.realtime.core;
  */
 public class Platform {
   public enum Type {
-    JAVA, HTML, ANDROID, IOS, FLASH, STUB
+    JAVA, HTML, ANDROID, IOS, FLASH, STUB, VERTX
   }
 
   private static PlatformFactory FACTORY;

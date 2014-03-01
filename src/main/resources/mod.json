@@ -1,0 +1,12 @@
+{
+  "main":"com.goodow.realtime.channel.server.ChannelWebServer",
+  "auto-redeploy": true,
+  
+  "description":"Event bus client over WebSocket for Java/Android/iOS/Javascript/GWT/J2ObjC",
+  "licenses": ["The Apache Software License Version 2.0"],
+  "author": "Larry Tin",
+
+  "developers": ["Larry Tin"],
+  "keywords": ["EventBus", "WebSocket", "android", "ios", "javascript", "gwt", "j2objc"],
+  "homepage": "https://github.com/goodow/realtime-channel/"
+}

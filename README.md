@@ -56,4 +56,4 @@ For javascript: good.channel
 =========
 
 ## Usage
-See https://github.com/goodow/realtime-server/blob/master/src/main/resources/web/index.html
+See https://github.com/goodow/realtime-channel/blob/master/src/main/resources/web/index.html

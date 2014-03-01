@@ -12,7 +12,29 @@
   <properties>
     <maven.compiler.source>1.6</maven.compiler.source>
     <maven.compiler.target>1.6</maven.compiler.target>
+    
+    <!-- Set pullInDeps to true if you want any modules specified in the 'includes' and 'deploys' fields
+        in your mod.json to be automatically pulled in during packaging and added inside your module. Doing this means your
+        module won't download and install those dependencies at run-time when they're first requested. -->
+    <vertx.pullInDeps>false</vertx.pullInDeps>
+    <!-- Set createFatJar to true if you want to create a fat executable jar which contains the Vert.x binaries
+        along with the module so it can be run with java -jar <jarname> -->
+    <vertx.createFatJar>false</vertx.createFatJar>
   </properties>
+  
+  <repositories>
+    <repository>
+      <id>sonatype-nexus-snapshots</id>
+      <name>Sonatype Nexus Snapshots</name>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
   
   <dependencies>
     <!-- Internal modules -->
@@ -20,6 +42,30 @@
       <groupId>com.goodow.realtime</groupId>
       <artifactId>realtime-json</artifactId>
       <version>${project.version}</version>
+    </dependency>
+    
+    <!--Vert.x dependencies-->
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-platform</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>mod-web-server</artifactId>
+      <optional>true</optional>
+    </dependency>
+    
+    <!-- Guice -->
+    <dependency>
+      <groupId>com.goodow.vertx</groupId>
+      <artifactId>mod-guice</artifactId>
+      <optional>true</optional>
+    </dependency>
+    
+    <!-- Test -->
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>testtools</artifactId>
     </dependency>
     
     <!-- Google Web Toolkit (GWT) -->
@@ -37,16 +83,95 @@
       <version>2.5.1</version>
       <scope>provided</scope>
     </dependency>
-    
-    <!-- Test -->
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-    </dependency>
   </dependencies>
   
   <build>
     <plugins>
+      <!-- The vert.x Maven plugin -->
+      <plugin>
+        <groupId>io.vertx</groupId>
+        <artifactId>vertx-maven-plugin</artifactId>
+        <configuration>
+          <configFile>src/main/resources/vertx-config.json</configFile>
+        </configuration>
+        <executions>
+          <execution>
+            <id>PullInDeps</id>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>pullInDeps</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- Other plugins required by the build -->
+      <plugin>
+        <artifactId>maven-resources-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>copy-mod-to-target</id>
+            <phase>process-classes</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <overwrite>true</overwrite>
+              <outputDirectory>${vertx.mods.directory}/${vertx.module.name}</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>target/classes</directory>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>copy-mod-dependencies-to-target</id>
+            <phase>process-classes</phase>
+            <goals>
+              <goal>copy-dependencies</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${vertx.mods.directory}/${vertx.module.name}/lib</outputDirectory>
+              <includeScope>runtime</includeScope>
+            </configuration>
+          </execution>
+          <execution>
+            <id>copy-mod-dependencies-to-target-dependencies</id>
+            <phase>process-classes</phase>
+            <goals>
+              <goal>copy-dependencies</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>target/dependencies</outputDirectory>
+              <includeScope>runtime</includeScope>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <configuration>
+          <descriptors>
+            <descriptor>src/main/assembly/mod.xml</descriptor>
+          </descriptors>
+        </configuration>
+        <executions>
+          <execution>
+            <id>assemble</id>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-source-plugin</artifactId>
@@ -65,5 +190,35 @@
         </configuration>
       </plugin>
     </plugins>
+    
+    <!-- Required by m2e for import into eclipse. No effect on command line builds -->
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.eclipse.m2e</groupId>
+          <artifactId>lifecycle-mapping</artifactId>
+          <version>1.0.0</version>
+          <configuration>
+            <lifecycleMappingMetadata>
+              <pluginExecutions>
+                <pluginExecution>
+                  <pluginExecutionFilter>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-dependency-plugin</artifactId>
+                    <versionRange>[2.7,)</versionRange>
+                    <goals>
+                      <goal>copy-dependencies</goal>
+                    </goals>
+                  </pluginExecutionFilter>
+                  <action>
+                    <ignore />
+                  </action>
+                </pluginExecution>
+              </pluginExecutions>
+            </lifecycleMappingMetadata>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
   </build>
 </project>
