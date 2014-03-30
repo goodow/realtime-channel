@@ -49,18 +49,6 @@
       <groupId>io.vertx</groupId>
       <artifactId>vertx-platform</artifactId>
     </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>mod-web-server</artifactId>
-      <optional>true</optional>
-    </dependency>
-    
-    <!-- Guice -->
-    <dependency>
-      <groupId>com.goodow.vertx</groupId>
-      <artifactId>mod-guice</artifactId>
-      <optional>true</optional>
-    </dependency>
     
     <!-- Test -->
     <dependency>

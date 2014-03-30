@@ -1,6 +1,6 @@
 {
   "name": "realtime-channel",
-  "devDependencies": {
+  "dependencies": {
     "realtime-channel": "0.5.5"
   }
 }

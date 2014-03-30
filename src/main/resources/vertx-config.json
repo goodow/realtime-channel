@@ -1,6 +1,5 @@
 {
   "port": 8080,
-  "route_matcher": true,
     
   "bridge": true,
   "inbound_permitted": [{}],

@@ -13,26 +13,27 @@
  */
 package com.goodow.realtime.channel.server;
 
-import com.alienos.guice.GuiceVerticleHelper;
-import com.alienos.guice.GuiceVertxBinding;
-import com.google.inject.Inject;
+import org.vertx.java.busmods.BusModBase;
+import org.vertx.java.core.AsyncResult;
+import org.vertx.java.core.AsyncResultHandler;
+import org.vertx.java.core.Future;
 
-import org.vertx.java.core.http.RouteMatcher;
-import org.vertx.mods.web.WebServer;
-
-@GuiceVertxBinding(modules = {ChannelModule.class})
-public class ChannelWebServer extends WebServer {
-  @Inject protected RouteMatcher routeMatcher;
+public class ChannelVerticle extends BusModBase {
 
   @Override
-  public void start() {
-    GuiceVerticleHelper.inject(this, vertx, container);
+  public void start(final Future<Void> startedResult) {
     super.start();
-  }
 
-  @Override
-  protected RouteMatcher routeMatcher() {
-    routeMatcher.noMatch(staticHandler());
-    return routeMatcher;
+    container.deployModule("io.vertx~mod-web-server~2.0.0-final", config,
+        new AsyncResultHandler<String>() {
+          @Override
+          public void handle(AsyncResult<String> ar) {
+            if (ar.succeeded()) {
+              startedResult.setResult(null);
+            } else {
+              startedResult.setFailure(ar.cause());
+            }
+          }
+        });
   }
 }

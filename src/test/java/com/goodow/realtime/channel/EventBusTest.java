@@ -16,13 +16,17 @@ package com.goodow.realtime.channel;
 import com.goodow.realtime.channel.impl.ReconnectBus;
 import com.goodow.realtime.channel.impl.SimpleBus;
 import com.goodow.realtime.channel.server.VertxPlatform;
-import com.goodow.realtime.channel.util.IdGenerator;
 import com.goodow.realtime.core.Handler;
-import com.goodow.realtime.core.HandlerRegistrations;
 import com.goodow.realtime.json.Json;
 import com.goodow.realtime.json.JsonObject;
 
+import static org.vertx.testtools.VertxAssert.assertNotNull;
+import static org.vertx.testtools.VertxAssert.assertTrue;
+
 import org.junit.Test;
+import org.vertx.java.core.AsyncResult;
+import org.vertx.java.core.AsyncResultHandler;
+import org.vertx.java.core.json.JsonArray;
 import org.vertx.testtools.TestVerticle;
 import org.vertx.testtools.VertxAssert;
 
@@ -31,45 +35,65 @@ import java.util.logging.Logger;
 
 public class EventBusTest extends TestVerticle {
 
-  private static final String ADDR = "java.someaddress." + new IdGenerator().next(5);
   private static final Logger log = Logger.getLogger(EventBusTest.class.getName());
   private Bus bus;
-  private final HandlerRegistrations handlerRegs = new HandlerRegistrations();
 
   @Override
   public void start() {
     initialize();
 
     VertxPlatform.register(vertx);
-    bus =
-        new ReconnectBus("ws://data.goodow.com:8080/eventbus/websocket", Json.createObject().set(
-            SimpleBus.MODE_MIX, true));
 
-    startTests();
+    JsonArray all =
+        new org.vertx.java.core.json.JsonArray()
+            .addObject(new org.vertx.java.core.json.JsonObject());
+    org.vertx.java.core.json.JsonObject config =
+        new org.vertx.java.core.json.JsonObject().putNumber("port", 8080).putBoolean(
+            "static_files", false).putBoolean("bridge", true).putArray("inbound_permitted", all)
+            .putArray("outbound_permitted", all);
+    // Deploy the module - the System property `vertx.modulename` will contain the name of the
+    // module so you don't have to hardecode it in your tests
+    container.deployModule(System.getProperty("vertx.modulename"), config,
+        new AsyncResultHandler<String>() {
+          @Override
+          public void handle(AsyncResult<String> asyncResult) {
+            // Deployment is asynchronous and this this handler will be called when it's complete
+            // (or failed)
+            assertTrue(asyncResult.succeeded());
+            assertNotNull("deploymentID should not be null", asyncResult.result());
+
+            // If deployed correctly then start the tests!
+            bus =
+                new ReconnectBus("ws://localhost:8080/eventbus/websocket", Json.createObject().set(
+                    SimpleBus.MODE_MIX, true));
+
+            startTests();
+          }
+        });
   }
 
   @Test
   public void test() {
-    handlerRegs.add(bus.registerHandler(Bus.LOCAL_ON_OPEN, new MessageHandler<JsonObject>() {
+    bus.registerHandler(Bus.LOCAL_ON_OPEN, new MessageHandler<JsonObject>() {
       @Override
       public void handle(Message<JsonObject> message) {
         handlerEventBusOpened(bus);
       }
-    }));
-    handlerRegs.add(bus.registerHandler(Bus.LOCAL_ON_CLOSE, new MessageHandler<JsonObject>() {
+    });
+    bus.registerHandler(Bus.LOCAL_ON_CLOSE, new MessageHandler<JsonObject>() {
       @Override
       public void handle(Message<JsonObject> message) {
         log.info("EventBus closed");
       }
-    }));
-    handlerRegs.add(bus.registerHandler(Bus.LOCAL_ON_ERROR, new MessageHandler<JsonObject>() {
+    });
+    bus.registerHandler(Bus.LOCAL_ON_ERROR, new MessageHandler<JsonObject>() {
       @Override
       public void handle(Message<JsonObject> message) {
         log.log(Level.SEVERE, "EventBus Error");
       }
-    }));
+    });
 
-    handlerRegs.add(bus.registerHandler(ADDR, new MessageHandler<JsonObject>() {
+    bus.registerHandler("someaddress", new MessageHandler<JsonObject>() {
       @Override
       public void handle(Message<JsonObject> message) {
         VertxAssert.assertEquals("send1", message.body().getString("text"));
@@ -79,20 +103,19 @@ public class EventBusTest extends TestVerticle {
           @Override
           public void handle(Message<JsonObject> message) {
             VertxAssert.assertEquals("reply2", message.body().getString("text"));
-            VertxAssert.assertNull(message.replyAddress());
+            // VertxAssert.assertNull(message.replyAddress());
 
             bus.close();
-            handlerRegs.unregisterHandler();
             VertxAssert.testComplete();
           }
         });
       }
-    }));
+    });
   }
 
   private void handlerEventBusOpened(final Bus bus) {
     JsonObject o1 = Json.createObject().set("text", "send1");
-    bus.send(ADDR, o1, new Handler<Message<JsonObject>>() {
+    bus.send("someaddress", o1, new Handler<Message<JsonObject>>() {
       @Override
       public void handle(Message<JsonObject> message) {
         VertxAssert.assertEquals("reply1", message.body().getString("text"));
