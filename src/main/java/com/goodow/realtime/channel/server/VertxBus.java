@@ -33,13 +33,24 @@ import java.util.logging.Logger;
 public class VertxBus implements Bus {
   private static final Logger log = Logger.getLogger(VertxBus.class.getName());
 
-  static Object unwrap(Object msg) {
-    if (msg instanceof JreJsonObject) {
-      return new JsonObject(((JreJsonObject) msg).toNative());
-    } else if (msg instanceof JreJsonArray) {
-      return new JsonArray(((JreJsonArray) msg).toNative());
+  static Object unwrap(Object realtimeMessage) {
+    if (realtimeMessage instanceof JreJsonObject) {
+      return new JsonObject(((JreJsonObject) realtimeMessage).toNative());
+    } else if (realtimeMessage instanceof JreJsonArray) {
+      return new JsonArray(((JreJsonArray) realtimeMessage).toNative());
     } else {
-      return msg;
+      return realtimeMessage;
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  static Object wrap(Object vertxMessage) {
+    if (vertxMessage instanceof JsonObject) {
+      return new JreJsonObject(((JsonObject) vertxMessage).toMap());
+    } else if (vertxMessage instanceof JsonArray) {
+      return new JreJsonArray(((JsonArray) vertxMessage).toList());
+    } else {
+      return vertxMessage;
     }
   }
 

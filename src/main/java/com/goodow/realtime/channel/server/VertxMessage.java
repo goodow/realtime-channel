@@ -31,9 +31,10 @@ class VertxMessage<T> implements Message<T> {
     return delegate.address();
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public T body() {
-    return delegate.body();
+    return (T) VertxBus.wrap(delegate.body());
   }
 
   @Override
