@@ -34,7 +34,7 @@ public class HandlerRegistrations implements HandlerRegistration {
   @Override
   public void unregisterHandler() {
     if (registrations != null) {
-      registrations.forEach(new JsonArray.Iterator<HandlerRegistration>() {
+      registrations.forEach(new JsonArray.ListIterator<HandlerRegistration>() {
         @Override
         public void call(int index, HandlerRegistration value) {
           value.unregisterHandler();

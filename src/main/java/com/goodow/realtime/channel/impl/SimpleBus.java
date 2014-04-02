@@ -170,7 +170,7 @@ public class SimpleBus implements Bus {
     final String address = message.address();
     JsonArray handlers = handlerMap.getArray(address);
     if (handlers != null) {
-      handlers.forEach(new JsonArray.Iterator<Object>() {
+      handlers.forEach(new JsonArray.ListIterator<Object>() {
         @Override
         public void call(int index, Object value) {
           scheduleHandle(address, value, message);

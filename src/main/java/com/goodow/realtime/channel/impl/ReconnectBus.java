@@ -66,7 +66,7 @@ public class ReconnectBus extends WebSocketBus {
 
         if (queuedMessages.length() != 0) {
           // Drain any messages that came in while the channel was not open.
-          queuedMessages.forEach(new JsonArray.Iterator<QueuedMessage>() {
+          queuedMessages.forEach(new JsonArray.ListIterator<QueuedMessage>() {
             @Override
             public void call(int index, QueuedMessage value) {
               doSendOrPub(value.send, value.address, value.msg, value.replyHandler);

@@ -21,7 +21,6 @@ import com.goodow.realtime.core.Handler;
 import com.goodow.realtime.core.Platform;
 import com.goodow.realtime.json.Json;
 import com.goodow.realtime.json.JsonArray;
-import com.goodow.realtime.json.JsonArray.Iterator;
 import com.goodow.realtime.json.JsonObject;
 
 import java.util.logging.Level;
@@ -111,7 +110,7 @@ public class ReliableBus extends BusProxy {
       @Override
       public void handle(Message<JsonArray> message) {
         final String replyAddress = message.replyAddress();
-        message.body().forEach(new Iterator() {
+        message.body().forEach(new JsonArray.ListIterator() {
           @Override
           public void call(int index, Object value) {
             onReceiveMessage(new DefaultMessage(false, ReliableBus.this, address, replyAddress,
