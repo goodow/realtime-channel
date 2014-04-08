@@ -17,6 +17,8 @@ import org.vertx.java.busmods.BusModBase;
 import org.vertx.java.core.AsyncResult;
 import org.vertx.java.core.AsyncResultHandler;
 import org.vertx.java.core.Future;
+import org.vertx.java.core.json.JsonArray;
+import org.vertx.java.core.json.JsonObject;
 
 public class ChannelVerticle extends BusModBase {
 
@@ -24,7 +26,16 @@ public class ChannelVerticle extends BusModBase {
   public void start(final Future<Void> startedResult) {
     super.start();
 
-    container.deployModule("io.vertx~mod-web-server~2.0.0-final", config,
+    JsonObject cfg =
+        config
+            .copy()
+            .putBoolean("bridge", getOptionalBooleanConfig("bridge", true))
+            .putArray("inbound_permitted",
+                getOptionalArrayConfig("inbound_permitted", new JsonArray().add(new JsonObject())))
+            .putArray("outbound_permitted",
+                getOptionalArrayConfig("outbound_permitted", new JsonArray().add(new JsonObject())));
+
+    container.deployModule("io.vertx~mod-web-server~2.0.0-final", cfg,
         new AsyncResultHandler<String>() {
           @Override
           public void handle(AsyncResult<String> ar) {

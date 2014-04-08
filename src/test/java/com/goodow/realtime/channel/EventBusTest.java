@@ -26,7 +26,6 @@ import static org.vertx.testtools.VertxAssert.assertTrue;
 import org.junit.Test;
 import org.vertx.java.core.AsyncResult;
 import org.vertx.java.core.AsyncResultHandler;
-import org.vertx.java.core.json.JsonArray;
 import org.vertx.testtools.TestVerticle;
 import org.vertx.testtools.VertxAssert;
 
@@ -44,13 +43,9 @@ public class EventBusTest extends TestVerticle {
 
     VertxPlatform.register(vertx);
 
-    JsonArray all =
-        new org.vertx.java.core.json.JsonArray()
-            .addObject(new org.vertx.java.core.json.JsonObject());
     org.vertx.java.core.json.JsonObject config =
         new org.vertx.java.core.json.JsonObject().putNumber("port", 8080).putBoolean(
-            "static_files", false).putBoolean("bridge", true).putArray("inbound_permitted", all)
-            .putArray("outbound_permitted", all);
+            "static_files", false);
     // Deploy the module - the System property `vertx.modulename` will contain the name of the
     // module so you don't have to hardecode it in your tests
     container.deployModule(System.getProperty("vertx.modulename"), config,

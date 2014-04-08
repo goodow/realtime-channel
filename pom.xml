@@ -13,12 +13,7 @@
     <maven.compiler.source>1.6</maven.compiler.source>
     <maven.compiler.target>1.6</maven.compiler.target>
     
-    <!-- Set pullInDeps to true if you want any modules specified in the 'includes' and 'deploys' fields
-        in your mod.json to be automatically pulled in during packaging and added inside your module. Doing this means your
-        module won't download and install those dependencies at run-time when they're first requested. -->
     <vertx.pullInDeps>false</vertx.pullInDeps>
-    <!-- Set createFatJar to true if you want to create a fat executable jar which contains the Vert.x binaries
-        along with the module so it can be run with java -jar <jarname> -->
     <vertx.createFatJar>false</vertx.createFatJar>
   </properties>
   
@@ -80,7 +75,7 @@
         <groupId>io.vertx</groupId>
         <artifactId>vertx-maven-plugin</artifactId>
         <configuration>
-          <configFile>src/main/resources/vertx-config.json</configFile>
+          <configFile>src/main/resources/channel.conf</configFile>
         </configuration>
         <executions>
           <execution>
@@ -127,17 +122,7 @@
             <configuration>
               <outputDirectory>${vertx.mods.directory}/${vertx.module.name}/lib</outputDirectory>
               <includeScope>runtime</includeScope>
-            </configuration>
-          </execution>
-          <execution>
-            <id>copy-mod-dependencies-to-target-dependencies</id>
-            <phase>process-classes</phase>
-            <goals>
-              <goal>copy-dependencies</goal>
-            </goals>
-            <configuration>
-              <outputDirectory>target/dependencies</outputDirectory>
-              <includeScope>runtime</includeScope>
+              <excludeGroupIds>com.goodow.realtime,com.fasterxml.jackson.core</excludeGroupIds>
             </configuration>
           </execution>
         </executions>
@@ -159,9 +144,16 @@
           </execution>
         </executions>
       </plugin>
-    
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <excludes>
+            <exclude>mod.json</exclude>
+          </excludes>
+        </configuration>
+      </plugin>
+
+      <plugin>
         <artifactId>maven-source-plugin</artifactId>
       </plugin>
       <!-- GWT Maven Plugin -->

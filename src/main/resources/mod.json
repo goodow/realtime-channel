@@ -2,6 +2,7 @@
   "main": "com.goodow.realtime.channel.server.ChannelVerticle",
   "auto-redeploy": true,
   
+  "includes": "com.goodow.realtime~realtime-json~0.5.5-SNAPSHOT",
   "deploys": "io.vertx~mod-web-server~2.0.0-final",
   
   "description": "Event bus client over WebSocket for Java/Android/iOS/Javascript/GWT/J2ObjC",
