@@ -1,3 +1,6 @@
+realtime-channel [![Build Status](https://travis-ci.org/goodow/realtime-channel.svg?branch=master)](https://travis-ci.org/goodow/realtime-channel)
+================
+
 For java and android: realtime-android
 =========
 
