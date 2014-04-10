@@ -4,7 +4,9 @@
 <script>
     var socket;
     if (window.WebSocket) {
-        socket = new WebSocket("ws://data.goodow.com:8080/eventbus/websocket");
+        var protocol = location.protocol.lastIndexOf('s:') == location.protocol.length -2 ? "wss:" : "ws:";
+        var port = location.port ? (':' + location.port) : '';
+        socket = new WebSocket(protocol + '//' + location.hostname + port + "/eventbus/websocket");
         socket.onmessage = function(event) {
             alert("Received data from websocket: " + event.data);
         }

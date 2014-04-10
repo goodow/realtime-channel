@@ -76,20 +76,20 @@
 
 <script>
 
-  var eb = null;
+  var bus = null;
 
   function publish(address,  message) {
-    if (eb) {
+    if (bus) {
       var json = {text: message};
-      eb.publish(address, 123.2);
+      bus.publish(address, json);
       $('#sent').append($("<code>").text("Address:" + address + " Message:" + message));
       $('#sent').append($("</code><br>"));
     }
   }
 
   function subscribe(address) {
-    if (eb) {
-      eb.registerHandler(address, function(msg, replyTo) {
+    if (bus) {
+      bus.registerHandler(address, function(msg, replyTo) {
         $('#received').append("Address:" + address + " Message:" + msg + "<br>");
       });
       $('#subscribed').append($("<code>").text("Address:" + address));
@@ -98,26 +98,23 @@
   }
 
   function closeConn() {
-    if (eb) {
-      eb.close();
+    if (bus) {
+      bus.close();
     }
   }
 
   function openConn() {
-    if (!eb) {
-      eb = new vertx.EventBus("http://data.goodow.com:8080/eventbus");
+    if (!bus) {
+      var port = location.port ? (':' + location.port) : '';
+      bus = new vertx.EventBus(location.protocol + '//' + location.hostname + port + "/eventbus");
 
-      eb.onopen = function(e) {
+      bus.onopen = function() {
         $("#status_info").text("Connected");
       };
 
-      eb.onclose = function(e) {
+      bus.onclose = function() {
         $("#status_info").text("Not connected");
-        eb = null;
-      };
-      
-      eb.onerror = function(e) {
-    	console.log(e);
+        bus = null;
       };
     }
   }
