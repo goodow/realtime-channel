@@ -40,15 +40,13 @@ public class EventBusTest extends TestVerticle {
   @Override
   public void start() {
     initialize();
-
     VertxPlatform.register(vertx);
 
-    org.vertx.java.core.json.JsonObject config =
-        new org.vertx.java.core.json.JsonObject().putNumber("port", 8080).putBoolean(
-            "static_files", false);
+    JsonObject config = Json.createObject().set("port", 8080).set("static_files", false);
     // Deploy the module - the System property `vertx.modulename` will contain the name of the
     // module so you don't have to hardecode it in your tests
-    container.deployModule(System.getProperty("vertx.modulename"), config,
+    container.deployModule(System.getProperty("vertx.modulename"),
+        new org.vertx.java.core.json.JsonObject(config.toJsonString()),
         new AsyncResultHandler<String>() {
           @Override
           public void handle(AsyncResult<String> asyncResult) {
