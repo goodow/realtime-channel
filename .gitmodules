@@ -1,0 +1,9 @@
+[submodule "GDChannel"]
+  path = GDChannel
+  url = https://github.com/goodow/GDChannel.git
+[submodule "bower-realtime-channel"]
+  path = bower-realtime-channel
+  url = https://github.com/goodow/bower-realtime-channel.git
+[submodule "realtime-android"]
+  path = realtime-android
+  url = https://github.com/goodow/realtime-android.git
