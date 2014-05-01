@@ -1,14 +1,22 @@
 language: java
+
 before_install:
-  - wget -P target/travis https://raw.githubusercontent.com/goodow/maven/master/settings.xml
-  - npm install -g bower
-  - bower install
+- git config --global user.name "Goodow Dev"
+- git config --global user.email "dev@goodow.com"
+- cd bower-realtime-channel && git remote set-url origin "https://${GH_TOKEN}@github.com/goodow/bower-realtime-channel.git" && cd ..
+- wget -P target/travis https://raw.githubusercontent.com/goodow/maven/master/settings.xml
+- npm install -g bower
+- bower install
 
-after_success: '[ ${TRAVIS_PULL_REQUEST} = ''false'' ]
-  && mvn deploy -Psonatype-oss-release -Dgpg.skip=true --settings target/travis/settings.xml
-  || mvn verify --settings target/travis/settings.xml'
+after_script:
+- ./gwt-compile.sh
+- cd bower-realtime-channel && git commit -a -m "goodow/realtime-channel@${TRAVIS_COMMIT}" && git push origin HEAD:master && cd ..
 
+after_success:
+- '[ ${TRAVIS_PULL_REQUEST} = ''false'' ] && mvn deploy -Psonatype-oss-release -Dgpg.skip=true
+  --settings target/travis/settings.xml || mvn verify --settings target/travis/settings.xml'
 env:
   global:
-    - secure: b4X3MJYGJSwOWsGzDHzuh5+cfigEnPHEipg9yn2TFNYQNshQV5v4INxLBXfEGioEdtjcU7RzU9q8VkyCvF/hgEEWZZLQwy+OXMh8l849DO82ywZ9gq584tuu3zaADWKuxSyONW34OEdrdeS66Z0+iM3/8WFlWuYATbpPmSFhwJI=
-    - secure: Boxz3nNJvOjgcM2ivSSwlBkXQT69KRjI8+KbdmTG80OKfbmoOksHHfUCPainYYUSgcN+U3i8+pG3K61/rrP08RbBKKQO6LKdHZXXq38UE5hdcE6XPBB7DDb7x2wM1YkX+WA0dhw0wTbZGCRxZNeaVhbDSyJkkEr2x6ElEyYi5jE=
+  - secure: b4X3MJYGJSwOWsGzDHzuh5+cfigEnPHEipg9yn2TFNYQNshQV5v4INxLBXfEGioEdtjcU7RzU9q8VkyCvF/hgEEWZZLQwy+OXMh8l849DO82ywZ9gq584tuu3zaADWKuxSyONW34OEdrdeS66Z0+iM3/8WFlWuYATbpPmSFhwJI=
+  - secure: Boxz3nNJvOjgcM2ivSSwlBkXQT69KRjI8+KbdmTG80OKfbmoOksHHfUCPainYYUSgcN+U3i8+pG3K61/rrP08RbBKKQO6LKdHZXXq38UE5hdcE6XPBB7DDb7x2wM1YkX+WA0dhw0wTbZGCRxZNeaVhbDSyJkkEr2x6ElEyYi5jE=
+  - secure: at0JGJV0C2Qsa/pqNfHa8ulDGvvkQB68EgrUBPqr5g6haluJJB0UrQyvon9PVQ6N1f8w86LPCLPMjnDFNRaHRMxiWiY0mTzkSv/KlgPAr/XQBo7+ypUZ5FOJ6yD2dFmnQzjZTLn1aX+gaE5JRaAkHm3VCSuqDyds3ISy+T0S0Qo=

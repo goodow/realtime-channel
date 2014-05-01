@@ -2,12 +2,12 @@
 .PHONY: default clean translate link
 
 include ../resources/make/common.mk
-# J2OBJC_DIST = ../GDChannel/Project/Pods/J2ObjC/dist
+# J2OBJC_DIST = GDChannel/Project/Pods/J2ObjC/dist
 
-CHANNEL_GEN_DIR = ../GDChannel/Classes/generated
+CHANNEL_GEN_DIR = GDChannel/Classes/generated
 MAIN_SOURCES = $(subst $(MAIN_SRC_DIR)/,,$(shell find $(MAIN_SRC_DIR) -name *.java ! -path "*/html/*" ! -path "*/server/*"))
 MAIN_GEN_SOURCES = $(MAIN_SOURCES:%.java=$(CHANNEL_GEN_DIR)/%.m)
-OVERRIDE_GEN_DIR = ../GDChannel/Classes/override
+OVERRIDE_GEN_DIR = GDChannel/Classes/override
 MAIN_OBJECTS = $(MAIN_SOURCES:%.java=$(BUILD_DIR)/main/%.o)
 SUPPORT_LIB = $(BUILD_DIR)/libGDChannel.a
 
