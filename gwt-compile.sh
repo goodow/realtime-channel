@@ -1,4 +1,7 @@
-mvn clean compile gwt:compile -Dgwt.module=com.goodow.realtime.channel.ChannelProd \
+#!/bin/bash
+set -ev
+
+mvn compile gwt:compile -Dgwt.module=com.goodow.realtime.channel.ChannelProd \
     -Dgwt.disableCastChecking=true -Dgwt.disableClassMetadata=true \
     -Dgwt.compiler.optimizationLevel=9 -Dgwt.compiler.enableClosureCompiler=true
 # -Dgwt.draftCompile=true -Dgwt.style=DETAILED -Dgwt.compiler.compileReport=true

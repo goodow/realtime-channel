@@ -1,7 +1,7 @@
 {
   "name": "realtime-channel",
   "devDependencies": {
-    "realtime-channel": "0.5.5",
+    "realtime-channel": "master",
     "vertxbus": "v2.1RC3"
   }
 }
