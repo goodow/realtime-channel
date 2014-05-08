@@ -103,22 +103,22 @@ public class ReliableBus extends BusProxy {
   }
 
   protected void catchup(final String address, double currentSequence) {
-    delegate.send(address.substring(0, address.lastIndexOf(":")) + ".ack", Json.createObject().set(
-        "id", address.substring(address.lastIndexOf(":") + 1)).set(SEQUENCE_NUMBER,
-        currentSequence + 1), new Handler<Message<JsonArray>>() {
-      @SuppressWarnings({"rawtypes", "unchecked"})
-      @Override
-      public void handle(Message<JsonArray> message) {
-        final String replyAddress = message.replyAddress();
-        message.body().forEach(new JsonArray.ListIterator() {
+    delegate.send(address.substring(0, address.lastIndexOf(":")) + ".ops", Json.createObject().set(
+        "id", address.substring(address.lastIndexOf(":") + 1)).set("from", currentSequence + 1),
+        new Handler<Message<JsonArray>>() {
+          @SuppressWarnings({"rawtypes", "unchecked"})
           @Override
-          public void call(int index, Object value) {
-            onReceiveMessage(new DefaultMessage(false, ReliableBus.this, address, replyAddress,
-                value));
+          public void handle(Message<JsonArray> message) {
+            final String replyAddress = message.replyAddress();
+            message.body().forEach(new JsonArray.ListIterator() {
+              @Override
+              public void call(int index, Object value) {
+                onReceiveMessage(new DefaultMessage(false, ReliableBus.this, address, replyAddress,
+                    value));
+              }
+            });
           }
         });
-      }
-    });
   }
 
   protected double getSequenceNumber(String address, Object body) {
