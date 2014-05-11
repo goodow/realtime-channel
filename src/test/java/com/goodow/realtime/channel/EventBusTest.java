@@ -42,11 +42,9 @@ public class EventBusTest extends TestVerticle {
     initialize();
     VertxPlatform.register(vertx);
 
-    JsonObject config = Json.createObject().set("port", 8080);
     // Deploy the module - the System property `vertx.modulename` will contain the name of the
     // module so you don't have to hardecode it in your tests
     container.deployModule(System.getProperty("vertx.modulename"),
-        new org.vertx.java.core.json.JsonObject(config.toJsonString()),
         new AsyncResultHandler<String>() {
           @Override
           public void handle(AsyncResult<String> asyncResult) {
@@ -57,7 +55,7 @@ public class EventBusTest extends TestVerticle {
 
             // If deployed correctly then start the tests!
             bus =
-                new ReconnectBus("ws://localhost:8080/eventbus/websocket", Json.createObject().set(
+                new ReconnectBus("ws://localhost:1986/channel/websocket", Json.createObject().set(
                     SimpleBus.MODE_MIX, true));
 
             startTests();

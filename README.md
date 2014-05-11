@@ -16,3 +16,5 @@ See: https://github.com/goodow/GDChannel
 
 ### For javascript: good.channel
 See: https://github.com/goodow/bower-realtime-channel
+
+You can try out the Goodow Realtime Channel API Playground on its [live instance](http://realtimeplayground.goodow.com/bus.html).

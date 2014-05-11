@@ -36,10 +36,10 @@ public class ChannelVerticle extends BusModBase {
         getOptionalArrayConfig("outbound_permitted", new JsonArray().add(new JsonObject()));
 
     sjsServer.bridge(getOptionalObjectConfig("sjs_config", new JsonObject().putString("prefix",
-        "/eventbus")), inboundPermitted, outboundPermitted, getOptionalObjectConfig(
-        "bridge_config", new JsonObject()));
+        "/channel")), inboundPermitted, outboundPermitted, getOptionalObjectConfig("bridge_config",
+        new JsonObject()));
 
-    server.listen(getOptionalIntConfig("port", 8080), getOptionalStringConfig("host", "0.0.0.0"),
+    server.listen(getOptionalIntConfig("port", 1986), getOptionalStringConfig("host", "0.0.0.0"),
         new AsyncResultHandler<HttpServer>() {
           @Override
           public void handle(AsyncResult<HttpServer> ar) {
