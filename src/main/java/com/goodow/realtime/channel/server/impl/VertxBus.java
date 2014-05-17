@@ -11,12 +11,13 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.goodow.realtime.channel.server;
+package com.goodow.realtime.channel.server.impl;
 
 import com.goodow.realtime.channel.Bus;
 import com.goodow.realtime.channel.BusHook;
 import com.goodow.realtime.channel.Message;
 import com.goodow.realtime.channel.State;
+import com.goodow.realtime.channel.impl.SimpleBus;
 import com.goodow.realtime.core.Handler;
 import com.goodow.realtime.core.HandlerRegistration;
 import com.goodow.realtime.json.impl.JreJsonArray;
@@ -33,18 +34,8 @@ import java.util.logging.Logger;
 public class VertxBus implements Bus {
   private static final Logger log = Logger.getLogger(VertxBus.class.getName());
 
-  static Object unwrap(Object realtimeMessage) {
-    if (realtimeMessage instanceof JreJsonObject) {
-      return new JsonObject(((JreJsonObject) realtimeMessage).toNative());
-    } else if (realtimeMessage instanceof JreJsonArray) {
-      return new JsonArray(((JreJsonArray) realtimeMessage).toNative());
-    } else {
-      return realtimeMessage;
-    }
-  }
-
   @SuppressWarnings("unchecked")
-  static Object wrap(Object vertxMessage) {
+  static Object unwrapMsg(Object vertxMessage) {
     if (vertxMessage instanceof JsonObject) {
       return new JreJsonObject(((JsonObject) vertxMessage).toMap());
     } else if (vertxMessage instanceof JsonArray) {
@@ -54,6 +45,17 @@ public class VertxBus implements Bus {
     }
   }
 
+  static Object wrapMsg(Object realtimeMessage) {
+    if (realtimeMessage instanceof JreJsonObject) {
+      return new JsonObject(((JreJsonObject) realtimeMessage).toNative());
+    } else if (realtimeMessage instanceof JreJsonArray) {
+      return new JsonArray(((JreJsonArray) realtimeMessage).toNative());
+    } else {
+      return realtimeMessage;
+    }
+  }
+
+  private final Bus localBus;
   private final EventBus eb;
   private State state;
   private BusHook hook;
@@ -61,6 +63,7 @@ public class VertxBus implements Bus {
   public VertxBus(EventBus eb) {
     this.eb = eb;
     state = State.OPEN;
+    localBus = new SimpleBus();
   }
 
   @Override
@@ -91,9 +94,14 @@ public class VertxBus implements Bus {
   @Override
   public VertxBus publish(String address, Object msg) {
     if (hook == null || hook.handleSendOrPub(false, address, msg, null)) {
-      eb.publish(address, unwrap(msg));
+      eb.publish(address, wrapMsg(msg));
     }
     return this;
+  }
+
+  @Override
+  public Bus publishLocal(String address, Object msg) {
+    return localBus.publishLocal(address, msg);
   }
 
   @SuppressWarnings("rawtypes")
@@ -104,16 +112,7 @@ public class VertxBus implements Bus {
       return HandlerRegistration.EMPTY;
     }
     final org.vertx.java.core.Handler<org.vertx.java.core.eventbus.Message> vertxHandler =
-        new org.vertx.java.core.Handler<org.vertx.java.core.eventbus.Message>() {
-          @SuppressWarnings("unchecked")
-          @Override
-          public void handle(org.vertx.java.core.eventbus.Message message) {
-            VertxMessage event = new VertxMessage(VertxBus.this, message);
-            if (hook == null || hook.handleReceiveMessage(event)) {
-              ((Handler<Message>) handler).handle(event);
-            }
-          }
-        };
+        wrapHandler(handler);
     eb.registerHandler(address, vertxHandler, new org.vertx.java.core.Handler<AsyncResult<Void>>() {
       @Override
       public void handle(AsyncResult<Void> ar) {
@@ -140,25 +139,24 @@ public class VertxBus implements Bus {
     };
   }
 
+  @SuppressWarnings("rawtypes")
+  @Override
+  public HandlerRegistration registerLocalHandler(final String address,
+      Handler<? extends Message> handler) {
+    return localBus.registerLocalHandler(address, handler);
+  }
+
   @Override
   public <T> VertxBus send(String address, Object msg, final Handler<Message<T>> replyHandler) {
     if (hook == null || hook.handleSendOrPub(true, address, msg, replyHandler)) {
-      @SuppressWarnings("rawtypes")
-      org.vertx.java.core.Handler<org.vertx.java.core.eventbus.Message> handler =
-          replyHandler == null ? null
-              : new org.vertx.java.core.Handler<org.vertx.java.core.eventbus.Message>() {
-                @SuppressWarnings("unchecked")
-                @Override
-                public void handle(org.vertx.java.core.eventbus.Message message) {
-                  VertxMessage<T> event = new VertxMessage<T>(VertxBus.this, message);
-                  if (hook == null || hook.handleReceiveMessage(event)) {
-                    replyHandler.handle(event);
-                  }
-                }
-              };
-      eb.send(address, unwrap(msg), handler);
+      eb.send(address, wrapMsg(msg), wrapHandler(replyHandler));
     }
     return this;
+  }
+
+  @Override
+  public <T> Bus sendLocal(String address, Object msg, Handler<Message<T>> replyHandler) {
+    return localBus.sendLocal(address, msg, replyHandler);
   }
 
   @Override
@@ -172,5 +170,21 @@ public class VertxBus implements Bus {
 
   BusHook getHook() {
     return hook;
+  }
+
+  @SuppressWarnings("rawtypes")
+  private org.vertx.java.core.Handler<org.vertx.java.core.eventbus.Message> wrapHandler(
+      final Handler<? extends Message> handler) {
+    return handler == null ? null
+        : new org.vertx.java.core.Handler<org.vertx.java.core.eventbus.Message>() {
+          @SuppressWarnings("unchecked")
+          @Override
+          public void handle(org.vertx.java.core.eventbus.Message message) {
+            VertxMessage event = new VertxMessage(VertxBus.this, message);
+            if (hook == null || hook.handleReceiveMessage(event)) {
+              ((Handler<Message>) handler).handle(event);
+            }
+          }
+        };
   }
 }

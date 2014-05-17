@@ -11,7 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.goodow.realtime.channel.server;
+package com.goodow.realtime.channel.server.impl;
 
 import com.goodow.realtime.channel.BusHook;
 import com.goodow.realtime.channel.Message;
@@ -34,7 +34,7 @@ class VertxMessage<T> implements Message<T> {
   @SuppressWarnings("unchecked")
   @Override
   public T body() {
-    return (T) VertxBus.wrap(delegate.body());
+    return (T) VertxBus.unwrapMsg(delegate.body());
   }
 
   @Override
@@ -64,7 +64,7 @@ class VertxMessage<T> implements Message<T> {
                   }
                 }
               };
-      delegate.reply(VertxBus.unwrap(msg), handler);
+      delegate.reply(VertxBus.wrapMsg(msg), handler);
     }
   }
 

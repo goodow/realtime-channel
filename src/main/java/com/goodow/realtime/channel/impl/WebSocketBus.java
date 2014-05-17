@@ -13,6 +13,7 @@
  */
 package com.goodow.realtime.channel.impl;
 
+import com.goodow.realtime.channel.Bus;
 import com.goodow.realtime.channel.Message;
 import com.goodow.realtime.channel.State;
 import com.goodow.realtime.core.Handler;
@@ -21,33 +22,32 @@ import com.goodow.realtime.core.WebSocket;
 import com.goodow.realtime.json.Json;
 import com.goodow.realtime.json.JsonObject;
 
-import java.util.logging.Logger;
-
 @SuppressWarnings("rawtypes")
 public class WebSocketBus extends SimpleBus {
   public static final String PING_INTERVAL = "vertxbus_ping_interval";
+  public static final String AUTH_ADDRESS = "auth_address";
+
   protected static final String BODY = "body";
   protected static final String ADDRESS = "address";
   protected static final String REPLY_ADDRESS = "replyAddress";
   protected static final String TYPE = "type";
 
-  private static final Logger log = Logger.getLogger(WebSocketBus.class.getName());
-  protected WebSocket webSocket;
-  protected String url;
   private final WebSocket.WebSocketHandler webSocketHandler;
+  String url;
+  WebSocket webSocket;
   private int pingInterval;
-  private String sessionID;
+  private String authAddress;
   private int pingTimerID = -1;
+  private String accessToken;
+  private String sid;
+  final JsonObject handlerCount = Json.createObject();
 
   public WebSocketBus(String url, JsonObject options) {
-    state = State.CONNECTING;
-
     webSocketHandler = new WebSocket.WebSocketHandler() {
       @Override
       public void onClose(JsonObject reason) {
-        state = State.CLOSED;
         Platform.scheduler().cancelTimer(pingTimerID);
-        doReceiveMessage(new DefaultMessage<JsonObject>(false, null, LOCAL_ON_CLOSE, null, reason));
+        publishLocal(ON_CLOSE, reason);
         if (hook != null) {
           hook.handlePostClose();
         }
@@ -55,8 +55,7 @@ public class WebSocketBus extends SimpleBus {
 
       @Override
       public void onError(String error) {
-        doReceiveMessage(new DefaultMessage<JsonObject>(false, null, LOCAL_ON_ERROR, null, Json
-            .createObject().set("message", error)));
+        publishLocal(ON_ERROR, Json.createObject().set("message", error));
       }
 
       @Override
@@ -64,14 +63,13 @@ public class WebSocketBus extends SimpleBus {
         JsonObject json = Json.<JsonObject> parse(msg);
         @SuppressWarnings({"unchecked"})
         DefaultMessage message =
-            new DefaultMessage(false, WebSocketBus.this, json.getString(ADDRESS), json
+            new DefaultMessage(false, false, WebSocketBus.this, json.getString(ADDRESS), json
                 .getString(REPLY_ADDRESS), json.get(BODY));
-        internalHandleReceiveMessage(message);
+        internalHandleReceiveMessage(false, message);
       }
 
       @Override
       public void onOpen() {
-        state = State.OPEN;
         // Send the first ping then send a ping every 5 seconds
         sendPing();
         pingTimerID = Platform.scheduler().schedulePeriodic(pingInterval, new Handler<Void>() {
@@ -83,7 +81,7 @@ public class WebSocketBus extends SimpleBus {
         if (hook != null) {
           hook.handleOpened();
         }
-        doReceiveMessage(new DefaultMessage<Void>(false, null, LOCAL_ON_OPEN, null, null));
+        publishLocal(ON_OPEN, null);
       }
     };
 
@@ -92,28 +90,35 @@ public class WebSocketBus extends SimpleBus {
 
   public void connect(String url, JsonObject options) {
     this.url = url;
-    setOptions(options);
     pingInterval =
         options == null || !options.has(PING_INTERVAL) ? 5 * 1000 : (int) options
             .getNumber(PING_INTERVAL);
+    authAddress =
+        options == null || !options.has(AUTH_ADDRESS) ? "realtime.auth" : options
+            .getString(AUTH_ADDRESS);
 
-    state = State.CONNECTING;
     webSocket = Platform.net().createWebSocket(url, options);
     webSocket.setListen(webSocketHandler);
   }
 
-  public void login(String username, String password, final Handler<JsonObject> replyHandler) {
-    JsonObject msg = Json.createObject().set("username", username).set("password", password);
-    final String addr = "vertx.basicauthmanager.login";
-    doSendOrPub(true, addr, msg, new Handler<Message<JsonObject>>() {
+  @Override
+  public State getReadyState() {
+    return webSocket.getReadyState();
+  }
+
+  public void login(String userId, String token, final Handler<JsonObject> replyHandler) {
+    JsonObject msg = Json.createObject().set("userId", userId).set("token", token);
+    send(authAddress + ".login", msg, new Handler<Message<JsonObject>>() {
       @Override
       public void handle(Message<JsonObject> msg) {
         JsonObject body = msg.body();
         if ("ok".equals(body.getString("status"))) {
-          sessionID = body.getString("sessionID");
+          accessToken = body.getString("access_token");
+          sid = body.getString("sid");
         }
         if (replyHandler != null) {
-          scheduleHandle(addr, replyHandler, body.remove("sessionID"));
+          body.remove("access_token");
+          scheduleHandle(authAddress + ".login", replyHandler, body);
         }
       }
     });
@@ -121,69 +126,81 @@ public class WebSocketBus extends SimpleBus {
 
   @Override
   protected void doClose() {
-    state = State.CLOSING;
     webSocket.close();
-    registerHandler(LOCAL_ON_CLOSE, new Handler<Message>() {
+    registerLocalHandler(Bus.ON_CLOSE, new Handler<Message<JsonObject>>() {
       @Override
-      public void handle(Message event) {
+      public void handle(Message<JsonObject> event) {
         clearHandlers();
+        handlerCount.clear();
       }
     });
   }
 
   @Override
-  protected boolean doRegisterHandler(String address, Handler<? extends Message> handler) {
-    boolean first = super.doRegisterHandler(address, handler);
-    if (first && !isLocalFork(address)
-        && (hook == null || hook.handlePreRegister(address, handler))) {
-      sendRegister(address);
+  protected boolean doRegisterHandler(boolean local, String address,
+      Handler<? extends Message> handler) {
+    boolean registered = super.doRegisterHandler(local, address, handler);
+    if (local || !registered || (hook != null && !hook.handlePreRegister(address, handler))) {
+      return false;
     }
-    return first;
+    if (handlerCount.has(address)) {
+      handlerCount.set(address, handlerCount.getNumber(address) + 1);
+      return false;
+    }
+    handlerCount.set(address, 1);
+    sendRegister(address);
+    return true;
   }
 
   @Override
-  protected <T> void doSendOrPub(boolean send, String address, Object msg,
+  protected <T> void doSendOrPub(boolean local, boolean send, String address, Object msg,
       Handler<Message<T>> replyHandler) {
     checkNotNull(ADDRESS, address);
-    if (isLocalFork(address)) {
-      super.doSendOrPub(send, address, msg, replyHandler);
+    if (local) {
+      super.doSendOrPub(local, send, address, msg, replyHandler);
       return;
-    }
-    if (state != State.OPEN) {
-      throw new IllegalStateException("INVALID_STATE_ERR");
     }
     JsonObject envelope = Json.createObject().set(TYPE, send ? "send" : "publish");
     envelope.set(ADDRESS, address).set(BODY, msg);
-    if (sessionID != null) {
-      envelope.set("sessionID", sessionID);
+    if (accessToken != null) {
+      envelope.set("sessionID", accessToken);
+    }
+    if (sid != null) {
+      envelope.set("sid", accessToken);
     }
     if (replyHandler != null) {
       String replyAddress = makeUUID();
       envelope.set(REPLY_ADDRESS, replyAddress);
       replyHandlers.set(replyAddress, replyHandler);
     }
-    send(envelope.toJsonString());
+    send(envelope);
   }
 
   @Override
-  protected boolean doUnregisterHandler(String address, Handler<? extends Message> handler) {
-    boolean last = super.doUnregisterHandler(address, handler);
-    if (last && !isLocalFork(address) && (hook == null || hook.handleUnregister(address))) {
-      sendUnregister(address);
+  protected boolean doUnregisterHandler(boolean local, String address,
+      Handler<? extends Message> handler) {
+    boolean unregistered = super.doUnregisterHandler(local, address, handler);
+    if (local || !unregistered || (hook != null && !hook.handleUnregister(address))) {
+      return false;
     }
-    return last;
+    handlerCount.set(address, handlerCount.getNumber(address) - 1);
+    if (handlerCount.getNumber(address) == 0) {
+      handlerCount.remove(address);
+      sendUnregister(address);
+      return true;
+    }
+    return false;
   }
 
-  protected void send(String msg) {
-    if (state == State.OPEN) {
-      webSocket.send(msg);
-    } else {
-      log.warning("WebSocket is in " + state + " state. Cannot send: " + msg);
+  protected void send(JsonObject msg) {
+    if (getReadyState() != State.OPEN) {
+      throw new IllegalStateException("INVALID_STATE_ERR");
     }
+    webSocket.send(msg.toJsonString());
   }
 
   protected void sendPing() {
-    send(Json.createObject().set(TYPE, "ping").toJsonString());
+    send(Json.createObject().set(TYPE, "ping"));
   }
 
   /*
@@ -192,7 +209,7 @@ public class WebSocketBus extends SimpleBus {
   protected void sendRegister(String address) {
     assert address != null : "address shouldn't be null";
     JsonObject msg = Json.createObject().set(TYPE, "register").set(ADDRESS, address);
-    send(msg.toJsonString());
+    send(msg);
   }
 
   /*
@@ -200,6 +217,6 @@ public class WebSocketBus extends SimpleBus {
    */
   protected void sendUnregister(String address) {
     JsonObject msg = Json.createObject().set(TYPE, "unregister").set(ADDRESS, address);
-    send(msg.toJsonString());
+    send(msg);
   }
 }

@@ -67,6 +67,10 @@ abstract class ChannelOverlay implements ExportOverlay<ReconnectBus> {
       this.g.@com.goodow.realtime.channel.Bus::send(Ljava/lang/String;Ljava/lang/Object;Lcom/goodow/realtime/core/Handler;)
           (address, msg, replyHandler);
     };
+    _.sendLocal = function(address, msg, replyHandler) {
+      this.g.@com.goodow.realtime.channel.Bus::sendLocal(Ljava/lang/String;Ljava/lang/Object;Lcom/goodow/realtime/core/Handler;)
+          (address, msg, replyHandler);
+    };
     
     _ = $wnd.good.channel.Message.prototype;
     _.reply = function(msg, replyHandler) {
@@ -93,9 +97,10 @@ abstract class ChannelOverlay implements ExportOverlay<ReconnectBus> {
 
   public abstract State getReadyState();
 
-  public abstract void login(String username, String password, Handler<JsonObject> replyHandler);
+  public abstract void login(String userId, String token, Handler<JsonObject> replyHandler);
 
   public abstract Bus publish(String address, Object msg);
+  public abstract Bus publishLocal(String address, Object msg);
 
   public abstract void reconnect();
 
@@ -103,4 +108,6 @@ abstract class ChannelOverlay implements ExportOverlay<ReconnectBus> {
 
   @SuppressWarnings("rawtypes")
   public abstract HandlerRegistration registerHandler(String address, Handler<? extends Message> handler);
+  @SuppressWarnings("rawtypes")
+  public abstract HandlerRegistration registerLocalHandler(String address, Handler<? extends Message> handler);
 }

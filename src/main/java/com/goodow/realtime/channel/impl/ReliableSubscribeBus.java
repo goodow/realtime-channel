@@ -13,10 +13,9 @@
  */
 package com.goodow.realtime.channel.impl;
 
+import com.goodow.realtime.channel.Bus;
 import com.goodow.realtime.channel.BusHook;
-import com.goodow.realtime.channel.BusHook.BusHookProxy;
 import com.goodow.realtime.channel.Message;
-import com.goodow.realtime.channel.impl.SimpleBus.BusProxy;
 import com.goodow.realtime.core.Handler;
 import com.goodow.realtime.core.Platform;
 import com.goodow.realtime.json.Json;
@@ -30,10 +29,14 @@ import java.util.logging.Logger;
  * Converts a stream of possibly-missing, possibly-unordered, possibly-duplicated messages into a
  * stream of in-order, consecutive, no-dup messages.
  */
-public class ReliableBus extends BusProxy {
-  public static final String SEQUENCE_NUMBER = "_seq";
+public class ReliableSubscribeBus extends BusProxy {
+  public static final String SEQUENCE_NUMBER = "sequence_number_key";
+  public static final String PUBLISH_CHANNEL = "publish_channel";
   public static final String ACKNOWLEDGE_DELAY_MILLIS = "acknowledgeDelayMillis";
-  private static final Logger log = Logger.getLogger(ReliableBus.class.getName());
+
+  private static final Logger log = Logger.getLogger(ReliableSubscribeBus.class.getName());
+  private final String sequenceNumberKey;
+  private final String publishChannel;
   /**
    * Delay acknowledgment in case we receive operations in the meantime.
    */
@@ -44,11 +47,15 @@ public class ReliableBus extends BusProxy {
   private final JsonObject acknowledgeScheduled;
   private final JsonObject acknowledgeNumbers;
 
-  public ReliableBus(SimpleBus delegate) {
+  public ReliableSubscribeBus(Bus delegate, JsonObject options) {
     super(delegate);
-    JsonObject options = delegate.getOptions();
+    sequenceNumberKey =
+        options == null || !options.has(SEQUENCE_NUMBER) ? "v" : options.getString(SEQUENCE_NUMBER);
+    publishChannel =
+        options == null || !options.has(PUBLISH_CHANNEL) ? "realtime.store" : options
+            .getString(PUBLISH_CHANNEL);
     acknowledgeDelayMillis =
-        (options == null || !options.has(ACKNOWLEDGE_DELAY_MILLIS)) ? 3 * 1000 : (int) options
+        options == null || !options.has(ACKNOWLEDGE_DELAY_MILLIS) ? 3 * 1000 : (int) options
             .getNumber(ACKNOWLEDGE_DELAY_MILLIS);
     pendings = Json.createObject();
     currentSequences = Json.createObject();
@@ -57,15 +64,6 @@ public class ReliableBus extends BusProxy {
     acknowledgeNumbers = Json.createObject();
 
     delegate.setHook(new BusHookProxy() {
-      @Override
-      public void handlePostClose() {
-        pendings.clear();
-        currentSequences.clear();
-        knownHeadSequences.clear();
-        acknowledgeScheduled.clear();
-        acknowledgeNumbers.clear();
-      }
-
       @Override
       public boolean handleReceiveMessage(Message<?> message) {
         if (hook != null && !hook.handleReceiveMessage(message)) {
@@ -76,7 +74,7 @@ public class ReliableBus extends BusProxy {
 
       @Override
       public boolean handleUnregister(String address) {
-        if (requireReliable(address)) {
+        if (needProcess(address)) {
           pendings.remove(address);
           currentSequences.remove(address);
           knownHeadSequences.remove(address);
@@ -93,6 +91,16 @@ public class ReliableBus extends BusProxy {
     });
   }
 
+  @Override
+  public void close() {
+    super.close();
+    pendings.clear();
+    currentSequences.clear();
+    knownHeadSequences.clear();
+    acknowledgeScheduled.clear();
+    acknowledgeNumbers.clear();
+  }
+
   public void synchronizeSequenceNumber(String address, double initialSequenceNumber) {
     assert !currentSequences.has(address) && !knownHeadSequences.has(address)
         && !pendings.has(address);
@@ -103,8 +111,8 @@ public class ReliableBus extends BusProxy {
   }
 
   protected void catchup(final String address, double currentSequence) {
-    delegate.send(address.substring(0, address.lastIndexOf(":")) + ".ops", Json.createObject().set(
-        "id", address.substring(address.lastIndexOf(":") + 1)).set("from", currentSequence + 1),
+    delegate.send(publishChannel + ".ops", Json.createObject().set("id",
+        address.substring(address.lastIndexOf(":") + 1)).set("from", currentSequence + 1),
         new Handler<Message<JsonArray>>() {
           @SuppressWarnings({"rawtypes", "unchecked"})
           @Override
@@ -113,8 +121,8 @@ public class ReliableBus extends BusProxy {
             message.body().forEach(new JsonArray.ListIterator() {
               @Override
               public void call(int index, Object value) {
-                onReceiveMessage(new DefaultMessage(false, ReliableBus.this, address, replyAddress,
-                    value));
+                onReceiveMessage(new DefaultMessage(false, false, ReliableSubscribeBus.this,
+                    address, replyAddress, value));
               }
             });
           }
@@ -122,13 +130,17 @@ public class ReliableBus extends BusProxy {
   }
 
   protected double getSequenceNumber(String address, Object body) {
-    return ((JsonObject) body).getNumber(SEQUENCE_NUMBER);
+    return ((JsonObject) body).getNumber(sequenceNumberKey);
+  }
+
+  protected boolean needProcess(String address) {
+    return address.startsWith(publishChannel + ":");
   }
 
   protected boolean onReceiveMessage(Message<?> message) {
     String address = message.address();
     Object body = message.body();
-    if (!requireReliable(address)) {
+    if (!needProcess(address)) {
       return true;
     }
     double sequence = getSequenceNumber(address, body);
@@ -165,7 +177,7 @@ public class ReliableBus extends BusProxy {
     assert sequence == currentSequence + 1 : "other cases should have been caught";
     String next;
     while (true) {
-      delegate.doReceiveMessage(message);
+      delegate.publishLocal(message.address(), message.body());
       currentSequences.set(address, ++currentSequence);
       next = currentSequence + 1 + "";
       message = pending.get(next);
@@ -176,10 +188,6 @@ public class ReliableBus extends BusProxy {
       }
     }
     assert !pending.has(next);
-    return false;
-  }
-
-  protected boolean requireReliable(String address) {
     return false;
   }
 

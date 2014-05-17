@@ -18,7 +18,8 @@ import java.util.Random;
 public class IdGenerator {
 
   /** valid characters. */
-  static final char[] ALPHABET = "abcdefghijklmnopqrstuvwxyz0123456789".toCharArray();
+  static final char[] WEB64_ALPHABET =
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_".toCharArray();
   static final char[] NUMBERS = "0123456789".toCharArray();
 
   private final Random random;
@@ -37,7 +38,7 @@ public class IdGenerator {
   public String next(int length) {
     StringBuilder result = new StringBuilder(length);
     for (int i = 0; i < length; i++) {
-      result.append(ALPHABET[random.nextInt(36)]);
+      result.append(WEB64_ALPHABET[random.nextInt(64)]);
     }
     return result.toString();
   }

@@ -15,4 +15,5 @@ package com.goodow.realtime.channel;
 
 public enum State {
   CONNECTING, OPEN, CLOSING, CLOSED;
+  public static final State values[] = values();
 }

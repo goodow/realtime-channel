@@ -13,6 +13,7 @@
  */
 package com.goodow.realtime.core;
 
+import com.goodow.realtime.channel.State;
 import com.goodow.realtime.json.JsonObject;
 
 public interface WebSocket {
@@ -47,6 +48,8 @@ public interface WebSocket {
    * new socket.
    */
   void close();
+
+  State getReadyState();
 
   void send(String data);
 

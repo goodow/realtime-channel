@@ -11,8 +11,9 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.goodow.realtime.channel.server;
+package com.goodow.realtime.channel.server.impl;
 
+import com.goodow.realtime.channel.State;
 import com.goodow.realtime.core.WebSocket;
 import com.goodow.realtime.json.Json;
 
@@ -31,8 +32,10 @@ class VertxWebSocket implements WebSocket {
 
   private org.vertx.java.core.http.WebSocket socket;
   private WebSocketHandler eventHandler;
+  private State state;
 
   VertxWebSocket(Vertx vertx, String uri) {
+    state = State.CONNECTING;
     URI serverUri = null;
     try {
       serverUri = new URI(uri);
@@ -46,6 +49,7 @@ class VertxWebSocket implements WebSocket {
     client.connectWebsocket(serverUri.getPath(), new Handler<org.vertx.java.core.http.WebSocket>() {
       @Override
       public void handle(org.vertx.java.core.http.WebSocket ws) {
+        state = State.OPEN;
         socket = ws;
         log.info("Websocket Connected");
 
@@ -53,6 +57,7 @@ class VertxWebSocket implements WebSocket {
           @Override
           public void handle(Void event) {
             log.info("WebSocket closed");
+            state = State.CLOSED;
             if (eventHandler == null) {
               return;
             }
@@ -76,6 +81,7 @@ class VertxWebSocket implements WebSocket {
           @Override
           public void handle(Throwable e) {
             log.log(Level.SEVERE, "Websocket Failed With Exception", e);
+            state = State.CLOSING;
             if (eventHandler == null) {
               return;
             }
@@ -93,9 +99,15 @@ class VertxWebSocket implements WebSocket {
 
   @Override
   public void close() {
+    state = State.CLOSING;
     if (socket != null) {
       socket.close();
     }
+  }
+
+  @Override
+  public State getReadyState() {
+    return state;
   }
 
   @Override

@@ -23,12 +23,13 @@ import com.goodow.realtime.json.JsonArray;
 public class HandlerRegistrations implements HandlerRegistration {
   private JsonArray registrations;
 
-  public void add(HandlerRegistration registration) {
+  public HandlerRegistrations add(HandlerRegistration registration) {
     assert registration != null : "registration shouldn't be null";
     if (registrations == null) {
       registrations = Json.createArray();
     }
     registrations.push(registration);
+    return this;
   }
 
   @Override
@@ -52,10 +53,7 @@ public class HandlerRegistrations implements HandlerRegistration {
     return new HandlerRegistration() {
       @Override
       public void unregisterHandler() {
-        int idx = registrations.indexOf(registration);
-        if (idx != -1) {
-          registrations.remove(idx);
-        }
+        registrations.removeValue(registration);
         registration.unregisterHandler();
       }
     };

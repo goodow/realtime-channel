@@ -13,13 +13,14 @@
  */
 package com.goodow.realtime.html;
 
+import com.goodow.realtime.channel.State;
 import com.goodow.realtime.core.WebSocket;
 import com.goodow.realtime.json.JsonObject;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
 /**
- * ObjCWebSocket implementation of {@link WebSocket}.
+ * SockJS implementation of {@link WebSocket}.
  */
 final class SockJS extends JavaScriptObject implements WebSocket {
 
@@ -36,6 +37,11 @@ final class SockJS extends JavaScriptObject implements WebSocket {
     this.close();
   }-*/;
  
+  @Override
+  public State getReadyState() {
+    return State.values[nativeGetReadyState()];
+  }
+
   @Override
   public native void send(String data) /*-{
     this.send(data);
@@ -64,5 +70,10 @@ final class SockJS extends JavaScriptObject implements WebSocket {
       handler.@com.goodow.realtime.core.WebSocket.WebSocketHandler::onError(Ljava/lang/String;)(e);
     };
   }-*/;
+  
+  private native int nativeGetReadyState() /*-{
+    return this.readyState;
+  }-*/;
   // @formatter:on
+
 }

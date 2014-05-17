@@ -17,10 +17,9 @@ import com.goodow.realtime.core.Handler;
 import com.goodow.realtime.core.HandlerRegistration;
 
 public interface Bus {
-  String LOCAL = "@";
-  String LOCAL_ON_OPEN = LOCAL + "goodow.bus.onOpen";
-  String LOCAL_ON_CLOSE = LOCAL + "goodow.bus.onClose";
-  String LOCAL_ON_ERROR = LOCAL + "goodow.bus.onError";
+  String ON_OPEN = "@realtime.bus.onOpen";
+  String ON_CLOSE = "@realtime.bus.onClose";
+  String ON_ERROR = "@realtime.bus.onError";
 
   /**
    * Close the Bus and release all resources.
@@ -38,6 +37,14 @@ public interface Bus {
   Bus publish(String address, Object msg);
 
   /**
+   * Publish a local message
+   * 
+   * @param address The address to publish it to
+   * @param msg The message
+   */
+  Bus publishLocal(String address, Object msg);
+
+  /**
    * Registers a handler against the specified address
    * 
    * @param address The address to register it at
@@ -48,6 +55,16 @@ public interface Bus {
   HandlerRegistration registerHandler(String address, Handler<? extends Message> handler);
 
   /**
+   * Registers a local handler against the specified address. The handler info won't be propagated
+   * across the cluster
+   * 
+   * @param address The address to register it at
+   * @param handler The handler
+   */
+  @SuppressWarnings("rawtypes")
+  HandlerRegistration registerLocalHandler(String address, Handler<? extends Message> handler);
+
+  /**
    * Send a message
    * 
    * @param address The address to send it to
@@ -55,6 +72,15 @@ public interface Bus {
    * @param replyHandler Reply handler will be called when any reply from the recipient is received
    */
   <T> Bus send(String address, Object msg, Handler<Message<T>> replyHandler);
+
+  /**
+   * Send a local message
+   * 
+   * @param address The address to send it to
+   * @param msg The message
+   * @param replyHandler Reply handler will be called when any reply from the recipient is received
+   */
+  <T> Bus sendLocal(String address, Object msg, Handler<Message<T>> replyHandler);
 
   /**
    * Set a BusHook on the Bus

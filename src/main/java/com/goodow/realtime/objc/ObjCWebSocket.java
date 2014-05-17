@@ -13,6 +13,7 @@
  */
 package com.goodow.realtime.objc;
 
+import com.goodow.realtime.channel.State;
 import com.goodow.realtime.core.WebSocket;
 import com.goodow.realtime.json.JsonObject;
 
@@ -28,6 +29,9 @@ final class ObjCWebSocket implements WebSocket {
 
   @Override
   public native void close();
+
+  @Override
+  public native State getReadyState();
 
   @Override
   public native void send(String data);
