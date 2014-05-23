@@ -19,7 +19,7 @@ import com.goodow.realtime.channel.Message;
 import com.goodow.realtime.channel.State;
 import com.goodow.realtime.channel.util.IdGenerator;
 import com.goodow.realtime.core.Handler;
-import com.goodow.realtime.core.HandlerRegistration;
+import com.goodow.realtime.core.Registration;
 import com.goodow.realtime.core.Platform;
 import com.goodow.realtime.json.Json;
 import com.goodow.realtime.json.JsonArray;
@@ -62,7 +62,7 @@ public class SimpleBus implements Bus {
   }
 
   @Override
-  public SimpleBus publish(String address, Object msg) {
+  public Bus publish(String address, Object msg) {
     internalHandleSendOrPub(false, false, address, msg, null);
     return this;
   }
@@ -74,19 +74,19 @@ public class SimpleBus implements Bus {
   }
 
   @Override
-  public HandlerRegistration registerHandler(final String address,
+  public Registration registerHandler(final String address,
       final Handler<? extends Message> handler) {
     return registerHandlerImpl(false, address, handler);
   }
 
   @Override
-  public HandlerRegistration registerLocalHandler(final String address,
+  public Registration registerLocalHandler(final String address,
       final Handler<? extends Message> handler) {
     return registerHandlerImpl(true, address, handler);
   }
 
   @Override
-  public <T> SimpleBus send(String address, Object msg, Handler<Message<T>> replyHandler) {
+  public <T> Bus send(String address, Object msg, Handler<Message<T>> replyHandler) {
     internalHandleSendOrPub(false, true, address, msg, replyHandler);
     return this;
   }
@@ -98,7 +98,7 @@ public class SimpleBus implements Bus {
   }
 
   @Override
-  public SimpleBus setHook(BusHook hook) {
+  public Bus setHook(BusHook hook) {
     this.hook = hook;
     return this;
   }
@@ -216,12 +216,12 @@ public class SimpleBus implements Bus {
     }
   }
 
-  private HandlerRegistration registerHandlerImpl(final boolean local, final String address,
+  private Registration registerHandlerImpl(final boolean local, final String address,
       final Handler<? extends Message> handler) {
     doRegisterHandler(local, address, handler);
-    return new HandlerRegistration() {
+    return new Registration() {
       @Override
-      public void unregisterHandler() {
+      public void unregister() {
         doUnregisterHandler(local, address, handler);
       }
     };

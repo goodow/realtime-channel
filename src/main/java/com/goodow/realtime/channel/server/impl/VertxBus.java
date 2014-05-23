@@ -19,7 +19,7 @@ import com.goodow.realtime.channel.Message;
 import com.goodow.realtime.channel.State;
 import com.goodow.realtime.channel.impl.SimpleBus;
 import com.goodow.realtime.core.Handler;
-import com.goodow.realtime.core.HandlerRegistration;
+import com.goodow.realtime.core.Registration;
 import com.goodow.realtime.json.impl.JreJsonArray;
 import com.goodow.realtime.json.impl.JreJsonObject;
 
@@ -70,6 +70,7 @@ public class VertxBus implements Bus {
   public void close() {
     if (hook == null || hook.handlePreClose()) {
       state = State.CLOSING;
+      localBus.close();
       eb.close(new org.vertx.java.core.Handler<AsyncResult<Void>>() {
         @Override
         public void handle(AsyncResult<Void> ar) {
@@ -106,10 +107,10 @@ public class VertxBus implements Bus {
 
   @SuppressWarnings("rawtypes")
   @Override
-  public HandlerRegistration registerHandler(final String address,
+  public Registration registerHandler(final String address,
       final Handler<? extends Message> handler) {
     if (hook != null && !hook.handlePreRegister(address, handler)) {
-      return HandlerRegistration.EMPTY;
+      return Registration.EMPTY;
     }
     final org.vertx.java.core.Handler<org.vertx.java.core.eventbus.Message> vertxHandler =
         wrapHandler(handler);
@@ -121,9 +122,9 @@ public class VertxBus implements Bus {
         }
       }
     });
-    return new HandlerRegistration() {
+    return new Registration() {
       @Override
-      public void unregisterHandler() {
+      public void unregister() {
         if (hook == null || hook.handleUnregister(address)) {
           eb.unregisterHandler(address, vertxHandler,
               new org.vertx.java.core.Handler<AsyncResult<Void>>() {
@@ -141,7 +142,7 @@ public class VertxBus implements Bus {
 
   @SuppressWarnings("rawtypes")
   @Override
-  public HandlerRegistration registerLocalHandler(final String address,
+  public Registration registerLocalHandler(final String address,
       Handler<? extends Message> handler) {
     return localBus.registerLocalHandler(address, handler);
   }

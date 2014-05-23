@@ -17,13 +17,13 @@ import com.goodow.realtime.json.Json;
 import com.goodow.realtime.json.JsonArray;
 
 /**
- * A {@link HandlerRegistration} that will call {@link HandlerRegistration#unregisterHandler()} on
- * all added handlers if {@link HandlerRegistration#unregisterHandler()} is called on this object.
+ * A {@link Registration} that will call {@link Registration#unregister()} on
+ * all added handlers if {@link Registration#unregister()} is called on this object.
  */
-public class HandlerRegistrations implements HandlerRegistration {
+public class Registrations implements Registration {
   private JsonArray registrations;
 
-  public HandlerRegistrations add(HandlerRegistration registration) {
+  public Registrations add(Registration registration) {
     assert registration != null : "registration shouldn't be null";
     if (registrations == null) {
       registrations = Json.createArray();
@@ -33,12 +33,12 @@ public class HandlerRegistrations implements HandlerRegistration {
   }
 
   @Override
-  public void unregisterHandler() {
+  public void unregister() {
     if (registrations != null) {
-      registrations.forEach(new JsonArray.ListIterator<HandlerRegistration>() {
+      registrations.forEach(new JsonArray.ListIterator<Registration>() {
         @Override
-        public void call(int index, HandlerRegistration value) {
-          value.unregisterHandler();
+        public void call(int index, Registration value) {
+          value.unregister();
         }
       });
       // make sure we remove the handlers to avoid potential leaks
@@ -48,13 +48,13 @@ public class HandlerRegistrations implements HandlerRegistration {
     }
   }
 
-  public HandlerRegistration wrap(final HandlerRegistration registration) {
+  public Registration wrap(final Registration registration) {
     add(registration);
-    return new HandlerRegistration() {
+    return new Registration() {
       @Override
-      public void unregisterHandler() {
+      public void unregister() {
         registrations.removeValue(registration);
-        registration.unregisterHandler();
+        registration.unregister();
       }
     };
   }

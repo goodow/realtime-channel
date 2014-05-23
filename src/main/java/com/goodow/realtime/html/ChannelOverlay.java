@@ -18,7 +18,7 @@ import com.goodow.realtime.channel.Message;
 import com.goodow.realtime.channel.State;
 import com.goodow.realtime.channel.impl.ReconnectBus;
 import com.goodow.realtime.core.Handler;
-import com.goodow.realtime.core.HandlerRegistration;
+import com.goodow.realtime.core.Registration;
 import com.goodow.realtime.json.JsonObject;
 
 import org.timepedia.exporter.client.Export;
@@ -38,11 +38,6 @@ abstract class ChannelOverlay implements ExportOverlay<ReconnectBus> {
 
   @ExportPackage("good.channel")
   @Export
-  interface HandlerRegistrationOverlay extends ExportOverlay<HandlerRegistration> {
-    void unregisterHandler();
-  }
-  @ExportPackage("good.channel")
-  @Export
   @SuppressWarnings("rawtypes")
   interface MessageOverlay extends ExportOverlay<Message> {
     public abstract String address();
@@ -54,6 +49,11 @@ abstract class ChannelOverlay implements ExportOverlay<ReconnectBus> {
     // public abstract <T> void reply(Object msg, Handler<Message<T>> replyHandler);
 
     public abstract String replyAddress();
+  }
+  @ExportPackage("good.channel")
+  @Export
+  interface RegistrationOverlay extends ExportOverlay<Registration> {
+    void unregister();
   }
 
   /**
@@ -107,7 +107,7 @@ abstract class ChannelOverlay implements ExportOverlay<ReconnectBus> {
   // public abstract <T> Bus send(String address, Object msg, Handler<Message<T>> replyHandler);
 
   @SuppressWarnings("rawtypes")
-  public abstract HandlerRegistration registerHandler(String address, Handler<? extends Message> handler);
+  public abstract Registration registerHandler(String address, Handler<? extends Message> handler);
   @SuppressWarnings("rawtypes")
-  public abstract HandlerRegistration registerLocalHandler(String address, Handler<? extends Message> handler);
+  public abstract Registration registerLocalHandler(String address, Handler<? extends Message> handler);
 }

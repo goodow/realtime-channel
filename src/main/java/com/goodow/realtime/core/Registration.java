@@ -19,11 +19,11 @@ import com.goodow.realtime.channel.Bus;
  * Registration objects returned when an event handler is bound (e.g. via
  * {@link Bus#registerHandler}), used to deregister.
  */
-public interface HandlerRegistration {
+public interface Registration {
 
-  HandlerRegistration EMPTY = new HandlerRegistration() {
+  Registration EMPTY = new Registration() {
     @Override
-    public void unregisterHandler() {
+    public void unregister() {
     }
   };
 
@@ -32,5 +32,5 @@ public interface HandlerRegistration {
    * attached to the event bus. If the handler is no longer attached to the event bus, this is a
    * no-op.
    */
-  void unregisterHandler();
+  void unregister();
 }

@@ -14,7 +14,7 @@
 package com.goodow.realtime.channel;
 
 import com.goodow.realtime.core.Handler;
-import com.goodow.realtime.core.HandlerRegistration;
+import com.goodow.realtime.core.Registration;
 
 public interface Bus {
   String ON_OPEN = "@realtime.bus.onOpen";
@@ -52,7 +52,7 @@ public interface Bus {
    * @return the handler registration, can be stored in order to unregister the handler later
    */
   @SuppressWarnings("rawtypes")
-  HandlerRegistration registerHandler(String address, Handler<? extends Message> handler);
+  Registration registerHandler(String address, Handler<? extends Message> handler);
 
   /**
    * Registers a local handler against the specified address. The handler info won't be propagated
@@ -62,7 +62,7 @@ public interface Bus {
    * @param handler The handler
    */
   @SuppressWarnings("rawtypes")
-  HandlerRegistration registerLocalHandler(String address, Handler<? extends Message> handler);
+  Registration registerLocalHandler(String address, Handler<? extends Message> handler);
 
   /**
    * Send a message
