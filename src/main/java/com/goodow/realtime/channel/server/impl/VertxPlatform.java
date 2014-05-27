@@ -13,6 +13,7 @@
  */
 package com.goodow.realtime.channel.server.impl;
 
+import com.goodow.realtime.core.Diff;
 import com.goodow.realtime.core.Net;
 import com.goodow.realtime.core.Platform;
 import com.goodow.realtime.core.Platform.Type;
@@ -20,7 +21,6 @@ import com.goodow.realtime.core.PlatformFactory;
 import com.goodow.realtime.core.Scheduler;
 import com.goodow.realtime.core.WebSocket;
 import com.goodow.realtime.json.JsonObject;
-
 import org.vertx.java.core.Vertx;
 
 public class VertxPlatform implements PlatformFactory {
@@ -33,6 +33,7 @@ public class VertxPlatform implements PlatformFactory {
 
   protected final Scheduler scheduler;
   protected final Net net;
+  private final JavaDiff diff;
 
   private VertxPlatform(final Vertx vertx) {
     scheduler = new VertxScheduler(vertx);
@@ -42,6 +43,12 @@ public class VertxPlatform implements PlatformFactory {
         return new VertxWebSocket(vertx, url);
       }
     };
+    diff = new JavaDiff();
+  }
+
+  @Override
+  public Diff diff() {
+    return diff;
   }
 
   @Override

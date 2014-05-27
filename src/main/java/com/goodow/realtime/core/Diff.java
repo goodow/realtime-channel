@@ -13,15 +13,22 @@
  */
 package com.goodow.realtime.core;
 
-/**
- * Generic platform interface. New platforms are defined as implementations of this interface.
- */
-public interface PlatformFactory {
-  Diff diff();
+import com.goodow.realtime.json.JsonArray;
 
-  Net net();
+import java.util.Comparator;
 
-  Scheduler scheduler();
+public interface Diff {
+  public static interface ListTarget<T> {
+    void insert(int startIndex, T values);
 
-  Platform.Type type();
+    void remove(int startIndex, int length);
+
+    void replace(int startIndex, T values);
+
+    void move(int fromIndex, int toIndex, int length);
+  }
+
+  void diff(String before, String after, ListTarget<String> target);
+
+  void diff(JsonArray before, JsonArray after, ListTarget<JsonArray> target, Comparator<Object> comparator);
 }

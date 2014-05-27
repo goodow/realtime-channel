@@ -29,6 +29,10 @@ public class Platform {
 
   private static PlatformFactory FACTORY;
 
+  public static Diff diff() {
+    return get().diff();
+  }
+
   public static Net net() {
     return get().net();
   }

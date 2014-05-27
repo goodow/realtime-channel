@@ -13,6 +13,7 @@
  */
 package com.goodow.realtime.objc;
 
+import com.goodow.realtime.core.Diff;
 import com.goodow.realtime.core.Net;
 import com.goodow.realtime.core.Platform;
 import com.goodow.realtime.core.Platform.Type;
@@ -35,6 +36,12 @@ class ObjCPlatform implements PlatformFactory {
 
   private final Net net = new ObjCNet();
   private final ObjCScheduler scheduler = new ObjCScheduler();
+  private final ObjCDiff diff = new ObjCDiff();
+
+  @Override
+  public Diff diff() {
+    return diff;
+  }
 
   @Override
   public Net net() {

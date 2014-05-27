@@ -13,6 +13,7 @@
  */
 package com.goodow.realtime.channel.impl;
 
+import com.goodow.realtime.channel.Bus;
 import com.goodow.realtime.channel.BusHook;
 import com.goodow.realtime.channel.State;
 import com.goodow.realtime.channel.util.FuzzingBackOffGenerator;
@@ -100,7 +101,7 @@ public class ReconnectBus extends WebSocketBus {
   }
 
   @Override
-  public SimpleBus setHook(BusHook hook) {
+  public Bus setHook(BusHook hook) {
     this.hook = hook;
     return this;
   }

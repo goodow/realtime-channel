@@ -166,7 +166,7 @@ public class WebSocketBus extends SimpleBus {
       envelope.set("sessionID", accessToken);
     }
     if (sid != null) {
-      envelope.set("sid", accessToken);
+      envelope.set("sid", sid);
     }
     if (replyHandler != null) {
       String replyAddress = makeUUID();

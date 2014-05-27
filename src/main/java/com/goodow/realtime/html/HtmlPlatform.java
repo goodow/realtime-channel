@@ -13,6 +13,7 @@
  */
 package com.goodow.realtime.html;
 
+import com.goodow.realtime.core.Diff;
 import com.goodow.realtime.core.Net;
 import com.goodow.realtime.core.Platform;
 import com.goodow.realtime.core.Platform.Type;
@@ -29,6 +30,12 @@ class HtmlPlatform implements PlatformFactory {
 
   private final HtmlNet net = new HtmlNet();
   private final HtmlScheduler scheduler = new HtmlScheduler();
+  private final HtmlDiff diff = new HtmlDiff();
+
+  @Override
+  public Diff diff() {
+    return diff;
+  }
 
   @Override
   public Net net() {

@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /*-[
  #import "GDChannel.h"
+ #import "ComGoodowRealtimeChannelImplDefaultMessage+Adapter.h"
  ]-*/
 class ObjCScheduler implements Scheduler {
   // @formatter:off
@@ -30,7 +31,7 @@ class ObjCScheduler implements Scheduler {
   ]-*/;
 
   private static native <T> void nativeHandle(Object handler, T event) /*-[
-    GDCBlock block = (GDCBlock)handler;
+    GDCMessageHandler block = (GDCMessageHandler)handler;
     block(event);
   ]-*/;
   

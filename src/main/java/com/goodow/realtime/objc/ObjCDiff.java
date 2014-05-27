@@ -11,17 +11,17 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.goodow.realtime.core;
+package com.goodow.realtime.objc;
 
-/**
- * Generic platform interface. New platforms are defined as implementations of this interface.
- */
-public interface PlatformFactory {
-  Diff diff();
+import com.goodow.realtime.core.Diff;
+import com.goodow.realtime.json.JsonArray;
 
-  Net net();
+import java.util.Comparator;
 
-  Scheduler scheduler();
+class ObjCDiff implements Diff {
+  @Override
+  public native void diff(String before, String after, ListTarget<String> target);
 
-  Platform.Type type();
+  @Override
+  public native void diff(JsonArray before, JsonArray after, ListTarget<JsonArray> target, Comparator<Object> comparator);
 }
