@@ -30,6 +30,17 @@
       </snapshots>
     </repository>
     <repository>
+      <id>sonatype-google-snapshots</id>
+      <name>Sonatype Google Snapshots</name>
+      <url>https://oss.sonatype.org/content/repositories/google-snapshots</url>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
+    <repository>
       <id>google-diff-match-patch</id>
       <url>http://google-diff-match-patch.googlecode.com/svn/trunk/maven/</url>
       <snapshots>
@@ -72,12 +83,6 @@
     <dependency>
       <groupId>com.google.gwt</groupId>
       <artifactId>gwt-codeserver</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.timepedia.exporter</groupId>
-      <artifactId>gwtexporter</artifactId>
-      <version>2.5.1</version>
-      <scope>provided</scope>
     </dependency>
   </dependencies>
   
@@ -184,13 +189,13 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>gwt-maven-plugin</artifactId>
-        <version>${gwt.version}</version>
         <configuration>
           <compileSourcesArtifacts>
             <compileSourcesArtifact>com.goodow.realtime:realtime-json</compileSourcesArtifact>
           </compileSourcesArtifacts>
           <bindAddress>0.0.0.0</bindAddress>
-          <!-- <module>${project.groupId}.ChannelProd</module> -->
+          <!--<module>${project.groupId}.channel.Channel</module>-->
+          <precompile>false</precompile>
         </configuration>
       </plugin>
     </plugins>

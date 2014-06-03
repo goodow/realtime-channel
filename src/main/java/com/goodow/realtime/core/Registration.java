@@ -13,12 +13,13 @@
  */
 package com.goodow.realtime.core;
 
-import com.goodow.realtime.channel.Bus;
+import com.google.gwt.core.client.js.JsInterface;
 
 /**
  * Registration objects returned when an event handler is bound (e.g. via
- * {@link Bus#registerHandler}), used to deregister.
+ * {@link com.goodow.realtime.channel.Bus#registerHandler}), used to deregister.
  */
+@JsInterface
 public interface Registration {
 
   Registration EMPTY = new Registration() {

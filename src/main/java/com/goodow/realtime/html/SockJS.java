@@ -39,7 +39,7 @@ final class SockJS extends JavaScriptObject implements WebSocket {
  
   @Override
   public State getReadyState() {
-    return State.values[nativeGetReadyState()];
+    return State.values()[nativeGetReadyState()];
   }
 
   @Override

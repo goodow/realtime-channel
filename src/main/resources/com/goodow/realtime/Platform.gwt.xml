@@ -15,7 +15,7 @@
 -->
 <module>
   <inherits name="com.goodow.realtime.json.Json" />
-  
+
   <source path="core"/>
   <source path="html"/>
 </module>

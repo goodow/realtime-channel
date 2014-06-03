@@ -22,6 +22,7 @@ import com.goodow.realtime.core.Platform;
 import com.goodow.realtime.json.Json;
 import com.goodow.realtime.json.JsonArray;
 import com.goodow.realtime.json.JsonObject;
+import com.google.gwt.core.client.js.JsExport;
 
 public class ReconnectBus extends WebSocketBus {
   public static final String AUTO_RECONNECT = "reconnect";
@@ -31,6 +32,7 @@ public class ReconnectBus extends WebSocketBus {
   private final JsonArray queuedMessages = Json.createArray(); // ArrayList<JsonObject>()
   private final JsonObject options;
 
+  @JsExport("$wnd.realtime.channel.WebSocketBus")
   public ReconnectBus(String url, JsonObject options) {
     super(url, options);
     this.options = options;
@@ -44,13 +46,15 @@ public class ReconnectBus extends WebSocketBus {
         backOffGenerator.reset();
         login(null, null, null);
 
-        String[] addresses = handlerCount.keys();
-        for (String address : addresses) {
-          assert handlerCount.getNumber(address) > 0 : "Handlers registried on " + address
-              + " shouldn't be empty";
-          sendUnregister(address);
-          sendRegister(address);
-        }
+        handlerCount.keys().forEach(new JsonArray.ListIterator<String>() {
+          @Override
+          public void call(int index, String address) {
+            assert handlerCount.getNumber(address) > 0 : "Handlers registried on " + address
+                + " shouldn't be empty";
+            sendUnregister(address);
+            sendRegister(address);
+          }
+        });
 
         if (queuedMessages.length() > 0) {
           JsonArray copy = queuedMessages.copy();

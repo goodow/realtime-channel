@@ -15,9 +15,10 @@
 -->
 <module rename-to='channel'>
   <inherits name='com.goodow.realtime.Platform'/>
-  <inherits name='org.timepedia.exporter.Exporter'/>
-  
-  <source path=""/>
+
+  <source path="">
+    <exclude name="server/**"/>
+  </source>
   
   <!-- Logging -->
   <inherits name="com.google.gwt.logging.Logging" />
@@ -32,8 +33,4 @@
   <set-property name="gwt.logging.simpleRemoteHandler" value="DISABLED" />
   
   <entry-point class="com.goodow.realtime.html.ChannelEntryPoint"/>
-
-  <add-linker name="xsiframe"/>
-  <set-property name="export" value="yes"/>
-  <set-configuration-property name="devModeRedirectEnabled" value="true"/>
 </module>

@@ -24,7 +24,7 @@ import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 class HtmlScheduler implements Scheduler {
   // @formatter:off 
   private static native <T> void nativeHandle(Object handler, T event) /*-{
-    handler(@org.timepedia.exporter.client.ExporterUtil::wrap(Ljava/lang/Object;)(event));
+    handler(event);
   }-*/;
   // @formatter:on
 

@@ -50,7 +50,6 @@ class DefaultMessage<U> implements Message<U> {
     // sendReply(new ReplyException(ReplyFailure.RECIPIENT_FAILURE, failureCode, message), null);
   }
 
-  @Override
   public void reply(Object msg) {
     sendReply(msg, null);
   }

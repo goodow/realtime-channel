@@ -13,27 +13,12 @@
  */
 package com.goodow.realtime.html;
 
-import com.goodow.realtime.html.ChannelOverlay.MessageOverlay;
-import com.goodow.realtime.html.ChannelOverlay.RegistrationOverlay;
-
 import com.google.gwt.core.client.EntryPoint;
-import com.google.gwt.core.shared.GWT;
 
 class ChannelEntryPoint implements EntryPoint {
 
   @Override
   public void onModuleLoad() {
     HtmlPlatform.register();
-    GWT.create(RegistrationOverlay.class);
-    GWT.create(MessageOverlay.class);
-    GWT.create(ChannelOverlay.class);
-    // GWT.create(MessageHandlerOverlay.class);
-    __jsniOnLoad__();
   }
-
-  // @formatter:off
-  private native void __jsniOnLoad__() /*-{
-    $wnd.gdc = $wnd.gdc || $wnd.good.channel;
-  }-*/;
-  // @formatter:on
 }

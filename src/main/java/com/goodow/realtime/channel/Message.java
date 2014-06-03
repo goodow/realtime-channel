@@ -14,10 +14,12 @@
 package com.goodow.realtime.channel;
 
 import com.goodow.realtime.core.Handler;
+import com.google.gwt.core.client.js.JsInterface;
 
 /**
  * Represents a message on the event bus.
  */
+@JsInterface
 public interface Message<T> {
   /**
    * The address the message was sent to
@@ -44,7 +46,7 @@ public interface Message<T> {
    * called when it has received a reply. If the message wasn't sent specifying a receipt handler
    * this method does nothing.
    */
-  void reply(Object msg);
+  // void reply(Object msg);
 
   /**
    * The same as {@code reply(Object msg)} but you can specify handler for the reply - i.e. to

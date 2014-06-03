@@ -15,7 +15,9 @@ package com.goodow.realtime.channel;
 
 import com.goodow.realtime.core.Handler;
 import com.goodow.realtime.core.Registration;
+import com.google.gwt.core.client.js.JsInterface;
 
+@JsInterface
 public interface Bus {
   String ON_OPEN = "@realtime.bus.onOpen";
   String ON_CLOSE = "@realtime.bus.onClose";
