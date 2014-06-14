@@ -22,7 +22,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /*-[
  #import "GDChannel.h"
- #import "ComGoodowRealtimeChannelImplDefaultMessage+Adapter.h"
  ]-*/
 class ObjCScheduler implements Scheduler {
   // @formatter:off

@@ -18,10 +18,16 @@ import com.goodow.realtime.json.JsonArray;
 
 import java.util.Comparator;
 
+/*-[
+ #import "JavaObjCDiff+Adapter.h"
+ ]-*/
 class ObjCDiff implements Diff {
   @Override
-  public native void diff(String before, String after, ListTarget<String> target);
+  public native void diff(String before, String after, ListTarget<String> target) /*-[
+    [self diff:before after:after target:target];
+  ]-*/;
 
   @Override
-  public native void diff(JsonArray before, JsonArray after, ListTarget<JsonArray> target, Comparator<Object> comparator);
+  public native void diff(JsonArray before, JsonArray after, ListTarget<JsonArray> target, Comparator<Object> comparator) /*-[
+  ]-*/;
 }
