@@ -23,7 +23,9 @@ import com.goodow.realtime.json.Json;
 import com.goodow.realtime.json.JsonArray;
 import com.goodow.realtime.json.JsonObject;
 import com.google.gwt.core.client.js.JsExport;
+import com.google.gwt.core.client.js.JsNamespace;
 
+@JsNamespace("$wnd.realtime.channel")
 public class ReconnectBus extends WebSocketBus {
   public static final String AUTO_RECONNECT = "reconnect";
   private final FuzzingBackOffGenerator backOffGenerator;
@@ -32,7 +34,7 @@ public class ReconnectBus extends WebSocketBus {
   private final JsonArray queuedMessages = Json.createArray(); // ArrayList<JsonObject>()
   private final JsonObject options;
 
-  @JsExport("$wnd.realtime.channel.WebSocketBus")
+  @JsExport
   public ReconnectBus(String url, JsonObject options) {
     super(url, options);
     this.options = options;

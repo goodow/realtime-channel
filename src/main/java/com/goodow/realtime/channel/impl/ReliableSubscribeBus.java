@@ -52,7 +52,7 @@ public class ReliableSubscribeBus extends BusProxy {
     sequenceNumberKey =
         options == null || !options.has(SEQUENCE_NUMBER) ? "v" : options.getString(SEQUENCE_NUMBER);
     publishChannel =
-        options == null || !options.has(PUBLISH_CHANNEL) ? "realtime.store" : options
+        options == null || !options.has(PUBLISH_CHANNEL) ? "realtime/store" : options
             .getString(PUBLISH_CHANNEL);
     acknowledgeDelayMillis =
         options == null || !options.has(ACKNOWLEDGE_DELAY_MILLIS) ? 3 * 1000 : (int) options
@@ -111,8 +111,9 @@ public class ReliableSubscribeBus extends BusProxy {
   }
 
   protected void catchup(final String address, double currentSequence) {
-    delegate.send(publishChannel + ".ops", Json.createObject().set("id",
-        address.substring(address.lastIndexOf(":") + 1)).set("from", currentSequence + 1),
+    String id = address.substring(publishChannel.length() + 1);
+    id = id.substring(0, id.lastIndexOf("/_watch"));
+    delegate.send(publishChannel + "/_ops", Json.createObject().set("id", id) .set("from", currentSequence + 1),
         new Handler<Message<JsonArray>>() {
           @SuppressWarnings({"rawtypes", "unchecked"})
           @Override
@@ -134,7 +135,7 @@ public class ReliableSubscribeBus extends BusProxy {
   }
 
   protected boolean needProcess(String address) {
-    return address.startsWith(publishChannel + ":");
+    return address.startsWith(publishChannel + "/") && address.endsWith("/_watch");
   }
 
   protected boolean onReceiveMessage(Message<?> message) {

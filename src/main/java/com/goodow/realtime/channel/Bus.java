@@ -15,7 +15,7 @@ package com.goodow.realtime.channel;
 
 import com.goodow.realtime.core.Handler;
 import com.goodow.realtime.core.Registration;
-import com.google.gwt.core.client.js.JsInterface;
+import com.google.gwt.core.client.js.JsType;
 
 /**
  * A distributed lightweight event bus which can encompass multiple machines.
@@ -37,11 +37,11 @@ import com.google.gwt.core.client.js.JsInterface;
  * has been received. Reply messages can also be replied to, etc, ad infinitum<p>
  * Different event bus instances can be clustered together over a network, to give a single logical event bus.<p>
  */
-@JsInterface
+@JsType
 public interface Bus {
-  String ON_OPEN = "@realtime.bus.onOpen";
-  String ON_CLOSE = "@realtime.bus.onClose";
-  String ON_ERROR = "@realtime.bus.onError";
+  String ON_OPEN = "@realtime/bus/onOpen";
+  String ON_CLOSE = "@realtime/bus/onClose";
+  String ON_ERROR = "@realtime/bus/onError";
 
   /**
    * Close the Bus and release all resources.

@@ -42,6 +42,7 @@ class VertxMessage<T> implements Message<T> {
     delegate.fail(failureCode, msg);
   }
 
+  @Override
   public void reply(Object msg) {
     reply(msg, null);
   }
