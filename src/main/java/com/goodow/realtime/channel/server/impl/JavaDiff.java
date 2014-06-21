@@ -15,10 +15,11 @@ package com.goodow.realtime.channel.server.impl;
 
 import com.goodow.realtime.core.Diff;
 import com.goodow.realtime.json.JsonArray;
-import name.fraser.neil.plaintext.diff_match_patch;
 
 import java.util.Comparator;
 import java.util.LinkedList;
+
+import name.fraser.neil.plaintext.diff_match_patch;
 
 public class JavaDiff implements Diff {
   private final diff_match_patch dmp = new diff_match_patch();
@@ -49,7 +50,8 @@ public class JavaDiff implements Diff {
   }
 
   @Override
-  public void diff(JsonArray before, JsonArray after, ListTarget<JsonArray> target, Comparator<Object> comparator) {
+  public void diff(JsonArray before, JsonArray after, ListTarget<JsonArray> target,
+                   Comparator<Object> comparator) {
 
   }
 }

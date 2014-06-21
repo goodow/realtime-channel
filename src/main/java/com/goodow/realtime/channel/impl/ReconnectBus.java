@@ -13,6 +13,9 @@
  */
 package com.goodow.realtime.channel.impl;
 
+import com.google.gwt.core.client.js.JsExport;
+import com.google.gwt.core.client.js.JsNamespace;
+
 import com.goodow.realtime.channel.Bus;
 import com.goodow.realtime.channel.BusHook;
 import com.goodow.realtime.channel.State;
@@ -22,8 +25,6 @@ import com.goodow.realtime.core.Platform;
 import com.goodow.realtime.json.Json;
 import com.goodow.realtime.json.JsonArray;
 import com.goodow.realtime.json.JsonObject;
-import com.google.gwt.core.client.js.JsExport;
-import com.google.gwt.core.client.js.JsNamespace;
 
 @JsNamespace("$wnd.realtime.channel")
 public class ReconnectBus extends WebSocketBus {
@@ -46,7 +47,6 @@ public class ReconnectBus extends WebSocketBus {
       @Override
       public void handleOpened() {
         backOffGenerator.reset();
-        login(null, null, null);
 
         handlerCount.keys().forEach(new JsonArray.ListIterator<String>() {
           @Override

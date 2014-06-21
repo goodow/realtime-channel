@@ -54,7 +54,8 @@ public class Platform {
   }
 
   private static PlatformFactory get() {
-    assert FACTORY != null : "You must register a platform first by invoke {Java|Android}Platform.register()";
+    assert FACTORY != null :
+        "You must register a platform first by invoke {Java|Android}Platform.register()";
     return FACTORY;
   }
 

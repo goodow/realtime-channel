@@ -52,7 +52,8 @@ final class HtmlDiff implements Diff {
 
 
   @Override
-  public void diff(JsonArray before, JsonArray after, ListTarget<JsonArray> target, Comparator<Object> comparator) {
+  public void diff(JsonArray before, JsonArray after, ListTarget<JsonArray> target,
+                   Comparator<Object> comparator) {
 
   }
 }

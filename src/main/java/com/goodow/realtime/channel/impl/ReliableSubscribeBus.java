@@ -113,7 +113,8 @@ public class ReliableSubscribeBus extends BusProxy {
   protected void catchup(final String address, double currentSequence) {
     String id = address.substring(publishChannel.length() + 1);
     id = id.substring(0, id.lastIndexOf("/_watch"));
-    delegate.send(publishChannel + "/_ops", Json.createObject().set("id", id) .set("from", currentSequence + 1),
+    delegate.send(publishChannel + "/_ops",
+                  Json.createObject().set("id", id) .set("from", currentSequence + 1),
         new Handler<Message<JsonArray>>() {
           @SuppressWarnings({"rawtypes", "unchecked"})
           @Override
@@ -135,7 +136,8 @@ public class ReliableSubscribeBus extends BusProxy {
   }
 
   protected boolean needProcess(String address) {
-    return address.startsWith(publishChannel + "/") && address.endsWith("/_watch");
+    return address.startsWith(publishChannel + "/") && address.endsWith("/_watch") &&
+           !address.contains("/_presence/");
   }
 
   protected boolean onReceiveMessage(Message<?> message) {

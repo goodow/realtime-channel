@@ -28,6 +28,7 @@ class ObjCDiff implements Diff {
   ]-*/;
 
   @Override
-  public native void diff(JsonArray before, JsonArray after, ListTarget<JsonArray> target, Comparator<Object> comparator) /*-[
+  public native void diff(JsonArray before, JsonArray after, ListTarget<JsonArray> target,
+                          Comparator<Object> comparator) /*-[
   ]-*/;
 }

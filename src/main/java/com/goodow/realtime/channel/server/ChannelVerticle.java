@@ -13,6 +13,8 @@
  */
 package com.goodow.realtime.channel.server;
 
+import com.goodow.realtime.channel.server.impl.BridgeHook;
+
 import org.vertx.java.busmods.BusModBase;
 import org.vertx.java.core.AsyncResult;
 import org.vertx.java.core.Future;
@@ -37,6 +39,6 @@ public class ChannelVerticle extends BusModBase {
         }
       }
     });
-    new ChannelBridge(vertx, config).bridge(countDownLatch);
+    new ChannelBridge(vertx, config).setHook(new BridgeHook(vertx)).bridge(countDownLatch);
   }
 }

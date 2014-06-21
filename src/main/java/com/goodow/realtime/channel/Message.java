@@ -13,9 +13,10 @@
  */
 package com.goodow.realtime.channel;
 
-import com.goodow.realtime.core.Handler;
 import com.google.gwt.core.client.js.JsNoExport;
 import com.google.gwt.core.client.js.JsType;
+
+import com.goodow.realtime.core.Handler;
 
 /**
  * Represents a message on the event bus.

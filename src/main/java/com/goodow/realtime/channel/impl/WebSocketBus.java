@@ -24,8 +24,11 @@ import com.goodow.realtime.json.JsonObject;
 
 @SuppressWarnings("rawtypes")
 public class WebSocketBus extends SimpleBus {
+  public static final String SESSION = "_session";
+  public static final String USERNAME = "username";
+  public static final String PASSWORD = "password";
   public static final String PING_INTERVAL = "vertxbus_ping_interval";
-  public static final String AUTH_ADDRESS = "auth_address";
+  public static final String ADDR = "realtime/channel";
 
   protected static final String BODY = "body";
   protected static final String ADDRESS = "address";
@@ -36,10 +39,10 @@ public class WebSocketBus extends SimpleBus {
   String url;
   WebSocket webSocket;
   private int pingInterval;
-  private String authAddress;
   private int pingTimerID = -1;
-  private String accessToken;
-  private String sid;
+  private String sessionId;
+  private String username;
+  private String password;
   final JsonObject handlerCount = Json.createObject();
 
   public WebSocketBus(String url, JsonObject options) {
@@ -70,6 +73,7 @@ public class WebSocketBus extends SimpleBus {
 
       @Override
       public void onOpen() {
+        sendConnect();
         // Send the first ping then send a ping every 5 seconds
         sendPing();
         pingTimerID = Platform.scheduler().schedulePeriodic(pingInterval, new Handler<Void>() {
@@ -93,9 +97,10 @@ public class WebSocketBus extends SimpleBus {
     pingInterval =
         options == null || !options.has(PING_INTERVAL) ? 5 * 1000 : (int) options
             .getNumber(PING_INTERVAL);
-    authAddress =
-        options == null || !options.has(AUTH_ADDRESS) ? "realtime.auth" : options
-            .getString(AUTH_ADDRESS);
+    sessionId = options == null || !options.has(SESSION) ? idGenerator.next(23) : options.getString(
+        SESSION);
+    username = options == null || !options.has(USERNAME) ? null : options.getString(USERNAME);
+    password = options == null || !options.has(PASSWORD) ? null : options.getString(PASSWORD);
 
     webSocket = Platform.net().createWebSocket(url, options);
     webSocket.setListen(webSocketHandler);
@@ -106,22 +111,9 @@ public class WebSocketBus extends SimpleBus {
     return webSocket.getReadyState();
   }
 
-  public void login(String userId, String token, final Handler<JsonObject> replyHandler) {
-    JsonObject msg = Json.createObject().set("userId", userId).set("token", token);
-    send(authAddress + ".login", msg, new Handler<Message<JsonObject>>() {
-      @Override
-      public void handle(Message<JsonObject> msg) {
-        JsonObject body = msg.body();
-        if ("ok".equals(body.getString("status"))) {
-          accessToken = body.getString("access_token");
-          sid = body.getString("sid");
-        }
-        if (replyHandler != null) {
-          body.remove("access_token");
-          scheduleHandle(authAddress + ".login", replyHandler, body);
-        }
-      }
-    });
+  @Override
+  public String getSessionId() {
+    return sessionId;
   }
 
   @Override
@@ -162,12 +154,6 @@ public class WebSocketBus extends SimpleBus {
     }
     JsonObject envelope = Json.createObject().set(TYPE, send ? "send" : "publish");
     envelope.set(ADDRESS, address).set(BODY, msg);
-    if (accessToken != null) {
-      envelope.set("sessionID", accessToken);
-    }
-    if (sid != null) {
-      envelope.set("sid", sid);
-    }
     if (replyHandler != null) {
       String replyAddress = makeUUID();
       envelope.set(REPLY_ADDRESS, replyAddress);
@@ -197,6 +183,24 @@ public class WebSocketBus extends SimpleBus {
       throw new IllegalStateException("INVALID_STATE_ERR");
     }
     webSocket.send(msg.toJsonString());
+  }
+
+  protected void sendConnect() {
+    JsonObject msg = Json.createObject().set(SESSION, sessionId);
+    if(username != null) {
+      msg.set(USERNAME, username);
+      if(password != null) {
+        msg.set(PASSWORD, password);
+      }
+    }
+    send(ADDR + "/_CONNECT", msg, new Handler<Message<JsonObject>>() {
+      @Override
+      public void handle(Message<JsonObject> message) {
+        if (0 != message.body().getNumber("code")) {
+          throw new RuntimeException(message.body().toJsonString());
+        }
+      }
+    });
   }
 
   protected void sendPing() {

@@ -30,6 +30,11 @@ public abstract class BusProxy implements Bus {
   }
 
   @Override
+  public String getSessionId() {
+    return delegate.getSessionId();
+  }
+
+  @Override
   public Bus publish(String address, Object msg) {
     return delegate.publish(address, msg);
   }

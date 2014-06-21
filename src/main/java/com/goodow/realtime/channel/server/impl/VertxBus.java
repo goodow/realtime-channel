@@ -93,6 +93,11 @@ public class VertxBus implements Bus {
   }
 
   @Override
+  public String getSessionId() {
+    return "vertx";
+  }
+
+  @Override
   public VertxBus publish(String address, Object msg) {
     if (hook == null || hook.handleSendOrPub(false, address, msg, null)) {
       eb.publish(address, wrapMsg(msg));

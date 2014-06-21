@@ -19,8 +19,8 @@ import com.goodow.realtime.channel.Message;
 import com.goodow.realtime.channel.State;
 import com.goodow.realtime.channel.util.IdGenerator;
 import com.goodow.realtime.core.Handler;
-import com.goodow.realtime.core.Registration;
 import com.goodow.realtime.core.Platform;
+import com.goodow.realtime.core.Registration;
 import com.goodow.realtime.json.Json;
 import com.goodow.realtime.json.JsonArray;
 import com.goodow.realtime.json.JsonObject;
@@ -41,7 +41,7 @@ public class SimpleBus implements Bus {
   private JsonObject handlerMap; // LinkedHashMap<String, LinkedHashSet<Handler<Message>>>
   final JsonObject replyHandlers; // LinkedHashMap<String, Handler<Message>>
   BusHook hook;
-  private final IdGenerator idGenerator;
+  final IdGenerator idGenerator;
 
   public SimpleBus() {
     handlerMap = Json.createObject();
@@ -59,6 +59,11 @@ public class SimpleBus implements Bus {
   @Override
   public State getReadyState() {
     return handlerMap == null ? State.CLOSED : State.OPEN;
+  }
+
+  @Override
+  public String getSessionId() {
+    return "@";
   }
 
   @Override

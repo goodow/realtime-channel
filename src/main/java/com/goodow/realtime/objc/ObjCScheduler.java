@@ -33,8 +33,9 @@ class ObjCScheduler implements Scheduler {
     GDCMessageHandler block = (GDCMessageHandler)handler;
     block(event);
   ]-*/;
-  
-  private static native Object nativeScheduleTimer(int delayMs, boolean repeat, Handler<Void> handler) /*-[
+
+  private static native Object nativeScheduleTimer(int delayMs, boolean repeat,
+                                                   Handler<Void> handler) /*-[
     return
     [NSTimer scheduledTimerWithTimeInterval:delayMs/1000 
                                      target:handler
@@ -71,7 +72,11 @@ class ObjCScheduler implements Scheduler {
   @Override
   // @formatter:off
   public native void scheduleDeferred(Handler<Void> handler) /*-[
-    [[NSRunLoop mainRunLoop] performSelector:@selector(handleWithId:) target:handler argument:nil order:0 modes:@[NSDefaultRunLoopMode]];
+    [[NSRunLoop mainRunLoop] performSelector:@selector(handleWithId:)
+                                      target:handler
+                                    argument:nil
+                                       order:0
+                                       modes:@[NSDefaultRunLoopMode]];
   ]-*/;
   // @formatter:on
 
