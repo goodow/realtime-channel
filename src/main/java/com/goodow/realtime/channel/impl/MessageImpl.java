@@ -17,7 +17,7 @@ import com.goodow.realtime.channel.Bus;
 import com.goodow.realtime.channel.Message;
 import com.goodow.realtime.core.Handler;
 
-class DefaultMessage<U> implements Message<U> {
+class MessageImpl<U> implements Message<U> {
   protected U body;
   protected Bus bus;
   protected String address;
@@ -25,8 +25,8 @@ class DefaultMessage<U> implements Message<U> {
   protected boolean send; // Is it a send or a publish?
   protected boolean local;
 
-  public DefaultMessage(boolean local, boolean send, Bus bus, String address, String replyAddress,
-      U body) {
+  public MessageImpl(boolean local, boolean send, Bus bus, String address, String replyAddress,
+                     U body) {
     this.local = local;
     this.send = send;
     this.bus = bus;

@@ -123,7 +123,7 @@ public class ReliableSubscribeBus extends BusProxy {
             message.body().forEach(new JsonArray.ListIterator() {
               @Override
               public void call(int index, Object value) {
-                onReceiveMessage(new DefaultMessage(false, false, ReliableSubscribeBus.this,
+                onReceiveMessage(new MessageImpl(false, false, ReliableSubscribeBus.this,
                     address, replyAddress, value));
               }
             });

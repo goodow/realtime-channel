@@ -140,7 +140,7 @@ public class SimpleBus implements Bus {
     if (replyHandler != null) {
       replyAddress = makeUUID();
     }
-    DefaultMessage message = new DefaultMessage(local, send, this, address, replyAddress, msg);
+    MessageImpl message = new MessageImpl(local, send, this, address, replyAddress, msg);
     if (internalHandleReceiveMessage(local, message) && replyHandler != null) {
       replyHandlers.set(replyAddress, replyHandler);
     }

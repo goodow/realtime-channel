@@ -65,8 +65,8 @@ public class WebSocketBus extends SimpleBus {
       public void onMessage(String msg) {
         JsonObject json = Json.<JsonObject> parse(msg);
         @SuppressWarnings({"unchecked"})
-        DefaultMessage message =
-            new DefaultMessage(false, false, WebSocketBus.this, json.getString(ADDRESS), json
+        MessageImpl message =
+            new MessageImpl(false, false, WebSocketBus.this, json.getString(ADDRESS), json
                 .getString(REPLY_ADDRESS), json.get(BODY));
         internalHandleReceiveMessage(false, message);
       }
