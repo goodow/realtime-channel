@@ -26,8 +26,8 @@ public abstract class BusHookProxy implements BusHook {
 
   @SuppressWarnings("rawtypes")
   @Override
-  public boolean handlePreRegister(String address, Handler<? extends Message> handler) {
-    return delegate() == null ? true : delegate().handlePreRegister(address, handler);
+  public boolean handlePreRegister(String topic, Handler<? extends Message> handler) {
+    return delegate() == null ? true : delegate().handlePreRegister(topic, handler);
   }
 
   @Override
@@ -36,15 +36,15 @@ public abstract class BusHookProxy implements BusHook {
   }
 
   @Override
-  public <T> boolean handleSendOrPub(boolean send, String address, Object msg,
+  public <T> boolean handleSendOrPub(boolean send, String topic, Object msg,
       Handler<Message<T>> replyHandler) {
-    return delegate() == null ? true : delegate().handleSendOrPub(send, address, msg,
+    return delegate() == null ? true : delegate().handleSendOrPub(send, topic, msg,
         replyHandler);
   }
 
   @Override
-  public boolean handleUnregister(String address) {
-    return delegate() == null ? true : delegate().handleUnregister(address);
+  public boolean handleUnregister(String topic) {
+    return delegate() == null ? true : delegate().handleUnregister(topic);
   }
 
   protected abstract BusHook delegate();

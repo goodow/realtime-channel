@@ -31,13 +31,13 @@ import java.util.Set;
 public class BridgeHook implements EventBusBridgeHook {
   public static final String TOPIC = "topic";
   public static final String SESSION_WATCH_ADDR =
-      WebSocketBus.ADDR + "/" + WebSocketBus.SESSION + "/_watch";
+      WebSocketBus.TOPIC_CHANNEL + "/" + WebSocketBus.SESSION + "/_watch";
   private final EventBus eb;
   private final Map<String, String> connections = new HashMap<String, String>();
   private final SharedData sharedData;
 
-  public static String getSessionsKey(String address) {
-    return WebSocketBus.ADDR + "/" + address + "/" + WebSocketBus.SESSION;
+  public static String getSessionsKey(String topic) {
+    return WebSocketBus.TOPIC_CHANNEL + "/" + topic + "/" + WebSocketBus.SESSION;
   }
 
   public BridgeHook(Vertx vertx) {
@@ -46,22 +46,22 @@ public class BridgeHook implements EventBusBridgeHook {
   }
 
   @Override
-  public void handlePostRegister(SockJSSocket sock, String address) {
-    Set<String> sessionIds = sharedData.getSet(getSessionsKey(address));
+  public void handlePostRegister(SockJSSocket sock, String topic) {
+    Set<String> sessionIds = sharedData.getSet(getSessionsKey(topic));
     String sessionId = connections.get(sock.writeHandlerID());
     sessionIds.add(sessionId);
-    publishPresence(address, sessionId, true);
+    publishPresence(topic, sessionId, true);
   }
 
   @Override
-  public boolean handlePreRegister(SockJSSocket sock, String address) {
+  public boolean handlePreRegister(SockJSSocket sock, String topic) {
     return true;
   }
 
   @Override
   public boolean handleSendOrPub(SockJSSocket sock, boolean send, JsonObject msg,
-      final String address) {
-    if (address.equals(WebSocketBus.ADDR + "/_CONNECT")) {
+      final String topic) {
+    if (topic.equals(WebSocketBus.TOPIC_CHANNEL + "/_CONNECT")) {
       connections.put(sock.writeHandlerID(), msg.getObject("body").getString(WebSocketBus.SESSION));
     } else if (msg.getValue("body") instanceof JsonObject) {
       JsonObject body = msg.getObject("body");
@@ -83,11 +83,11 @@ public class BridgeHook implements EventBusBridgeHook {
   }
 
   @Override
-  public boolean handleUnregister(SockJSSocket sock, String address) {
-    Set<String> sessionIds = sharedData.getSet(getSessionsKey(address));
+  public boolean handleUnregister(SockJSSocket sock, String topic) {
+    Set<String> sessionIds = sharedData.getSet(getSessionsKey(topic));
     String sessionId = connections.get(sock.writeHandlerID());
     sessionIds.remove(sessionId);
-    publishPresence(address, sessionId, false);
+    publishPresence(topic, sessionId, false);
     return true;
   }
 
@@ -97,9 +97,9 @@ public class BridgeHook implements EventBusBridgeHook {
     return false;
   }
 
-  private void publishPresence(final String address, String sessionId, final boolean isJoined) {
+  private void publishPresence(final String topic, String sessionId, final boolean isJoined) {
     JsonObject msg = new JsonObject().putString(WebSocketBus.SESSION, sessionId).putBoolean(
-        "isJoined", isJoined).putString(TOPIC, address);
+        "isJoined", isJoined).putString(TOPIC, topic);
     eb.publish(SESSION_WATCH_ADDR, msg);
   }
 }

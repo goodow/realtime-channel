@@ -28,15 +28,15 @@ public class WebSocketBus extends SimpleBus {
   public static final String USERNAME = "username";
   public static final String PASSWORD = "password";
   public static final String PING_INTERVAL = "vertxbus_ping_interval";
-  public static final String ADDR = "realtime/channel";
+  public static final String TOPIC_CHANNEL = "realtime/channel";
 
   protected static final String BODY = "body";
-  protected static final String ADDRESS = "address";
-  protected static final String REPLY_ADDRESS = "replyAddress";
+  protected static final String TOPIC = "address";
+  protected static final String REPLY_TOPIC = "replyAddress";
   protected static final String TYPE = "type";
 
   private final WebSocket.WebSocketHandler webSocketHandler;
-  String url;
+  String serverUri;
   WebSocket webSocket;
   private int pingInterval;
   private int pingTimerID = -1;
@@ -45,7 +45,7 @@ public class WebSocketBus extends SimpleBus {
   private String password;
   final JsonObject handlerCount = Json.createObject();
 
-  public WebSocketBus(String url, JsonObject options) {
+  public WebSocketBus(String serverUri, JsonObject options) {
     webSocketHandler = new WebSocket.WebSocketHandler() {
       @Override
       public void onClose(JsonObject reason) {
@@ -66,8 +66,8 @@ public class WebSocketBus extends SimpleBus {
         JsonObject json = Json.<JsonObject> parse(msg);
         @SuppressWarnings({"unchecked"})
         MessageImpl message =
-            new MessageImpl(false, false, WebSocketBus.this, json.getString(ADDRESS), json
-                .getString(REPLY_ADDRESS), json.get(BODY));
+            new MessageImpl(false, false, WebSocketBus.this, json.getString(TOPIC), json
+                .getString(REPLY_TOPIC), json.get(BODY));
         internalHandleReceiveMessage(false, message);
       }
 
@@ -89,11 +89,11 @@ public class WebSocketBus extends SimpleBus {
       }
     };
 
-    connect(url, options);
+    connect(serverUri, options);
   }
 
-  public void connect(String url, JsonObject options) {
-    this.url = url;
+  public void connect(String serverUri, JsonObject options) {
+    this.serverUri = serverUri;
     pingInterval =
         options == null || !options.has(PING_INTERVAL) ? 5 * 1000 : (int) options
             .getNumber(PING_INTERVAL);
@@ -102,7 +102,7 @@ public class WebSocketBus extends SimpleBus {
     username = options == null || !options.has(USERNAME) ? null : options.getString(USERNAME);
     password = options == null || !options.has(PASSWORD) ? null : options.getString(PASSWORD);
 
-    webSocket = Platform.net().createWebSocket(url, options);
+    webSocket = Platform.net().createWebSocket(serverUri, options);
     webSocket.setListen(webSocketHandler);
   }
 
@@ -129,50 +129,50 @@ public class WebSocketBus extends SimpleBus {
   }
 
   @Override
-  protected boolean doRegisterHandler(boolean local, String address,
+  protected boolean doRegisterHandler(boolean local, String topic,
       Handler<? extends Message> handler) {
-    boolean registered = super.doRegisterHandler(local, address, handler);
-    if (local || !registered || (hook != null && !hook.handlePreRegister(address, handler))) {
+    boolean registered = super.doRegisterHandler(local, topic, handler);
+    if (local || !registered || (hook != null && !hook.handlePreRegister(topic, handler))) {
       return false;
     }
-    if (handlerCount.has(address)) {
-      handlerCount.set(address, handlerCount.getNumber(address) + 1);
+    if (handlerCount.has(topic)) {
+      handlerCount.set(topic, handlerCount.getNumber(topic) + 1);
       return false;
     }
-    handlerCount.set(address, 1);
-    sendRegister(address);
+    handlerCount.set(topic, 1);
+    sendRegister(topic);
     return true;
   }
 
   @Override
-  protected <T> void doSendOrPub(boolean local, boolean send, String address, Object msg,
+  protected <T> void doSendOrPub(boolean local, boolean send, String topic, Object msg,
       Handler<Message<T>> replyHandler) {
-    checkNotNull(ADDRESS, address);
+    checkNotNull(TOPIC, topic);
     if (local) {
-      super.doSendOrPub(local, send, address, msg, replyHandler);
+      super.doSendOrPub(local, send, topic, msg, replyHandler);
       return;
     }
     JsonObject envelope = Json.createObject().set(TYPE, send ? "send" : "publish");
-    envelope.set(ADDRESS, address).set(BODY, msg);
+    envelope.set(TOPIC, topic).set(BODY, msg);
     if (replyHandler != null) {
-      String replyAddress = makeUUID();
-      envelope.set(REPLY_ADDRESS, replyAddress);
-      replyHandlers.set(replyAddress, replyHandler);
+      String replyTopic = makeUUID();
+      envelope.set(REPLY_TOPIC, replyTopic);
+      replyHandlers.set(replyTopic, replyHandler);
     }
     send(envelope);
   }
 
   @Override
-  protected boolean doUnregisterHandler(boolean local, String address,
+  protected boolean doUnregisterHandler(boolean local, String topic,
       Handler<? extends Message> handler) {
-    boolean unregistered = super.doUnregisterHandler(local, address, handler);
-    if (local || !unregistered || (hook != null && !hook.handleUnregister(address))) {
+    boolean unregistered = super.doUnregisterHandler(local, topic, handler);
+    if (local || !unregistered || (hook != null && !hook.handleUnregister(topic))) {
       return false;
     }
-    handlerCount.set(address, handlerCount.getNumber(address) - 1);
-    if (handlerCount.getNumber(address) == 0) {
-      handlerCount.remove(address);
-      sendUnregister(address);
+    handlerCount.set(topic, handlerCount.getNumber(topic) - 1);
+    if (handlerCount.getNumber(topic) == 0) {
+      handlerCount.remove(topic);
+      sendUnregister(topic);
       return true;
     }
     return false;
@@ -193,7 +193,7 @@ public class WebSocketBus extends SimpleBus {
         msg.set(PASSWORD, password);
       }
     }
-    send(ADDR + "/_CONNECT", msg, new Handler<Message<JsonObject>>() {
+    send(TOPIC_CHANNEL + "/_CONNECT", msg, new Handler<Message<JsonObject>>() {
       @Override
       public void handle(Message<JsonObject> message) {
         if (0 != message.body().getNumber("code")) {
@@ -208,19 +208,19 @@ public class WebSocketBus extends SimpleBus {
   }
 
   /*
-   * First handler for this address so we should register the connection
+   * First handler for this topic so we should register the connection
    */
-  protected void sendRegister(String address) {
-    assert address != null : "address shouldn't be null";
-    JsonObject msg = Json.createObject().set(TYPE, "register").set(ADDRESS, address);
+  protected void sendRegister(String topic) {
+    assert topic != null : "topic shouldn't be null";
+    JsonObject msg = Json.createObject().set(TYPE, "register").set(TOPIC, topic);
     send(msg);
   }
 
   /*
    * No more handlers so we should unregister the connection
    */
-  protected void sendUnregister(String address) {
-    JsonObject msg = Json.createObject().set(TYPE, "unregister").set(ADDRESS, address);
+  protected void sendUnregister(String topic) {
+    JsonObject msg = Json.createObject().set(TYPE, "unregister").set(TOPIC, topic);
     send(msg);
   }
 }

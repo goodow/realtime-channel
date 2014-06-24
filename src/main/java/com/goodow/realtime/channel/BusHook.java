@@ -39,12 +39,12 @@ public interface BusHook {
   /**
    * Called before register a handler
    * 
-   * @param address The address
+   * @param topic The topic
    * @param handler The handler
    * @return true to let the registration occur, false otherwise
    */
   @SuppressWarnings("rawtypes")
-  boolean handlePreRegister(String address, Handler<? extends Message> handler);
+  boolean handlePreRegister(String topic, Handler<? extends Message> handler);
 
   /**
    * Called when a message is received
@@ -58,19 +58,19 @@ public interface BusHook {
    * Called when sending or publishing on the bus
    * 
    * @param send if true it's a send else it's a publish
-   * @param address The address the message is being sent/published to
+   * @param topic The topic the message is being sent/published to
    * @param msg The message
    * @param replyHandler Reply handler will be called when any reply from the recipient is received
    * @return true To allow the send/publish to occur, false otherwise
    */
-  <T> boolean handleSendOrPub(boolean send, String address, Object msg,
+  <T> boolean handleSendOrPub(boolean send, String topic, Object msg,
       Handler<Message<T>> replyHandler);
 
   /**
    * Called when unregistering a handler
    * 
-   * @param address The address
+   * @param topic The topic
    * @return true to let the unregistration occur, false otherwise
    */
-  boolean handleUnregister(String address);
+  boolean handleUnregister(String topic);
 }

@@ -55,7 +55,7 @@ public class VertxBusTest extends TestVerticle {
 
   @Test
   public void test() {
-    bus.registerHandler("someaddress", new MessageHandler<JsonObject>() {
+    bus.registerHandler("somea/topic", new MessageHandler<JsonObject>() {
       @Override
       public void handle(Message<JsonObject> message) {
         VertxAssert.assertEquals("send1", message.body().getString("text"));
@@ -65,7 +65,7 @@ public class VertxBusTest extends TestVerticle {
           @Override
           public void handle(Message<JsonObject> message) {
             VertxAssert.assertEquals("reply2", message.body().getString("text"));
-            VertxAssert.assertNull(message.replyAddress());
+            VertxAssert.assertNull(message.replyTopic());
 
             bus.close();
             VertxAssert.testComplete();
@@ -75,7 +75,7 @@ public class VertxBusTest extends TestVerticle {
     });
 
     JsonObject o1 = Json.createObject().set("text", "send1");
-    bus.send("someaddress", o1, new Handler<Message<JsonObject>>() {
+    bus.send("somea/topic", o1, new Handler<Message<JsonObject>>() {
       @Override
       public void handle(Message<JsonObject> message) {
         VertxAssert.assertEquals("reply1", message.body().getString("text"));

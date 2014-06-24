@@ -36,8 +36,8 @@ public class ReconnectBus extends WebSocketBus {
   private final JsonObject options;
 
   @JsExport
-  public ReconnectBus(String url, JsonObject options) {
-    super(url, options);
+  public ReconnectBus(String serverUri, JsonObject options) {
+    super(serverUri, options);
     this.options = options;
     reconnect =
         options == null || !options.has(AUTO_RECONNECT) ? true : options.getBoolean(AUTO_RECONNECT);
@@ -50,11 +50,11 @@ public class ReconnectBus extends WebSocketBus {
 
         handlerCount.keys().forEach(new JsonArray.ListIterator<String>() {
           @Override
-          public void call(int index, String address) {
-            assert handlerCount.getNumber(address) > 0 : "Handlers registried on " + address
+          public void call(int index, String topic) {
+            assert handlerCount.getNumber(topic) > 0 : "Handlers registried on " + topic
                 + " shouldn't be empty";
-            sendUnregister(address);
-            sendRegister(address);
+            sendUnregister(topic);
+            sendRegister(topic);
           }
         });
 
@@ -103,7 +103,7 @@ public class ReconnectBus extends WebSocketBus {
       webSocket.close();
     }
 
-    connect(url, options);
+    connect(serverUri, options);
   }
 
   @Override

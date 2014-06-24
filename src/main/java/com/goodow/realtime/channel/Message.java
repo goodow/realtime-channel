@@ -24,11 +24,6 @@ import com.goodow.realtime.core.Handler;
 @JsType
 public interface Message<T> {
   /**
-   * The address the message was sent to
-   */
-  String address();
-
-  /**
    * The body of the message
    */
   T body();
@@ -37,7 +32,7 @@ public interface Message<T> {
    * Signal that processing of this message failed. If the message was sent specifying a result
    * handler the handler will be called with a failure corresponding to the failure code and message
    * specified here
-   * 
+   *
    * @param failureCode A failure code to pass back to the sender
    * @param msg A message to pass back to the sender
    */
@@ -59,7 +54,12 @@ public interface Message<T> {
   <T> void reply(Object msg, Handler<Message<T>> replyHandler);
 
   /**
-   * The reply address (if any)
+   * The reply topic (if any)
    */
-  String replyAddress();
+  String replyTopic();
+
+  /**
+   * The topic the message was sent to
+   */
+  String topic();
 }

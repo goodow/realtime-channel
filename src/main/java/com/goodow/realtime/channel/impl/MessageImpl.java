@@ -20,24 +20,24 @@ import com.goodow.realtime.core.Handler;
 class MessageImpl<U> implements Message<U> {
   protected U body;
   protected Bus bus;
-  protected String address;
-  protected String replyAddress;
+  protected String topic;
+  protected String replyTopic;
   protected boolean send; // Is it a send or a publish?
   protected boolean local;
 
-  public MessageImpl(boolean local, boolean send, Bus bus, String address, String replyAddress,
+  public MessageImpl(boolean local, boolean send, Bus bus, String topic, String replyTopic,
                      U body) {
     this.local = local;
     this.send = send;
     this.bus = bus;
-    this.address = address;
-    this.replyAddress = replyAddress;
+    this.topic = topic;
+    this.replyTopic = replyTopic;
     this.body = body;
   }
 
   @Override
-  public String address() {
-    return address;
+  public String topic() {
+    return topic;
   }
 
   @Override
@@ -61,8 +61,8 @@ class MessageImpl<U> implements Message<U> {
   }
 
   @Override
-  public String replyAddress() {
-    return replyAddress;
+  public String replyTopic() {
+    return replyTopic;
   }
 
   @Override
@@ -71,12 +71,12 @@ class MessageImpl<U> implements Message<U> {
   }
 
   private <T> void sendReply(Object msg, Handler<Message<T>> replyHandler) {
-    if (bus != null && replyAddress != null) {
+    if (bus != null && replyTopic != null) {
       // Send back reply
       if (local) {
-        bus.sendLocal(replyAddress, msg, replyHandler);
+        bus.sendLocal(replyTopic, msg, replyHandler);
       } else {
-        bus.send(replyAddress, msg, replyHandler);
+        bus.send(replyTopic, msg, replyHandler);
       }
     }
   }

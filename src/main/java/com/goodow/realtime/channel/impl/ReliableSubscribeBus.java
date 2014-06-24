@@ -41,7 +41,7 @@ public class ReliableSubscribeBus extends BusProxy {
    * Delay acknowledgment in case we receive operations in the meantime.
    */
   private final int acknowledgeDelayMillis;
-  private final JsonObject pendings; // {address: {sequence: Message<?>}}
+  private final JsonObject pendings; // {topic: {sequence: Message<?>}}
   private final JsonObject currentSequences;
   private final JsonObject knownHeadSequences;
   private final JsonObject acknowledgeScheduled;
@@ -73,15 +73,15 @@ public class ReliableSubscribeBus extends BusProxy {
       }
 
       @Override
-      public boolean handleUnregister(String address) {
-        if (needProcess(address)) {
-          pendings.remove(address);
-          currentSequences.remove(address);
-          knownHeadSequences.remove(address);
-          acknowledgeScheduled.remove(address);
-          acknowledgeNumbers.remove(address);
+      public boolean handleUnregister(String topic) {
+        if (needProcess(topic)) {
+          pendings.remove(topic);
+          currentSequences.remove(topic);
+          knownHeadSequences.remove(topic);
+          acknowledgeScheduled.remove(topic);
+          acknowledgeNumbers.remove(topic);
         }
-        return super.handleUnregister(address);
+        return super.handleUnregister(topic);
       }
 
       @Override
@@ -101,17 +101,17 @@ public class ReliableSubscribeBus extends BusProxy {
     acknowledgeNumbers.clear();
   }
 
-  public void synchronizeSequenceNumber(String address, double initialSequenceNumber) {
-    assert !currentSequences.has(address) && !knownHeadSequences.has(address)
-        && !pendings.has(address);
-    initSequenceNumber(address, initialSequenceNumber);
+  public void synchronizeSequenceNumber(String topic, double initialSequenceNumber) {
+    assert !currentSequences.has(topic) && !knownHeadSequences.has(topic)
+        && !pendings.has(topic);
+    initSequenceNumber(topic, initialSequenceNumber);
     // Send the first acknowledgment immediately, to quickly catch up any initial missing messages,
-    // which might happen if the address is currently active.
-    catchup(address, initialSequenceNumber);
+    // which might happen if the topic is currently active.
+    catchup(topic, initialSequenceNumber);
   }
 
-  protected void catchup(final String address, double currentSequence) {
-    String id = address.substring(publishChannel.length() + 1);
+  protected void catchup(final String topic, double currentSequence) {
+    String id = topic.substring(publishChannel.length() + 1);
     id = id.substring(0, id.lastIndexOf("/_watch"));
     delegate.send(publishChannel + "/_ops",
                   Json.createObject().set("id", id) .set("from", currentSequence + 1),
@@ -119,46 +119,46 @@ public class ReliableSubscribeBus extends BusProxy {
           @SuppressWarnings({"rawtypes", "unchecked"})
           @Override
           public void handle(Message<JsonArray> message) {
-            final String replyAddress = message.replyAddress();
+            final String replyTopic = message.replyTopic();
             message.body().forEach(new JsonArray.ListIterator() {
               @Override
               public void call(int index, Object value) {
                 onReceiveMessage(new MessageImpl(false, false, ReliableSubscribeBus.this,
-                    address, replyAddress, value));
+                    topic, replyTopic, value));
               }
             });
           }
         });
   }
 
-  protected double getSequenceNumber(String address, Object body) {
+  protected double getSequenceNumber(String topic, Object body) {
     return ((JsonObject) body).getNumber(sequenceNumberKey);
   }
 
-  protected boolean needProcess(String address) {
-    return address.startsWith(publishChannel + "/") && address.endsWith("/_watch") &&
-           !address.contains("/_presence/");
+  protected boolean needProcess(String topic) {
+    return topic.startsWith(publishChannel + "/") && topic.endsWith("/_watch") &&
+           !topic.contains("/_presence/");
   }
 
   protected boolean onReceiveMessage(Message<?> message) {
-    String address = message.address();
+    String topic = message.topic();
     Object body = message.body();
-    if (!needProcess(address)) {
+    if (!needProcess(topic)) {
       return true;
     }
-    double sequence = getSequenceNumber(address, body);
-    if (!currentSequences.has(address)) {
-      initSequenceNumber(address, sequence);
+    double sequence = getSequenceNumber(topic, body);
+    if (!currentSequences.has(topic)) {
+      initSequenceNumber(topic, sequence);
       return true;
     }
 
-    double currentSequence = currentSequences.getNumber(address);
+    double currentSequence = currentSequences.getNumber(topic);
     if (sequence <= currentSequence) {
       log.log(Level.CONFIG, "Old dup at sequence " + sequence + ", current is now "
           + currentSequence);
       return false;
     }
-    JsonObject pending = pendings.getObject(address);
+    JsonObject pending = pendings.getObject(topic);
     Message<?> existing = pending.get("" + sequence);
     if (existing != null) {
       // Should not have pending data at a sequence we could have pushed out.
@@ -167,21 +167,21 @@ public class ReliableSubscribeBus extends BusProxy {
       return false;
     }
 
-    knownHeadSequences.set(address, Math.max(knownHeadSequences.getNumber(address), sequence));
+    knownHeadSequences.set(topic, Math.max(knownHeadSequences.getNumber(topic), sequence));
 
     if (sequence > currentSequence + 1) {
       pending.set("" + sequence, message);
       log.log(Level.CONFIG, "Missed message, current sequence=" + currentSequence
           + " incoming sequence=" + sequence);
-      scheduleAcknowledgment(address);
+      scheduleAcknowledgment(topic);
       return false;
     }
 
     assert sequence == currentSequence + 1 : "other cases should have been caught";
     String next;
     while (true) {
-      delegate.publishLocal(message.address(), message.body());
-      currentSequences.set(address, ++currentSequence);
+      delegate.publishLocal(message.topic(), message.body());
+      currentSequences.set(topic, ++currentSequence);
       next = currentSequence + 1 + "";
       message = pending.get(next);
       if (message != null) {
@@ -194,32 +194,32 @@ public class ReliableSubscribeBus extends BusProxy {
     return false;
   }
 
-  private void initSequenceNumber(String address, double initialSequenceNumber) {
-    currentSequences.set(address, initialSequenceNumber);
-    knownHeadSequences.set(address, initialSequenceNumber);
-    pendings.set(address, Json.createObject());
+  private void initSequenceNumber(String topic, double initialSequenceNumber) {
+    currentSequences.set(topic, initialSequenceNumber);
+    knownHeadSequences.set(topic, initialSequenceNumber);
+    pendings.set(topic, Json.createObject());
   }
 
   /**
    * Acknowledgment Number is the next sequence number that the receiver is expecting
    */
-  private void scheduleAcknowledgment(final String address) {
-    if (!acknowledgeScheduled.has(address)) {
-      acknowledgeScheduled.set(address, true);
+  private void scheduleAcknowledgment(final String topic) {
+    if (!acknowledgeScheduled.has(topic)) {
+      acknowledgeScheduled.set(topic, true);
       Platform.scheduler().scheduleDelay(acknowledgeDelayMillis, new Handler<Void>() {
         @Override
         public void handle(Void event) {
-          if (acknowledgeScheduled.has(address)) {
-            acknowledgeScheduled.remove(address);
+          if (acknowledgeScheduled.has(topic)) {
+            acknowledgeScheduled.remove(topic);
             // Check we're still out of date, and not already catching up.
-            double knownHeadSequence = knownHeadSequences.getNumber(address);
-            double currentSequence = currentSequences.getNumber(address);
+            double knownHeadSequence = knownHeadSequences.getNumber(topic);
+            double currentSequence = currentSequences.getNumber(topic);
             if (knownHeadSequence > currentSequence
-                && (!acknowledgeNumbers.has(address) || knownHeadSequence > acknowledgeNumbers
-                    .getNumber(address))) {
-              acknowledgeNumbers.set(address, knownHeadSequence);
+                && (!acknowledgeNumbers.has(topic) || knownHeadSequence > acknowledgeNumbers
+                    .getNumber(topic))) {
+              acknowledgeNumbers.set(topic, knownHeadSequence);
               log.log(Level.CONFIG, "Catching up to " + knownHeadSequence);
-              catchup(address, currentSequence);
+              catchup(topic, currentSequence);
             } else {
               log.log(Level.FINE, "No need to catchup");
             }

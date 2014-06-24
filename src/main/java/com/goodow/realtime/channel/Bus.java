@@ -22,14 +22,14 @@ import com.goodow.realtime.core.Registration;
  * A distributed lightweight event bus which can encompass multiple machines. The event bus
  * implements publish/subscribe, point to point messaging and request-response messaging.<p>
  * Messages sent over the event bus are represented by instances of the {@link Message} class.<p>
- * For publish/subscribe, messages can be published to an address using one of the {@link #publish}
- * methods. An address is a simple {@code String} instance.<p>
- * Handlers are registered against an address. There can be multiple handlers registered against
- * each address, and a particular handler can be registered against multiple addresses. The event
- * bus will route a sent message to all handlers which are registered against that address.<p>
- * For point to point messaging, messages can be sent to an address using one of the {@link #send}
+ * For publish/subscribe, messages can be published to a topic using one of the {@link #publish}
+ * methods. A topic is a simple {@code String} instance.<p>
+ * Handlers are registered against a topic. There can be multiple handlers registered against
+ * each topic, and a particular handler can be registered against multiple topics. The event
+ * bus will route a sent message to all handlers which are registered against that topic.<p>
+ * For point to point messaging, messages can be sent to a topic using one of the {@link #send}
  * methods. The messages will be delivered to a single handler, if one is registered on that
- * address. If more than one handler is registered on the same address, the bus will choose one and
+ * topic. If more than one handler is registered on the same topic, the bus will choose one and
  * deliver the message to that. The bus will aim to fairly distribute messages in a round-robin way,
  * but does not guarantee strict round-robin under all circumstances.<p>
  * The order of messages received by any specific handler from a specific sender should match the
@@ -59,56 +59,56 @@ public interface Bus {
   /**
    * Publish a message
    *
-   * @param address The address to publish it to
+   * @param topic The topic to publish it to
    * @param msg The message
    */
-  Bus publish(String address, Object msg);
+  Bus publish(String topic, Object msg);
 
   /**
    * Publish a local message
    *
-   * @param address The address to publish it to
+   * @param topic The topic to publish it to
    * @param msg The message
    */
-  Bus publishLocal(String address, Object msg);
+  Bus publishLocal(String topic, Object msg);
 
   /**
-   * Registers a handler against the specified address
+   * Registers a handler against the specified topic
    * 
-   * @param address The address to register it at
+   * @param topic The topic to register it at
    * @param handler The handler
    * @return the handler registration, can be stored in order to unregister the handler later
    */
   @SuppressWarnings("rawtypes")
-  Registration registerHandler(String address, Handler<? extends Message> handler);
+  Registration registerHandler(String topic, Handler<? extends Message> handler);
 
   /**
-   * Registers a local handler against the specified address. The handler info won't be propagated
+   * Registers a local handler against the specified topic. The handler info won't be propagated
    * across the cluster
    * 
-   * @param address The address to register it at
+   * @param topic The topic to register it at
    * @param handler The handler
    */
   @SuppressWarnings("rawtypes")
-  Registration registerLocalHandler(String address, Handler<? extends Message> handler);
+  Registration registerLocalHandler(String topic, Handler<? extends Message> handler);
 
   /**
    * Send a message
    * 
-   * @param address The address to send it to
+   * @param topic The topic to send it to
    * @param msg The message
    * @param replyHandler Reply handler will be called when any reply from the recipient is received
    */
-  <T> Bus send(String address, Object msg, Handler<Message<T>> replyHandler);
+  <T> Bus send(String topic, Object msg, Handler<Message<T>> replyHandler);
 
   /**
    * Send a local message
    * 
-   * @param address The address to send it to
+   * @param topic The topic to send it to
    * @param msg The message
    * @param replyHandler Reply handler will be called when any reply from the recipient is received
    */
-  <T> Bus sendLocal(String address, Object msg, Handler<Message<T>> replyHandler);
+  <T> Bus sendLocal(String topic, Object msg, Handler<Message<T>> replyHandler);
 
   /**
    * Set a BusHook on the Bus

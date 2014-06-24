@@ -67,38 +67,38 @@ public class SimpleBus implements Bus {
   }
 
   @Override
-  public Bus publish(String address, Object msg) {
-    internalHandleSendOrPub(false, false, address, msg, null);
+  public Bus publish(String topic, Object msg) {
+    internalHandleSendOrPub(false, false, topic, msg, null);
     return this;
   }
 
   @Override
-  public Bus publishLocal(String address, Object msg) {
-    internalHandleSendOrPub(true, false, address, msg, null);
+  public Bus publishLocal(String topic, Object msg) {
+    internalHandleSendOrPub(true, false, topic, msg, null);
     return this;
   }
 
   @Override
-  public Registration registerHandler(final String address,
+  public Registration registerHandler(final String topic,
       final Handler<? extends Message> handler) {
-    return registerHandlerImpl(false, address, handler);
+    return registerHandlerImpl(false, topic, handler);
   }
 
   @Override
-  public Registration registerLocalHandler(final String address,
+  public Registration registerLocalHandler(final String topic,
       final Handler<? extends Message> handler) {
-    return registerHandlerImpl(true, address, handler);
+    return registerHandlerImpl(true, topic, handler);
   }
 
   @Override
-  public <T> Bus send(String address, Object msg, Handler<Message<T>> replyHandler) {
-    internalHandleSendOrPub(false, true, address, msg, replyHandler);
+  public <T> Bus send(String topic, Object msg, Handler<Message<T>> replyHandler) {
+    internalHandleSendOrPub(false, true, topic, msg, replyHandler);
     return this;
   }
 
   @Override
-  public <T> Bus sendLocal(String address, Object msg, Handler<Message<T>> replyHandler) {
-    internalHandleSendOrPub(true, true, address, msg, replyHandler);
+  public <T> Bus sendLocal(String topic, Object msg, Handler<Message<T>> replyHandler) {
+    internalHandleSendOrPub(true, true, topic, msg, replyHandler);
     return this;
   }
 
@@ -116,13 +116,13 @@ public class SimpleBus implements Bus {
     }
   }
 
-  protected boolean doRegisterHandler(boolean local, String address,
+  protected boolean doRegisterHandler(boolean local, String topic,
       Handler<? extends Message> handler) {
-    checkNotNull("address", address);
+    checkNotNull("topic", topic);
     checkNotNull("handler", handler);
-    JsonArray handlers = handlerMap.getArray(address);
+    JsonArray handlers = handlerMap.getArray(topic);
     if (handlers == null) {
-      handlerMap.set(address, Json.createArray().push(handler));
+      handlerMap.set(topic, Json.createArray().push(handler));
       return true;
     }
     if (handlers.indexOf(handler) == -1) {
@@ -133,30 +133,30 @@ public class SimpleBus implements Bus {
   }
 
   @SuppressWarnings("unchecked")
-  protected <T> void doSendOrPub(boolean local, boolean send, String address, Object msg,
+  protected <T> void doSendOrPub(boolean local, boolean send, String topic, Object msg,
       Handler<Message<T>> replyHandler) {
-    checkNotNull("address", address);
-    String replyAddress = null;
+    checkNotNull("topic", topic);
+    String replyTopic = null;
     if (replyHandler != null) {
-      replyAddress = makeUUID();
+      replyTopic = makeUUID();
     }
-    MessageImpl message = new MessageImpl(local, send, this, address, replyAddress, msg);
+    MessageImpl message = new MessageImpl(local, send, this, topic, replyTopic, msg);
     if (internalHandleReceiveMessage(local, message) && replyHandler != null) {
-      replyHandlers.set(replyAddress, replyHandler);
+      replyHandlers.set(replyTopic, replyHandler);
     }
   }
 
-  protected boolean doUnregisterHandler(boolean local, String address,
+  protected boolean doUnregisterHandler(boolean local, String topic,
       Handler<? extends Message> handler) {
-    checkNotNull("address", address);
+    checkNotNull("topic", topic);
     checkNotNull("handler", handler);
-    JsonArray handlers = handlerMap.getArray(address);
+    JsonArray handlers = handlerMap.getArray(topic);
     if (handlers == null) {
       return false;
     }
     boolean removed = handlers.removeValue(handler);
     if (handlers.length() == 0) {
-      handlerMap.remove(address);
+      handlerMap.remove(topic);
     }
     return removed;
   }
@@ -175,10 +175,10 @@ public class SimpleBus implements Bus {
     return false;
   }
 
-  <T> void internalHandleSendOrPub(boolean local, boolean send, String address, Object msg,
+  <T> void internalHandleSendOrPub(boolean local, boolean send, String topic, Object msg,
       Handler<Message<T>> replyHandler) {
-    if (local || hook == null || hook.handleSendOrPub(send, address, msg, replyHandler)) {
-      doSendOrPub(local, send, address, msg, replyHandler);
+    if (local || hook == null || hook.handleSendOrPub(send, topic, msg, replyHandler)) {
+      doSendOrPub(local, send, topic, msg, replyHandler);
     }
   }
 
@@ -186,15 +186,15 @@ public class SimpleBus implements Bus {
     return idGenerator.next(36);
   }
 
-  void scheduleHandle(final String address, final Object handler, final Object message) {
+  void scheduleHandle(final String topic, final Object handler, final Object message) {
     Platform.scheduler().scheduleDeferred(new Handler<Void>() {
       @Override
       public void handle(Void ignore) {
         try {
           Platform.scheduler().handle(handler, message);
         } catch (Throwable e) {
-          log.log(Level.WARNING, "Failed to handle on address: " + address, e);
-          publishLocal(ON_ERROR, Json.createObject().set("address", address)
+          log.log(Level.WARNING, "Failed to handle on topic: " + topic, e);
+          publishLocal(ON_ERROR, Json.createObject().set("topic", topic)
               .set("message", message).set("cause", e));
         }
       }
@@ -202,32 +202,32 @@ public class SimpleBus implements Bus {
   }
 
   private void doReceiveMessage(final Message message) {
-    final String address = message.address();
-    JsonArray handlers = handlerMap.getArray(address);
+    final String topic = message.topic();
+    JsonArray handlers = handlerMap.getArray(topic);
     if (handlers != null) {
       handlers.forEach(new JsonArray.ListIterator<Object>() {
         @Override
         public void call(int index, Object value) {
-          scheduleHandle(address, value, message);
+          scheduleHandle(topic, value, message);
         }
       });
     } else {
       // Might be a reply message
-      Object handler = replyHandlers.get(address);
+      Object handler = replyHandlers.get(topic);
       if (handler != null) {
-        replyHandlers.remove(address);
-        scheduleHandle(address, handler, message);
+        replyHandlers.remove(topic);
+        scheduleHandle(topic, handler, message);
       }
     }
   }
 
-  private Registration registerHandlerImpl(final boolean local, final String address,
+  private Registration registerHandlerImpl(final boolean local, final String topic,
       final Handler<? extends Message> handler) {
-    doRegisterHandler(local, address, handler);
+    doRegisterHandler(local, topic, handler);
     return new Registration() {
       @Override
       public void unregister() {
-        doUnregisterHandler(local, address, handler);
+        doUnregisterHandler(local, topic, handler);
       }
     };
   }

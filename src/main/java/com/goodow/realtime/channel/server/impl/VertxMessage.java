@@ -27,7 +27,7 @@ class VertxMessage<T> implements Message<T> {
   }
 
   @Override
-  public String address() {
+  public String topic() {
     return delegate.address();
   }
 
@@ -51,7 +51,7 @@ class VertxMessage<T> implements Message<T> {
   @Override
   public <T> void reply(Object msg, final Handler<Message<T>> replyHandler) {
     BusHook hook = bus.getHook();
-    if (hook == null || hook.handleSendOrPub(true, replyAddress(), msg, replyHandler)) {
+    if (hook == null || hook.handleSendOrPub(true, replyTopic(), msg, replyHandler)) {
       org.vertx.java.core.Handler<org.vertx.java.core.eventbus.Message<T>> handler =
           replyHandler == null ? null
               : new org.vertx.java.core.Handler<org.vertx.java.core.eventbus.Message<T>>() {
@@ -69,7 +69,7 @@ class VertxMessage<T> implements Message<T> {
   }
 
   @Override
-  public String replyAddress() {
+  public String replyTopic() {
     return delegate.replyAddress();
   }
 }

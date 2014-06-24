@@ -35,35 +35,35 @@ public abstract class BusProxy implements Bus {
   }
 
   @Override
-  public Bus publish(String address, Object msg) {
-    return delegate.publish(address, msg);
+  public Bus publish(String topic, Object msg) {
+    return delegate.publish(topic, msg);
   }
 
   @Override
-  public Bus publishLocal(String address, Object msg) {
-    return delegate.publishLocal(address, msg);
-  }
-
-  @SuppressWarnings("rawtypes")
-  @Override
-  public Registration registerHandler(String address, Handler<? extends Message> handler) {
-    return delegate.registerHandler(address, handler);
+  public Bus publishLocal(String topic, Object msg) {
+    return delegate.publishLocal(topic, msg);
   }
 
   @SuppressWarnings("rawtypes")
   @Override
-  public Registration registerLocalHandler(String address, Handler<? extends Message> handler) {
-    return delegate.registerLocalHandler(address, handler);
+  public Registration registerHandler(String topic, Handler<? extends Message> handler) {
+    return delegate.registerHandler(topic, handler);
+  }
+
+  @SuppressWarnings("rawtypes")
+  @Override
+  public Registration registerLocalHandler(String topic, Handler<? extends Message> handler) {
+    return delegate.registerLocalHandler(topic, handler);
   }
 
   @Override
-  public <T> Bus send(String address, Object msg, Handler<Message<T>> replyHandler) {
-    return delegate.send(address, msg, replyHandler);
+  public <T> Bus send(String topic, Object msg, Handler<Message<T>> replyHandler) {
+    return delegate.send(topic, msg, replyHandler);
   }
 
   @Override
-  public <T> Bus sendLocal(String address, Object msg, Handler<Message<T>> replyHandler) {
-    return delegate.sendLocal(address, msg, replyHandler);
+  public <T> Bus sendLocal(String topic, Object msg, Handler<Message<T>> replyHandler) {
+    return delegate.sendLocal(topic, msg, replyHandler);
   }
 
   @Override

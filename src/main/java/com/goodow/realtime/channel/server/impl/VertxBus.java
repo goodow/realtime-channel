@@ -98,28 +98,28 @@ public class VertxBus implements Bus {
   }
 
   @Override
-  public VertxBus publish(String address, Object msg) {
-    if (hook == null || hook.handleSendOrPub(false, address, msg, null)) {
-      eb.publish(address, wrapMsg(msg));
+  public VertxBus publish(String topic, Object msg) {
+    if (hook == null || hook.handleSendOrPub(false, topic, msg, null)) {
+      eb.publish(topic, wrapMsg(msg));
     }
     return this;
   }
 
   @Override
-  public Bus publishLocal(String address, Object msg) {
-    return localBus.publishLocal(address, msg);
+  public Bus publishLocal(String topic, Object msg) {
+    return localBus.publishLocal(topic, msg);
   }
 
   @SuppressWarnings("rawtypes")
   @Override
-  public Registration registerHandler(final String address,
+  public Registration registerHandler(final String topic,
       final Handler<? extends Message> handler) {
-    if (hook != null && !hook.handlePreRegister(address, handler)) {
+    if (hook != null && !hook.handlePreRegister(topic, handler)) {
       return Registration.EMPTY;
     }
     final org.vertx.java.core.Handler<org.vertx.java.core.eventbus.Message> vertxHandler =
         wrapHandler(handler);
-    eb.registerHandler(address, vertxHandler, new org.vertx.java.core.Handler<AsyncResult<Void>>() {
+    eb.registerHandler(topic, vertxHandler, new org.vertx.java.core.Handler<AsyncResult<Void>>() {
       @Override
       public void handle(AsyncResult<Void> ar) {
         if (ar.failed()) {
@@ -130,8 +130,8 @@ public class VertxBus implements Bus {
     return new Registration() {
       @Override
       public void unregister() {
-        if (hook == null || hook.handleUnregister(address)) {
-          eb.unregisterHandler(address, vertxHandler,
+        if (hook == null || hook.handleUnregister(topic)) {
+          eb.unregisterHandler(topic, vertxHandler,
               new org.vertx.java.core.Handler<AsyncResult<Void>>() {
                 @Override
                 public void handle(AsyncResult<Void> ar) {
@@ -147,22 +147,22 @@ public class VertxBus implements Bus {
 
   @SuppressWarnings("rawtypes")
   @Override
-  public Registration registerLocalHandler(final String address,
+  public Registration registerLocalHandler(final String topic,
       Handler<? extends Message> handler) {
-    return localBus.registerLocalHandler(address, handler);
+    return localBus.registerLocalHandler(topic, handler);
   }
 
   @Override
-  public <T> VertxBus send(String address, Object msg, final Handler<Message<T>> replyHandler) {
-    if (hook == null || hook.handleSendOrPub(true, address, msg, replyHandler)) {
-      eb.send(address, wrapMsg(msg), wrapHandler(replyHandler));
+  public <T> VertxBus send(String topic, Object msg, final Handler<Message<T>> replyHandler) {
+    if (hook == null || hook.handleSendOrPub(true, topic, msg, replyHandler)) {
+      eb.send(topic, wrapMsg(msg), wrapHandler(replyHandler));
     }
     return this;
   }
 
   @Override
-  public <T> Bus sendLocal(String address, Object msg, Handler<Message<T>> replyHandler) {
-    return localBus.sendLocal(address, msg, replyHandler);
+  public <T> Bus sendLocal(String topic, Object msg, Handler<Message<T>> replyHandler) {
+    return localBus.sendLocal(topic, msg, replyHandler);
   }
 
   @Override
