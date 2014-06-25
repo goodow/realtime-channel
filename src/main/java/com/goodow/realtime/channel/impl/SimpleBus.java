@@ -79,15 +79,15 @@ public class SimpleBus implements Bus {
   }
 
   @Override
-  public Registration registerHandler(final String topic,
-      final Handler<? extends Message> handler) {
-    return registerHandlerImpl(false, topic, handler);
+  public Registration subscribe(final String topic,
+                                final Handler<? extends Message> handler) {
+    return subscribeImpl(false, topic, handler);
   }
 
   @Override
-  public Registration registerLocalHandler(final String topic,
-      final Handler<? extends Message> handler) {
-    return registerHandlerImpl(true, topic, handler);
+  public Registration subscribeLocal(final String topic,
+                                     final Handler<? extends Message> handler) {
+    return subscribeImpl(true, topic, handler);
   }
 
   @Override
@@ -116,8 +116,8 @@ public class SimpleBus implements Bus {
     }
   }
 
-  protected boolean doRegisterHandler(boolean local, String topic,
-      Handler<? extends Message> handler) {
+  protected boolean doSubscribe(boolean local, String topic,
+                                Handler<? extends Message> handler) {
     checkNotNull("topic", topic);
     checkNotNull("handler", handler);
     JsonArray handlers = handlerMap.getArray(topic);
@@ -146,8 +146,8 @@ public class SimpleBus implements Bus {
     }
   }
 
-  protected boolean doUnregisterHandler(boolean local, String topic,
-      Handler<? extends Message> handler) {
+  protected boolean doUnsubscribe(boolean local, String topic,
+                                  Handler<? extends Message> handler) {
     checkNotNull("topic", topic);
     checkNotNull("handler", handler);
     JsonArray handlers = handlerMap.getArray(topic);
@@ -221,13 +221,13 @@ public class SimpleBus implements Bus {
     }
   }
 
-  private Registration registerHandlerImpl(final boolean local, final String topic,
-      final Handler<? extends Message> handler) {
-    doRegisterHandler(local, topic, handler);
+  private Registration subscribeImpl(final boolean local, final String topic,
+                                     final Handler<? extends Message> handler) {
+    doSubscribe(local, topic, handler);
     return new Registration() {
       @Override
       public void unregister() {
-        doUnregisterHandler(local, topic, handler);
+        doUnsubscribe(local, topic, handler);
       }
     };
   }

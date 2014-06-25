@@ -73,28 +73,8 @@ public interface Bus {
   Bus publishLocal(String topic, Object msg);
 
   /**
-   * Registers a handler against the specified topic
-   * 
-   * @param topic The topic to register it at
-   * @param handler The handler
-   * @return the handler registration, can be stored in order to unregister the handler later
-   */
-  @SuppressWarnings("rawtypes")
-  Registration registerHandler(String topic, Handler<? extends Message> handler);
-
-  /**
-   * Registers a local handler against the specified topic. The handler info won't be propagated
-   * across the cluster
-   * 
-   * @param topic The topic to register it at
-   * @param handler The handler
-   */
-  @SuppressWarnings("rawtypes")
-  Registration registerLocalHandler(String topic, Handler<? extends Message> handler);
-
-  /**
    * Send a message
-   * 
+   *
    * @param topic The topic to send it to
    * @param msg The message
    * @param replyHandler Reply handler will be called when any reply from the recipient is received
@@ -103,7 +83,7 @@ public interface Bus {
 
   /**
    * Send a local message
-   * 
+   *
    * @param topic The topic to send it to
    * @param msg The message
    * @param replyHandler Reply handler will be called when any reply from the recipient is received
@@ -112,8 +92,28 @@ public interface Bus {
 
   /**
    * Set a BusHook on the Bus
-   * 
+   *
    * @param hook The hook
    */
   Bus setHook(BusHook hook);
+
+  /**
+   * Registers a handler against the specified topic
+   *
+   * @param topic The topic to register it at
+   * @param handler The handler
+   * @return the handler registration, can be stored in order to unregister the handler later
+   */
+  @SuppressWarnings("rawtypes")
+  Registration subscribe(String topic, Handler<? extends Message> handler);
+
+  /**
+   * Registers a local handler against the specified topic. The handler info won't be propagated
+   * across the cluster
+   *
+   * @param topic The topic to register it at
+   * @param handler The handler
+   */
+  @SuppressWarnings("rawtypes")
+  Registration subscribeLocal(String topic, Handler<? extends Message> handler);
 }

@@ -112,9 +112,9 @@ public class VertxBus implements Bus {
 
   @SuppressWarnings("rawtypes")
   @Override
-  public Registration registerHandler(final String topic,
-      final Handler<? extends Message> handler) {
-    if (hook != null && !hook.handlePreRegister(topic, handler)) {
+  public Registration subscribe(final String topic,
+                                final Handler<? extends Message> handler) {
+    if (hook != null && !hook.handlePreSubscribe(topic, handler)) {
       return Registration.EMPTY;
     }
     final org.vertx.java.core.Handler<org.vertx.java.core.eventbus.Message> vertxHandler =
@@ -130,7 +130,7 @@ public class VertxBus implements Bus {
     return new Registration() {
       @Override
       public void unregister() {
-        if (hook == null || hook.handleUnregister(topic)) {
+        if (hook == null || hook.handleUnsubscribe(topic)) {
           eb.unregisterHandler(topic, vertxHandler,
               new org.vertx.java.core.Handler<AsyncResult<Void>>() {
                 @Override
@@ -147,9 +147,9 @@ public class VertxBus implements Bus {
 
   @SuppressWarnings("rawtypes")
   @Override
-  public Registration registerLocalHandler(final String topic,
-      Handler<? extends Message> handler) {
-    return localBus.registerLocalHandler(topic, handler);
+  public Registration subscribeLocal(final String topic,
+                                     Handler<? extends Message> handler) {
+    return localBus.subscribeLocal(topic, handler);
   }
 
   @Override

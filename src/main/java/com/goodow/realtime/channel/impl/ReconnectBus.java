@@ -53,8 +53,8 @@ public class ReconnectBus extends WebSocketBus {
           public void call(int index, String topic) {
             assert handlerCount.getNumber(topic) > 0 : "Handlers registried on " + topic
                 + " shouldn't be empty";
-            sendUnregister(topic);
-            sendRegister(topic);
+            sendUnsubscribe(topic);
+            sendSubscribe(topic);
           }
         });
 

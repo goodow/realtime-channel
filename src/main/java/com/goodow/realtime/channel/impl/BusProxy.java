@@ -46,14 +46,14 @@ public abstract class BusProxy implements Bus {
 
   @SuppressWarnings("rawtypes")
   @Override
-  public Registration registerHandler(String topic, Handler<? extends Message> handler) {
-    return delegate.registerHandler(topic, handler);
+  public Registration subscribe(String topic, Handler<? extends Message> handler) {
+    return delegate.subscribe(topic, handler);
   }
 
   @SuppressWarnings("rawtypes")
   @Override
-  public Registration registerLocalHandler(String topic, Handler<? extends Message> handler) {
-    return delegate.registerLocalHandler(topic, handler);
+  public Registration subscribeLocal(String topic, Handler<? extends Message> handler) {
+    return delegate.subscribeLocal(topic, handler);
   }
 
   @Override

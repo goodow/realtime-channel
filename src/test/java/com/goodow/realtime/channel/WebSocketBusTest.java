@@ -58,19 +58,19 @@ public class WebSocketBusTest extends TestVerticle {
 
   @Test
   public void test() {
-    bus.registerLocalHandler(Bus.ON_OPEN, new MessageHandler<Void>() {
+    bus.subscribeLocal(Bus.ON_OPEN, new MessageHandler<Void>() {
       @Override
       public void handle(Message<Void> message) {
         log.info("EventBus opened");
       }
     });
-    bus.registerLocalHandler(Bus.ON_CLOSE, new MessageHandler<JsonObject>() {
+    bus.subscribeLocal(Bus.ON_CLOSE, new MessageHandler<JsonObject>() {
       @Override
       public void handle(Message<JsonObject> message) {
         log.info("EventBus closed");
       }
     });
-    bus.registerLocalHandler(Bus.ON_ERROR, new MessageHandler<JsonObject>() {
+    bus.subscribeLocal(Bus.ON_ERROR, new MessageHandler<JsonObject>() {
       @Override
       public void handle(Message<JsonObject> message) {
         log.log(Level.SEVERE, "EventBus Error");
@@ -88,7 +88,7 @@ public class WebSocketBusTest extends TestVerticle {
       }
     });
 
-    bus.registerHandler("some/topic", new MessageHandler<JsonObject>() {
+    bus.subscribe("some/topic", new MessageHandler<JsonObject>() {
       @Override
       public void handle(Message<JsonObject> message) {
         VertxAssert.assertEquals("send1", message.body().getString("text"));

@@ -17,7 +17,7 @@ import com.google.gwt.core.client.js.JsType;
 
 /**
  * Registration objects returned when an event handler is bound (e.g. via
- * {@link com.goodow.realtime.channel.Bus#registerHandler}), used to deregister.
+ * {@link com.goodow.realtime.channel.Bus#subscribe}), used to deregister.
  */
 @JsType
 public interface Registration {

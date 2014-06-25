@@ -119,7 +119,7 @@ public class WebSocketBus extends SimpleBus {
   @Override
   protected void doClose() {
     webSocket.close();
-    registerLocalHandler(Bus.ON_CLOSE, new Handler<Message<JsonObject>>() {
+    subscribeLocal(Bus.ON_CLOSE, new Handler<Message<JsonObject>>() {
       @Override
       public void handle(Message<JsonObject> event) {
         clearHandlers();
@@ -129,10 +129,10 @@ public class WebSocketBus extends SimpleBus {
   }
 
   @Override
-  protected boolean doRegisterHandler(boolean local, String topic,
-      Handler<? extends Message> handler) {
-    boolean registered = super.doRegisterHandler(local, topic, handler);
-    if (local || !registered || (hook != null && !hook.handlePreRegister(topic, handler))) {
+  protected boolean doSubscribe(boolean local, String topic,
+                                Handler<? extends Message> handler) {
+    boolean subscribed = super.doSubscribe(local, topic, handler);
+    if (local || !subscribed || (hook != null && !hook.handlePreSubscribe(topic, handler))) {
       return false;
     }
     if (handlerCount.has(topic)) {
@@ -140,7 +140,7 @@ public class WebSocketBus extends SimpleBus {
       return false;
     }
     handlerCount.set(topic, 1);
-    sendRegister(topic);
+    sendSubscribe(topic);
     return true;
   }
 
@@ -163,16 +163,16 @@ public class WebSocketBus extends SimpleBus {
   }
 
   @Override
-  protected boolean doUnregisterHandler(boolean local, String topic,
-      Handler<? extends Message> handler) {
-    boolean unregistered = super.doUnregisterHandler(local, topic, handler);
-    if (local || !unregistered || (hook != null && !hook.handleUnregister(topic))) {
+  protected boolean doUnsubscribe(boolean local, String topic,
+                                  Handler<? extends Message> handler) {
+    boolean unsubscribed = super.doUnsubscribe(local, topic, handler);
+    if (local || !unsubscribed || (hook != null && !hook.handleUnsubscribe(topic))) {
       return false;
     }
     handlerCount.set(topic, handlerCount.getNumber(topic) - 1);
     if (handlerCount.getNumber(topic) == 0) {
       handlerCount.remove(topic);
-      sendUnregister(topic);
+      sendUnsubscribe(topic);
       return true;
     }
     return false;
@@ -210,7 +210,7 @@ public class WebSocketBus extends SimpleBus {
   /*
    * First handler for this topic so we should register the connection
    */
-  protected void sendRegister(String topic) {
+  protected void sendSubscribe(String topic) {
     assert topic != null : "topic shouldn't be null";
     JsonObject msg = Json.createObject().set(TYPE, "register").set(TOPIC, topic);
     send(msg);
@@ -219,7 +219,7 @@ public class WebSocketBus extends SimpleBus {
   /*
    * No more handlers so we should unregister the connection
    */
-  protected void sendUnregister(String topic) {
+  protected void sendUnsubscribe(String topic) {
     JsonObject msg = Json.createObject().set(TYPE, "unregister").set(TOPIC, topic);
     send(msg);
   }

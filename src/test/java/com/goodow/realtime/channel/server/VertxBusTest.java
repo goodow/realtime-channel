@@ -55,7 +55,7 @@ public class VertxBusTest extends TestVerticle {
 
   @Test
   public void test() {
-    bus.registerHandler("somea/topic", new MessageHandler<JsonObject>() {
+    bus.subscribe("somea/topic", new MessageHandler<JsonObject>() {
       @Override
       public void handle(Message<JsonObject> message) {
         VertxAssert.assertEquals("send1", message.body().getString("text"));

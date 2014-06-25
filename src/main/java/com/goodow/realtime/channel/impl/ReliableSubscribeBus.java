@@ -73,7 +73,7 @@ public class ReliableSubscribeBus extends BusProxy {
       }
 
       @Override
-      public boolean handleUnregister(String topic) {
+      public boolean handleUnsubscribe(String topic) {
         if (needProcess(topic)) {
           pendings.remove(topic);
           currentSequences.remove(topic);
@@ -81,7 +81,7 @@ public class ReliableSubscribeBus extends BusProxy {
           acknowledgeScheduled.remove(topic);
           acknowledgeNumbers.remove(topic);
         }
-        return super.handleUnregister(topic);
+        return super.handleUnsubscribe(topic);
       }
 
       @Override

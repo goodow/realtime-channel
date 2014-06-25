@@ -44,7 +44,7 @@ public interface BusHook {
    * @return true to let the registration occur, false otherwise
    */
   @SuppressWarnings("rawtypes")
-  boolean handlePreRegister(String topic, Handler<? extends Message> handler);
+  boolean handlePreSubscribe(String topic, Handler<? extends Message> handler);
 
   /**
    * Called when a message is received
@@ -72,5 +72,5 @@ public interface BusHook {
    * @param topic The topic
    * @return true to let the unregistration occur, false otherwise
    */
-  boolean handleUnregister(String topic);
+  boolean handleUnsubscribe(String topic);
 }
