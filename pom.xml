@@ -56,7 +56,14 @@
       <artifactId>realtime-json</artifactId>
       <version>${project.version}</version>
     </dependency>
-    
+    <dependency>
+      <groupId>com.goodow.realtime</groupId>
+      <artifactId>realtime-json</artifactId>
+      <version>${project.version}</version>
+      <classifier>sources</classifier>
+      <scope>provided</scope>
+    </dependency>
+
     <!--Vert.x dependencies-->
     <dependency>
       <groupId>io.vertx</groupId>
@@ -190,9 +197,9 @@
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>gwt-maven-plugin</artifactId>
         <configuration>
-          <compileSourcesArtifacts>
-            <compileSourcesArtifact>com.goodow.realtime:realtime-json</compileSourcesArtifact>
-          </compileSourcesArtifacts>
+          <!--<compileSourcesArtifacts>-->
+            <!--<compileSourcesArtifact>com.goodow.realtime:realtime-json</compileSourcesArtifact>-->
+          <!--</compileSourcesArtifacts>-->
           <bindAddress>0.0.0.0</bindAddress>
           <!--<module>${project.groupId}.channel.Channel</module>-->
           <precompile>false</precompile>
