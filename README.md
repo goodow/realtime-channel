@@ -1,7 +1,9 @@
 realtime-channel [![Build Status](https://travis-ci.org/goodow/realtime-channel.svg?branch=master)](https://travis-ci.org/goodow/realtime-channel)
 ================
 
-Event bus client over WebSocket for Java/Android/iOS/Javascript/GWT/J2ObjC
+Event bus over WebSocket for Java/Android/iOS/Javascript/GWT/J2ObjC
+
+Visit [Google groups](https://groups.google.com/forum/#!forum/goodow-realtime) for discussions and announcements.
 
 ### Server side: realtime-channel
 * Vert.x Module Identifier: [com.goodow.realtime~realtime-channel~0.5.5-SNAPSHOT](https://oss.sonatype.org/index.html#nexus-search;gav~com.goodow.realtime~realtime-channel~~~)
@@ -11,7 +13,7 @@ Event bus client over WebSocket for Java/Android/iOS/Javascript/GWT/J2ObjC
 ### For java and android: realtime-android
 See: https://github.com/goodow/realtime-android
 
-### For iOS and mac osx: GDChannel
+### For iOS and Mac OS X: GDChannel
 See: https://github.com/goodow/GDChannel
 
 ### For javascript: realtime.channel
