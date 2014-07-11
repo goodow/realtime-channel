@@ -51,6 +51,11 @@ class MessageImpl<U> implements Message<U> {
   }
 
   @Override
+  public boolean isLocal() {
+    return local;
+  }
+
+  @Override
   public void reply(Object msg) {
     sendReply(msg, null);
   }

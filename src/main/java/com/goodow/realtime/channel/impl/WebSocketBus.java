@@ -68,7 +68,7 @@ public class WebSocketBus extends SimpleBus {
         MessageImpl message =
             new MessageImpl(false, false, WebSocketBus.this, json.getString(TOPIC), json
                 .getString(REPLY_TOPIC), json.get(BODY));
-        internalHandleReceiveMessage(false, message);
+        internalHandleReceiveMessage(message);
       }
 
       @Override

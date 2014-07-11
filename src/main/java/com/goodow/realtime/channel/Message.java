@@ -39,6 +39,11 @@ public interface Message<T> {
   void fail(int failureCode, String msg);
 
   /**
+   * @return Whether this message originated in the local session.
+   */
+  boolean isLocal();
+
+  /**
    * Reply to this message. If the message was sent specifying a reply handler, that handler will be
    * called when it has received a reply. If the message wasn't sent specifying a receipt handler
    * this method does nothing.

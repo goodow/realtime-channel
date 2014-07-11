@@ -141,7 +141,7 @@ public class SimpleBus implements Bus {
       replyTopic = makeUUID();
     }
     MessageImpl message = new MessageImpl(local, send, this, topic, replyTopic, msg);
-    if (internalHandleReceiveMessage(local, message) && replyHandler != null) {
+    if (internalHandleReceiveMessage(message) && replyHandler != null) {
       replyHandlers.set(replyTopic, replyHandler);
     }
   }
@@ -167,8 +167,8 @@ public class SimpleBus implements Bus {
     handlerMap = null;
   }
 
-  boolean internalHandleReceiveMessage(boolean local, Message message) {
-    if (local || hook == null || hook.handleReceiveMessage(message)) {
+  boolean internalHandleReceiveMessage(Message message) {
+    if (message.isLocal() || hook == null || hook.handleReceiveMessage(message)) {
       doReceiveMessage(message);
       return true;
     }
@@ -184,21 +184,6 @@ public class SimpleBus implements Bus {
 
   String makeUUID() {
     return idGenerator.next(36);
-  }
-
-  void scheduleHandle(final String topic, final Object handler, final Object message) {
-    Platform.scheduler().scheduleDeferred(new Handler<Void>() {
-      @Override
-      public void handle(Void ignore) {
-        try {
-          Platform.scheduler().handle(handler, message);
-        } catch (Throwable e) {
-          log.log(Level.WARNING, "Failed to handle on topic: " + topic, e);
-          publishLocal(ON_ERROR, Json.createObject().set("topic", topic)
-              .set("message", message).set("cause", e));
-        }
-      }
-    });
   }
 
   private void doReceiveMessage(final Message message) {
@@ -218,6 +203,29 @@ public class SimpleBus implements Bus {
         replyHandlers.remove(topic);
         scheduleHandle(topic, handler, message);
       }
+    }
+  }
+
+  private void handle(String topic, Object handler, Object message) {
+    try {
+      Platform.scheduler().handle(handler, message);
+    } catch (Throwable e) {
+      log.log(Level.WARNING, "Failed to handle on topic: " + topic, e);
+      publishLocal(ON_ERROR, Json.createObject().set("topic", topic)
+          .set("message", message).set("cause", e));
+    }
+  }
+
+  private void scheduleHandle(final String topic, final Object handler, final Message message) {
+    if (message.isLocal()) {
+      handle(topic, handler, message);
+    } else {
+      Platform.scheduler().scheduleDeferred(new Handler<Void>() {
+        @Override
+        public void handle(Void ignore) {
+          SimpleBus.this.handle(topic, handler, message);
+        }
+      });
     }
   }
 

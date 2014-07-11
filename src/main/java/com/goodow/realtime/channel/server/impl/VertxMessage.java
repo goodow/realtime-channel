@@ -43,6 +43,11 @@ class VertxMessage<T> implements Message<T> {
   }
 
   @Override
+  public boolean isLocal() {
+    return false;
+  }
+
+  @Override
   public void reply(Object msg) {
     reply(msg, null);
   }
