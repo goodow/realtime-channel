@@ -179,8 +179,9 @@ public class ReliableSubscribeBus extends BusProxy {
 
     assert sequence == currentSequence + 1 : "other cases should have been caught";
     String next;
+    JsonArray messages = Json.createArray();
     while (true) {
-      delegate.publishLocal(message.topic(), message.body());
+      messages.push(message);
       currentSequences.set(topic, ++currentSequence);
       next = currentSequence + 1 + "";
       message = pending.get(next);
@@ -190,6 +191,7 @@ public class ReliableSubscribeBus extends BusProxy {
         break;
       }
     }
+    scheduleMessages(messages);
     assert !pending.has(next);
     return false;
   }
@@ -227,5 +229,19 @@ public class ReliableSubscribeBus extends BusProxy {
         }
       });
     }
+  }
+
+  private void scheduleMessages(final JsonArray messages) {
+    Platform.scheduler().scheduleDeferred(new Handler<Void>() {
+      @Override
+      public void handle(Void event) {
+        messages.forEach(new JsonArray.ListIterator<Message<?>>() {
+          @Override
+          public void call(int index, Message<?> message) {
+            delegate.publishLocal(message.topic(), message.body());
+          }
+        });
+      }
+    });
   }
 }
