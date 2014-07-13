@@ -118,7 +118,6 @@ public class WebSocketBus extends SimpleBus {
 
   @Override
   protected void doClose() {
-    webSocket.close();
     subscribeLocal(Bus.ON_CLOSE, new Handler<Message<JsonObject>>() {
       @Override
       public void handle(Message<JsonObject> event) {
@@ -126,6 +125,7 @@ public class WebSocketBus extends SimpleBus {
         handlerCount.clear();
       }
     });
+    webSocket.close();
   }
 
   @Override

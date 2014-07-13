@@ -139,10 +139,11 @@ public class SimpleBus implements Bus {
     String replyTopic = null;
     if (replyHandler != null) {
       replyTopic = makeUUID();
+      replyHandlers.set(replyTopic, replyHandler);
     }
     MessageImpl message = new MessageImpl(local, send, this, topic, replyTopic, msg);
-    if (internalHandleReceiveMessage(message) && replyHandler != null) {
-      replyHandlers.set(replyTopic, replyHandler);
+    if (!internalHandleReceiveMessage(message) && replyTopic != null) {
+      replyHandlers.remove(replyTopic);
     }
   }
 
@@ -190,7 +191,16 @@ public class SimpleBus implements Bus {
     final String topic = message.topic();
     JsonArray handlers = handlerMap.getArray(topic);
     if (handlers != null) {
+      // We make a copy since the handler might get unregistered from within the handler itself,
+      // which would screw up our iteration
+      final JsonArray copy = Json.createArray();
       handlers.forEach(new JsonArray.ListIterator<Object>() {
+        @Override
+        public void call(int index, Object value) {
+          copy.push(value);
+        }
+      });
+      copy.forEach(new JsonArray.ListIterator<Object>() {
         @Override
         public void call(int index, Object value) {
           scheduleHandle(topic, value, message);
