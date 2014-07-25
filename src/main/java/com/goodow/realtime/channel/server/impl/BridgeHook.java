@@ -61,7 +61,7 @@ public class BridgeHook implements EventBusBridgeHook {
   @Override
   public boolean handleSendOrPub(SockJSSocket sock, boolean send, JsonObject msg,
       final String topic) {
-    if (topic.equals(WebSocketBus.TOPIC_CHANNEL + "/_CONNECT")) {
+    if (WebSocketBus.TOPIC_CONNECT.equals(topic)) {
       connections.put(sock.writeHandlerID(), msg.getObject("body").getString(WebSocketBus.SESSION));
     } else if (msg.getValue("body") instanceof JsonObject) {
       JsonObject body = msg.getObject("body");

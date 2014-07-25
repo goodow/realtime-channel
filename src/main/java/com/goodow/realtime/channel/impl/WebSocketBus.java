@@ -29,6 +29,7 @@ public class WebSocketBus extends SimpleBus {
   public static final String PASSWORD = "password";
   public static final String PING_INTERVAL = "vertxbus_ping_interval";
   public static final String TOPIC_CHANNEL = "realtime/channel";
+  public static final String TOPIC_CONNECT = TOPIC_CHANNEL + "/_CONNECT";
 
   protected static final String BODY = "body";
   protected static final String TOPIC = "address";
@@ -193,10 +194,10 @@ public class WebSocketBus extends SimpleBus {
         msg.set(PASSWORD, password);
       }
     }
-    send(TOPIC_CHANNEL + "/_CONNECT", msg, new Handler<Message<JsonObject>>() {
+    send(TOPIC_CONNECT, msg, new Handler<Message<JsonObject>>() {
       @Override
       public void handle(Message<JsonObject> message) {
-        if (0 != message.body().getNumber("code")) {
+        if (message.body() != null && message.body().getNumber("code") != 0) {
           throw new RuntimeException(message.body().toJsonString());
         }
       }
