@@ -17,5 +17,4 @@
   <inherits name='com.goodow.realtime.channel.Channel'/>
   
   <add-linker name="sso"/>
-  <set-configuration-property name="devModeRedirectEnabled" value="false"/>
 </module>

@@ -30,17 +30,6 @@
       </snapshots>
     </repository>
     <repository>
-      <id>sonatype-google-snapshots</id>
-      <name>Sonatype Google Snapshots</name>
-      <url>https://oss.sonatype.org/content/repositories/google-snapshots</url>
-      <releases>
-        <enabled>false</enabled>
-      </releases>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-    </repository>
-    <repository>
       <id>google-diff-match-patch</id>
       <url>http://google-diff-match-patch.googlecode.com/svn/trunk/maven/</url>
       <snapshots>
@@ -201,7 +190,7 @@
             <!--<compileSourcesArtifact>com.goodow.realtime:realtime-json</compileSourcesArtifact>-->
           <!--</compileSourcesArtifacts>-->
           <bindAddress>0.0.0.0</bindAddress>
-          <!--<module>${project.groupId}.channel.Channel</module>-->
+          <module>${project.groupId}.channel.Channel</module>
           <precompile>false</precompile>
         </configuration>
       </plugin>

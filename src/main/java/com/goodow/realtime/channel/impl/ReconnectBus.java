@@ -27,6 +27,7 @@ import com.goodow.realtime.json.JsonArray;
 import com.goodow.realtime.json.JsonObject;
 
 @JsNamespace("$wnd.realtime.channel")
+@JsExport
 public class ReconnectBus extends WebSocketBus {
   public static final String AUTO_RECONNECT = "reconnect";
   private final FuzzingBackOffGenerator backOffGenerator;
